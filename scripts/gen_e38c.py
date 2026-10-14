@@ -82,16 +82,19 @@ def gen_cord(dest: Path) -> tuple[list[dict], dict]:
             if txt.strip() not in set(iter_strings(gt)):
                 continue
             n_clean += 1
-            rid = row.get("image", {}).get("path") or f"{split}-{i}"
+            img = row.get("image")
+            rid = (img.get("path") if isinstance(img, dict) else getattr(img, "filename", None)) or f"{split}-{i}"
             rng = random.Random(stable_seed("e38c-cord", rid))
             delta = math.exp(rng.uniform(math.log(0.001), math.log(0.5)))
             thr = round(total * (1 - delta) if rng.random() < 0.5 else total * (1 + delta))
             label = "true" if total >= thr else "false"
             img_path = dest / f"{split}-{i}.png"
             if not img_path.exists():
-                img = row["image"]
-                img_path.write_bytes(img["bytes"] if isinstance(img, dict) and "bytes" in img
-                                     else Path(img["path"]).read_bytes())
+                img = row.get("image")
+                if isinstance(img, dict) and "bytes" in img:
+                    img_path.write_bytes(img["bytes"])
+                else:
+                    img.save(img_path)
             for lang in LANGS:
                 q = DOC_QUESTION["field_threshold"][lang].replace("EUR", "IDR").format(thr=fmt_idr(thr))
                 rows.append(DecisionCase(
@@ -126,7 +129,8 @@ def gen_gui(dest: Path) -> tuple[list[dict], dict]:
 
     dest.mkdir(parents=True, exist_ok=True)
     (dest / "task_split.json").write_bytes(requests.get(GUI_RESOLVE + "splits/task_split.json", timeout=60).content)
-    test_ids = set(json.loads((dest / "task_split.json").read_text(encoding="utf-8"))["test"])
+    test_ids = {x.removesuffix(".json") for x in
+                json.loads((dest / "task_split.json").read_text(encoding="utf-8"))["test"]}
     print(f"task_split test episodes: {len(test_ids)}", flush=True)
     rows: list[dict] = []
     seen = set()
@@ -183,7 +187,7 @@ def gen_gui(dest: Path) -> tuple[list[dict], dict]:
                     label_origin="e38c-gui-steps", split="test").to_dict()
                     | {"family": "task_done", "image": rel, "polarity": polarity,
                        "k": k, "n_steps": n, "steps": steps, "final_action": "COMPLETE",
-                       "goal": row.get("task", "")})
+                       "neg_ref": neg_ref, "fin_ref": fin_ref, "goal": row.get("task", "")})
     return out, {"test_ids": len(test_ids), "episodes_used": len(sample), "screenshots_downloaded": dl}
 
 def sha256_file(p: Path) -> str:
@@ -206,7 +210,7 @@ def main() -> int:
     for sub in ("cord", "gui_odyssey"):
         for p in (DATA / sub).rglob("*"):
             if p.is_file() and p.name != "manifest.json":
-                files[str(p.relative_to(DATA))] = sha256_file(p)
+                files[p.relative_to(DATA).as_posix()] = sha256_file(p)
     manifest = {"criteria": "docs/E38C_CRITERIA_2026-10-14.md", "stats": {"cord": cord_stats, "gui_odyssey": gui_stats},
                 "n_rows": {"cord": len(cord_rows), "gui_odyssey": len(gui_rows)},
                 "files_sha256": files}

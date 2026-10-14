@@ -133,7 +133,7 @@ def main() -> int:
             except Exception as exc:
                 fails["e_contract"].append(f"{row['id']}: {exc}")
             sha = hashlib.sha256((DATA / name / row["image"]).read_bytes()).hexdigest()
-            if sha != manifest["files_sha256"].get(f"{name}/{row['image']}"):
+            if sha != manifest["files_sha256"].get(f"{name}/{row['image']}".replace("\\\\", "/")):
                 fails["e_png_sha"].append(row["id"])
             try:
                 derived = derive_cord(row) if name == "cord" else derive_gui(row)
@@ -151,8 +151,8 @@ def main() -> int:
         evalset = rows
         bins = []
         if name == "cord":
-            thr_vals = sorted(t for r in train if (t := parse_price(
-                re.search(r"at least ([\d.,]+)", r["question"]).group(1))) is not None)
+            thr_vals = sorted(t for r in train if (m := NUM_RE.search(r["question"]))
+                              and (t := parse_price(m.group(0))) is not None)
             bins = [thr_vals[int(len(thr_vals) * q / 10)] for q in range(1, 10)]
         g2 = naive_bayes(train, evalset, bins)
         inject = lambda rs: [dict(r, state=f"{r['state']} leak{r['target_option']}") for r in rs]  # noqa: E731
