@@ -33,12 +33,30 @@ evaluates them on real data.
 - OCR-arm init: `mksh1_v12.safetensors` = MK-SH-1 v1.2, sha256
   `ea66cdde2271b98efda9dbb5d4437b59aa422cb34daca85d4203508aa56264d5`
   (576 788 228 B), same dataset.
-- SmolVLM2 arm: exact repo id `TBD` at freeze (Apache-2.0 re-verified then)
-- jev-vlm-4b comparator: `sidman007/jev-vlm-4b`, revision SHA `TBD` at freeze
-  (Apache-2.0, custom_code); if custom_code does not load in the pinned
-  environment → `not_run` with the exact error, no patches
-- Real-eval set: `Gjusev/MK-SH-V-E38c` (provisional name, skipped cleanly
-  while absent)
+- SmolVLM2 arm: **the pinned "SmolVLM2-500M" does not exist** — the series is
+  256M / 2.2B only (verified on the Hub 2026-10-14). Verified candidates,
+  both Apache-2.0, ungated: `HuggingFaceTB/SmolVLM2-256M-Video-Instruct`
+  (sha `067788b187b95ebe7b2e040b3e4299e342e5b8fd`; working default — quota
+  as computed) and `HuggingFaceTB/SmolVLM2-2.2B-Instruct`
+  (sha `482adb537c021c86670beed01cd58990d01e72e4`; needs new arithmetic).
+  **The freezer picks one and re-checks data-licenses at freeze.**
+- jev-vlm-4b comparator: `sidman007/jev-vlm-4b`, revision
+  `8c56e46a2b47dee398bc71c39c355b9716dec21e`, Apache-2.0 (verified on the
+  Hub 2026-10-14). **It is an adapter repo with custom_code**
+  (`adapter/adapter_config.json`, `modeling_jevvlm.py`): if it does not load
+  in the pinned environment → `not_run` with the exact error, no patches.
+- Real-eval set: `Gjusev/MK-SH-V-E38c`, PRIVATE, FIXED revision
+  `98dde3d2b3dd0fd319ff44d059656a2d2864c66e` (never `main`; manifest.json
+  sha256 `c4aa04f823ff9a78d8b7916350c715735c1f1d900d424dc4f5a19c5e4ac95ed2`).
+  The kernel verifies in-job the sha256 of both rows files and cuts the real
+  eval to `not_run` on any mismatch:
+  `cord/rows.jsonl` `5d0dbc9e7ba3b3301bbcc1d52ecc2fb352b281dcb72c76bbe21ad34e23ab3f09`
+  (576 rows = 192 receipts × 3 languages, field_threshold) and
+  `gui_odyssey/rows.jsonl` `dcdbe6170752738cbb4a72a7f4cafbb56f4b30177cdb79add4c0e2c5a3c2a8da`
+  (2 010 rows = 335 episodes × 2 polarities × 3 languages, task_done,
+  label_origin `annotation+visual-verification`). All rows are split=test.
+  The goal text rides in `state` in English across the three languages
+  (declared).
 - Laya Vision (`nnlgsakib/laya-vision`): **`not_run`, declared** — no
   published inference code; reimplementing it would not be a fair comparison.
 
@@ -117,15 +135,24 @@ separately, never gate):
   by 1 within family×language) must DROP ≥ 15 pp; absent and degraded are
   descriptive.
 - **G4 real eval + frozen interpretation rule**: reads `Gjusev/MK-SH-V-E38c`
-  (CORD → field_threshold ~188; GUI-Odyssey → task_done ~500 pending
-  re-probe r2; DocLayNet out; the other families have no real eval). CORD
-  and GUI-Odyssey are reported in the **main table**, not an annex. **Kill
-  criterion**: if every evaluated arm scores ≥ 95 %, the real eval does not
-  discriminate. **Interpretation rule (frozen)**: if G1 passes on synthetic
-  but the real Δ(A1-V − OCR) CI includes 0 or is negative, the result is
+  at the pinned revision with rows-sha verification (mismatch → `not_run`).
+  Label quality (E38c record): negatives 1/95 invalid (CP95 upper 5,0 %);
+  positives 335/982 verifiable (65,9 % discarded); coordinator agreement
+  43/50 = 86 % (≥ 85 % → not a noisy eval); kappa not computable (the
+  subsample is all operator-"yes"); 6 of 7 disagreements are purchase goals
+  whose final capture only shows "Added to cart". CORD and GUI-Odyssey are
+  reported in the **main table**, not an annex. **Kill criterion**: if every
+  evaluated arm scores ≥ 95 %, the real eval does not discriminate.
+  **Interpretation rule (frozen)**: if G1 passes on synthetic but the
+  governing real Δ(A1-V − OCR) CI includes 0 or is negative, the result is
   reported as **"ventaja solo sintética, sin evidencia de transferencia"**
   and neither the model card nor any announcement claims a general visual
   advantage. Release gates do not change.
+- **Pre-registered sensitivity (task_done real)**: reported (i) with all 335
+  episodes and (ii) excluding the 38 purchase-goal episodes (297). If the
+  readings differ in sign or in whether the Δ CI excludes 0, **(ii) — the
+  strict one — governs** the interpretation rule; the kernel computes both
+  and flags the governing reading.
 - **Claim rules (comparators, frozen now)**: (i) SmolVLM2 — if the CI of
   Δ(A1-V − SmolVLM2) has upper bound < 0, it is declared in the report and
   model card; no "best small visual model" claim; not a stop. (ii) rules —

@@ -46,9 +46,18 @@ from pathlib import Path
 
 WORK = Path("/kaggle/working")
 E38_REPOS = {"E38a": "Gjusev/MK-SH-V-E38a", "E38b": "Gjusev/MK-SH-V-E38b"}
-REAL_EVAL_REPO = "Gjusev/MK-SH-V-E38c"  # provisional; skipped cleanly if absent
-SMOL_ID = "HuggingFaceTB/SmolVLM2-500M-Video"  # exact id pinned at freeze
-JEV_ID = "sidman007/jev-vlm-4b"  # revision SHA pinned at freeze
+REAL_EVAL_REPO = "Gjusev/MK-SH-V-E38c"  # private; FIXED revision, never main
+REAL_EVAL_REVISION = "98dde3d2b3dd0fd319ff44d059656a2d2864c66e"
+REAL_EVAL_ROWS_SHA = {  # verified in-kernel; mismatch -> real eval not_run
+    "cord/rows.jsonl": "5d0dbc9e7ba3b3301bbcc1d52ecc2fb352b281dcb72c76bbe21ad34e23ab3f09",
+    "gui_odyssey/rows.jsonl": "dcdbe6170752738cbb4a72a7f4cafbb56f4b30177cdb79add4c0e2c5a3c2a8da",
+}
+# SmolVLM2-500M does NOT exist (series is 256M / 2.2B). Working default: the
+# 256M tier (quota as computed); the 2.2B alternative needs new arithmetic.
+# The freezer picks; switching = one constant.
+SMOL_ID = "HuggingFaceTB/SmolVLM2-256M-Video-Instruct"  # sha 067788b187b95ebe7b2e040b3e4299e342e5b8fd
+SMOL_ID_ALT = "HuggingFaceTB/SmolVLM2-2.2B-Instruct"  # sha 482adb537c021c86670beed01cd58990d01e72e4
+JEV_ID = "sidman007/jev-vlm-4b"  # sha 8c56e46a2b47dee398bc71c39c355b9716dec21e; ADAPTER repo (custom_code)
 STEPS = 2000
 SMOKE_STEPS = 20
 EFFECTIVE_BATCH = 32
@@ -887,25 +896,48 @@ def main() -> None:
     g3["passed"] = (test_acc["a1v"] - acc_swap) >= SWAP_DROP_BAR
     (WORK / "eval_ablations__a1v.json").write_text(json.dumps(g3, indent=2), encoding="utf-8")
 
-    # G4: real eval (repo may not exist; skipped cleanly). CORD and
+    # G4: real eval at the FIXED revision with rows-sha verification; any
+    # mismatch -> not_run (never trained-on, never swapped). CORD and
     # GUI-Odyssey go in the MAIN table; frozen interpretation rule computed.
-    g4 = {"status": "not_run", "reason": f"{REAL_EVAL_REPO} not available (E38c pending)"}
+    g4 = {"status": "not_run", "reason": f"{REAL_EVAL_REPO} not available"}
     real_ctx = None
+    rows_files = []
     try:
         from huggingface_hub import list_repo_files, snapshot_download
 
-        files = list_repo_files(REAL_EVAL_REPO, repo_type="dataset")
-        rows_file = next((f for f in files if f.endswith("rows.jsonl")), None)
+        files = list_repo_files(REAL_EVAL_REPO, repo_type="dataset",
+                                revision=REAL_EVAL_REVISION)
+        rows_files = [f for f in files if f in REAL_EVAL_ROWS_SHA]
     except Exception as exc:
-        rows_file = None
-        log(f"real eval skipped: {REAL_EVAL_REPO} not readable ({type(exc).__name__})")
-    if rows_file:
+        log(f"real eval skipped: {REAL_EVAL_REPO}@{REAL_EVAL_REVISION[:8]} "
+            f"not readable ({type(exc).__name__})")
+    if rows_files:
         real_root_path = Path(snapshot_download(
             repo_id=REAL_EVAL_REPO, repo_type="dataset",
+            revision=REAL_EVAL_REVISION,
             allow_patterns=["*.jsonl", "*.png", "*.jpg", "*.jpeg"]))
-        real_rows = [json.loads(l) for l in (real_root_path / rows_file)
-                     .read_text(encoding="utf-8").splitlines() if l.strip()]
-        real_root = {"E38a": real_root_path, "E38b": real_root_path}
+        sha_ok = True
+        for rel, want_sha in REAL_EVAL_ROWS_SHA.items():
+            f = real_root_path / rel
+            if not f.exists():
+                sha_ok = False
+                g4 = {"status": "not_run",
+                      "reason": f"missing {rel} at revision {REAL_EVAL_REVISION[:8]}"}
+                break
+            got = hashlib.sha256(f.read_bytes()).hexdigest()
+            if got != want_sha:
+                sha_ok = False
+                g4 = {"status": "not_run",
+                      "reason": f"rows sha mismatch for {rel}: {got}"}
+                break
+        if sha_ok:
+            log("E38c rows sha256 verified (cord + gui_odyssey)")
+        if sha_ok:
+            real_rows = []
+            for rel in REAL_EVAL_ROWS_SHA:
+                real_rows += [json.loads(l) for l in (real_root_path / rel)
+                              .read_text(encoding="utf-8").splitlines() if l.strip()]
+            real_root = {"E38a": real_root_path, "E38b": real_root_path}
         from concurrent.futures import ProcessPoolExecutor
 
         def _ocr_job(p_lang):
@@ -979,15 +1011,44 @@ def main() -> None:
             real_rows_by_arm[arm] = real_rows_arm
             (WORK / f"eval_real__{arm}.jsonl").write_text(
                 "".join(json.dumps(r) + "\n" for r in real_rows_arm), encoding="utf-8")
-        # frozen interpretation rule: real Delta(a1v - ocr) CI
-        real_by_id = {r["id"]: r for r in real_rows_by_arm["ocr"]}
-        real_delta_ci = paired_delta_ci(
-            [r["correct"] for r in real_rows_by_arm["a1v"]],
-            [int(real_by_id[r["id"]]["correct"]) for r in real_rows_by_arm["a1v"]],
-            [r.get("group_id", r["id"]) for r in real_rows_by_arm["a1v"]],
-            n_boot=1000, seed=42)
-        g4 = {"status": "completed", "repo": REAL_EVAL_REPO, **accs_real,
+
+        def real_delta(rows_a1v, rows_ocr):
+            by_id = {r["id"]: r for r in rows_ocr}
+            return paired_delta_ci(
+                [r["correct"] for r in rows_a1v],
+                [int(by_id[r["id"]]["correct"]) for r in rows_a1v],
+                [r.get("group_id", r["id"]) for r in rows_a1v],
+                n_boot=1000, seed=42)
+
+        # frozen interpretation rule: real Delta(a1v - ocr) CI...
+        real_delta_ci = real_delta(real_rows_by_arm["a1v"], real_rows_by_arm["ocr"])
+        # ...plus the PRE-REGISTERED sensitivity: (i) all episodes vs (ii)
+        # task_done excluding purchase-goal episodes; if the readings differ
+        # in sign or in whether the CI excludes 0, (ii) governs
+        real_by_id_a1v = {r["id"]: r for r in real_rows_by_arm["a1v"]}
+        purchase_ids = {r["id"] for r in real_rows
+                        if "purchase" in r.get("state", "").lower()}
+        strict_a1v = [r for r in real_rows_by_arm["a1v"] if r["id"] not in purchase_ids]
+        strict_ocr = [r for r in real_rows_by_arm["ocr"] if r["id"] not in purchase_ids]
+        real_delta_ci_strict = real_delta(strict_a1v, strict_ocr)
+
+        def excludes_zero(ci):
+            return ci["ci95"][0] > 0 or ci["ci95"][1] < 0
+
+        def sign_of(ci):
+            return 1 if ci["delta"] > 0 else (-1 if ci["delta"] < 0 else 0)
+
+        differ = (sign_of(real_delta_ci) != sign_of(real_delta_ci_strict)
+                  or excludes_zero(real_delta_ci) != excludes_zero(real_delta_ci_strict))
+        governing = "strict_no_purchase" if differ else "full"
+        g4 = {"status": "completed", "repo": REAL_EVAL_REPO,
+              "revision": REAL_EVAL_REVISION,
+              "n_purchase_episodes_excluded": len(purchase_ids), **accs_real,
               "delta_ci_a1v_vs_ocr": real_delta_ci,
+              "delta_ci_a1v_vs_ocr_strict": real_delta_ci_strict,
+              "sensitivity_readings_differ": differ,
+              "governing_reading": governing,
+              "governing_delta_ci": real_delta_ci_strict if differ else real_delta_ci,
               "kill_bar": REAL_EVAL_KILL,
               "non_discriminating": all(v >= REAL_EVAL_KILL for v in accs_real.values())}
     (WORK / "e39_real_eval.json").write_text(json.dumps(g4, indent=2), encoding="utf-8")
@@ -1205,10 +1266,11 @@ def main() -> None:
     else:
         skipped.append({"phase": "(f) jev", "reason": "wall budget"})
 
-    # transfer-evidence flag (frozen G4 interpretation rule)
+    # transfer-evidence flag (frozen G4 interpretation rule; the GOVERNING
+    # sensitivity reading decides when the two differ)
     transfer_evidence = None
     if g4.get("status") == "completed":
-        ci = g4.get("delta_ci_a1v_vs_ocr", {}).get("ci95")
+        ci = g4.get("governing_delta_ci", {}).get("ci95")
         if gates["G1_visual_advantage"]["passed"] and ci and ci[1] <= 0:
             transfer_evidence = "synthetic-only advantage, no transfer evidence"
         elif gates["G1_visual_advantage"]["passed"]:
