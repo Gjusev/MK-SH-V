@@ -17,8 +17,10 @@ Last reviewed: 2026-10-14.
 | jhu-clsp/mmBERT-small | MIT | verified earlier in MK-SH-1 | fallback text encoder |
 | Gjusev/MK-SH-1 | Apache-2.0 | own | comparator, fallback init |
 | SupersonicLabs/Julia-1 | Apache-2.0 | model card | comparator |
-| HuggingFaceTB/SmolVLM2-500M | Apache-2.0 | to re-check at pin time | comparator |
-| PaddleOCR / Tesseract | Apache-2.0 | to re-check at pin time | OCR for comparators |
+| [HuggingFaceTB/SmolVLM2-500M-Video-Instruct](https://huggingface.co/HuggingFaceTB/SmolVLM2-500M-Video-Instruct) rev `7b375e1b` | Apache-2.0 | verified (Hub API, 2026-10-14) | E39 comparator (task-trained) |
+| [sidman007/jev-vlm-4b](https://huggingface.co/sidman007/jev-vlm-4b) rev `8c56e46a` | Apache-2.0 | verified (Hub API, 2026-10-14) | E39 external comparator (zero-shot, adapter + custom code) |
+| nnlgsakib/laya-vision | Apache-2.0 | verified (Hub API, 2026-10-14) | not run: no inference code published |
+| [Tesseract](https://github.com/tesseract-ocr/tesseract) + tessdata / tessdata_best | Apache-2.0 | verified (GitHub LICENSE, 2026-10-14) | OCR for E39 comparators (OCR→MK-SH-1, OCR+rules) |
 
 ## Datasets
 
