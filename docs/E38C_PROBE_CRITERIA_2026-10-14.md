@@ -63,11 +63,15 @@ rule alone; (ii) the decisive value is visible (CORD: total text in annotation
 strings; GUI-Odyssey: final screenshot fetched OK; DocLayNet: n/a beyond
 metadata); (iii) no ambiguity flag from the rule set below.
 
-Ambiguity rejections (any hit fails the row): CORD total text shorter than two
-characters or not parseable as a number in any of EN/ID formats; GUI-Odyssey
-final action both COMPLETE-flagged and IMPOSSIBLE-flagged in `ps` notes;
-DocLayNet category outside the six classes (→ `no_doc_type_match`, expected
-for laws/tenders/reports — that IS the measurement).
+Ambiguity rejections (any hit fails the row): CORD total text not parseable as
+a number by the frozen parse rule — strip currency symbols; ≥ 2 separators →
+thousands; exactly one separator followed by exactly 3 digits → thousands
+(ID convention, IDR totals carry no cents); one separator followed by 1-2
+digits → decimal; both separators present → EN pattern `,` thousands + `.`
+decimal, else ID pattern, else reject as ambiguous; GUI-Odyssey final action
+both COMPLETE-flagged and IMPOSSIBLE-flagged in `ps` notes; DocLayNet category
+outside the six classes (→ `no_doc_type_match`, expected for
+laws/tenders/reports — that IS the measurement).
 
 ## Threshold (frozen)
 
