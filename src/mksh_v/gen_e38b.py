@@ -715,6 +715,7 @@ def generate_split(family: str, split: str, lang: str, seed: int = 38) -> list[G
                 question_state = state["state"]
             assert_clean(question_state, question)
             cid = f"{gid}-{role}"
+            meta["app"] = app
             case = DecisionCase(id=cid, group_id=gid, source="e38b-synthetic", language=lang,
                                 domain="screens", state=question_state, question=question,
                                 options=_options(family, lang), target_kind="single",
