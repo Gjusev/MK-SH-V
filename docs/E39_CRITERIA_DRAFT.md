@@ -25,11 +25,14 @@ evaluates them on real data.
   shas in its manifest). Transport: CPU kernel `gjusev/mkshv-e39-ocrprep` →
   CLI output download → CLI dataset upload (GO-gated, ABSOLUTE `-p` paths)
 - A1-V init: E37 C3 checkpoint `c3_final.safetensors` sha256
-  `bac7c72242d236f8…` (full sha at freeze) via `gjusev/mkshv-e37-ckpt`.
-  Pre-declared fallback: C3 recipe rerun in-job (3 phases × fresh AdamW, rng
-  42^0xE35^phase), sha recorded, divergence declared.
-- OCR-arm init: `mksh1_v12.safetensors` = MK-SH-1 v1.2 (sha `ea66cdde…`),
-  same dataset
+  `bac7c72242d236f8717338d5bfe9751a24df13c41147de6a5b83a248dd220f6c`
+  (1 056 039 004 B) via the private Kaggle dataset `gjusev/mkshv-e37-ckpt`
+  (uploaded and ready; carries a SHA256SUMS file). Pre-declared fallback: C3
+  recipe rerun in-job (3 phases × fresh AdamW, rng 42^0xE35^phase), sha
+  recorded, divergence declared.
+- OCR-arm init: `mksh1_v12.safetensors` = MK-SH-1 v1.2, sha256
+  `ea66cdde2271b98efda9dbb5d4437b59aa422cb34daca85d4203508aa56264d5`
+  (576 788 228 B), same dataset.
 - SmolVLM2 arm: exact repo id `TBD` at freeze (Apache-2.0 re-verified then)
 - jev-vlm-4b comparator: `sidman007/jev-vlm-4b`, revision SHA `TBD` at freeze
   (Apache-2.0, custom_code); if custom_code does not load in the pinned
