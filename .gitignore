@@ -48,3 +48,7 @@ PROMPT_GLM53.md
 /docs/internal/
 /docs/status.md
 /docs/decisions.md
+
+# generated kaggle artifacts (regenerate with kaggle/build_kernels.py)
+kaggle/gen/
+kaggle/push/

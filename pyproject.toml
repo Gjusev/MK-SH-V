@@ -1,0 +1,38 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mksh-v"
+version = "0.1.0"
+description = "MK-SH-V: a small decision model that reads documents and screenshots plus text and returns calibrated probabilities, choice and abstention"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Gjusev" }]
+keywords = ["decision-model", "multimodal", "documents", "screenshots", "abstention"]
+dependencies = [
+  "mokka-decisions @ git+https://github.com/Gjusev/MK-SH-1@9e1a226e",
+  "transformers>=5.17",
+  "torch>=2.1",
+  "pillow>=10.1",
+]
+
+[project.optional-dependencies]
+data = ["playwright>=1.40"]
+dev = ["pytest>=8"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mksh_v"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.pytest.ini_options]
+pythonpath = ["src", "."]
+testpaths = ["tests"]
+markers = [
+  "slow: needs real model weights or network; opt in with -m slow",
+  "gpu: needs a CUDA device",
+]
+addopts = "-m 'not slow and not gpu'"
