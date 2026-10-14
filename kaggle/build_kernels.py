@@ -21,7 +21,7 @@ SRC = ROOT / "src" / "mksh_v"
 KAGGLE = ROOT / "kaggle"
 GEN = KAGGLE / "gen"
 MODULES = ("__init__.py", "sequence.py", "splitting.py", "visual.py",
-           "synth_doc_type.py", "arch_a1v.py")
+           "synth_doc_type.py", "arch_a1v.py", "train_compare.py")
 
 HEADER = '''# AUTO-GENERATED from kaggle/{name}.py + src/mksh_v/* by kaggle/build_kernels.py.
 # Do not edit: edit the sources and regenerate.
@@ -60,7 +60,9 @@ def main() -> None:
     import argparse
 
     ap = argparse.ArgumentParser()
-    ap.add_argument("names", nargs="*", default=["e37_preflight", "e37_c1", "e37_c2", "e37_c4", "e37_c3"])
+    ap.add_argument("names", nargs="*",
+                    default=["e37_preflight", "e37_c1", "e37_c2", "e37_c4", "e37_c3",
+                             "e39_train"])
     args = ap.parse_args()
     for name in args.names:
         build(name)
