@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.venv-*/
+venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# Credentials
+.env
+.env.*
+!.env.example
+kaggle.json
+.kaggle/
+secrets/
+*.pem
+*.key
+
+# Data, weights, runs (manifests and hashes are versioned elsewhere, not the files)
+data/
+runs/
+release/
+checkpoints/
+artifacts/
+.cache/
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.onnx
+*.bin
+*.gguf
+
+# OS / notebooks
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+desktop.ini
+.playwright-mcp/
+
+# Internal planning: local only, never git add -f
+AGENTS.md
+PROMPT_GLM53.md
+/docs/internal/
+/docs/status.md
+/docs/decisions.md
