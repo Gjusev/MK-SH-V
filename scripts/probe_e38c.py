@@ -52,21 +52,33 @@ def http_json(url: str, params: dict | None = None, tries: int = 4) -> dict:
 
 
 def fetch_rows(repo: str, config: str, split: str) -> list[dict]:
-    """First min(N_FETCH_CAP, split_size) rows in server order via /rows."""
-    out, offset = [], 0
-    while offset < N_FETCH_CAP:
-        page = http_json(f"{API}/rows", {"dataset": repo, "config": config, "split": split,
-                                         "offset": offset, "length": PAGE})
-        rows = page.get("rows", [])
-        if not rows:
-            break
-        out.extend(rows)
-        if len(rows) < PAGE:
-            break
-        offset += PAGE
-        if offset % 500 == 0:
-            print(f"  fetched {offset} rows", flush=True)
-    return out
+    """First min(N_FETCH_CAP, split_size) rows via /rows; streaming fallback."""
+    try:
+        out, offset = [], 0
+        while offset < N_FETCH_CAP:
+            page = http_json(f"{API}/rows", {"dataset": repo, "config": config, "split": split,
+                                             "offset": offset, "length": PAGE})
+            rows = page.get("rows", [])
+            if not rows:
+                break
+            out.extend(rows)
+            if len(rows) < PAGE:
+                break
+            offset += PAGE
+            if offset % 500 == 0:
+                print(f"  fetched {offset} rows", flush=True)
+        return out
+    except RuntimeError as exc:
+        print(f"  /rows failed ({str(exc)[:80]}); streaming fallback", flush=True)
+        from datasets import load_dataset
+
+        ds = load_dataset(repo, split=split, streaming=True)
+        out = []
+        for i, row in enumerate(ds):
+            out.append({"row_idx": i, "row": row})
+            if len(out) >= N_FETCH_CAP:
+                break
+        return out
 
 
 def select_sample(rows: list[dict]) -> list[dict]:
@@ -129,7 +141,7 @@ def probe_cord(rows: list[dict], dest: Path) -> dict:
     clean, reasons, out_rows = 0, Counter(), []
     for r in select_sample(rows):
         row = r["row"]
-        gt_txt = row.get("ground_truths") or ""
+        gt_txt = row.get("ground_truth") or row.get("ground_truths") or ""
         try:
             gt = json.loads(gt_txt) if isinstance(gt_txt, str) else gt_txt
         except json.JSONDecodeError:
@@ -194,9 +206,13 @@ def probe_gui_odyssey(rows: list[dict], dest: Path, repo: str) -> dict:
     for r in select_sample(rows):
         row = r["row"]
         try:
+            import ast
             steps = json.loads(row.get("steps") or "[]")
-        except json.JSONDecodeError:
-            steps = []
+        except (json.JSONDecodeError, ValueError):
+            try:
+                steps = ast.literal_eval(row.get("steps") or "[]")
+            except (ValueError, SyntaxError):
+                steps = []
         if not steps:
             reasons["no_steps"] += 1
             out_rows.append({"row_idx": r["row_idx"], "clean": False, "reason": "no_steps"})
@@ -221,9 +237,21 @@ def probe_gui_odyssey(rows: list[dict], dest: Path, repo: str) -> dict:
             reasons["screenshot_missing_in_repo"] += 1
             out_rows.append({"row_idx": r["row_idx"], "clean": False, "reason": "screenshot_missing_in_repo"})
             continue
+        shot_path = dest / "shots" / f"{r['row_idx']}_{Path(matches[0]).name}"
+        if not shot_path.exists():
+            url = f"https://huggingface.co/datasets/{repo}/resolve/main/{matches[0]}"
+            resp = requests.get(url, timeout=120)
+            if resp.status_code != 200:
+                reasons["screenshot_download_failed"] += 1
+                out_rows.append({"row_idx": r["row_idx"], "clean": False,
+                                 "reason": f"screenshot_download_failed: HTTP {resp.status_code}"})
+                continue
+            shot_path.parent.mkdir(parents=True, exist_ok=True)
+            shot_path.write_bytes(resp.content)
         clean += 1
         out_rows.append({"row_idx": r["row_idx"], "clean": True, "family": "task_done",
-                         "label": label, "screenshot_path": matches[0]})
+                         "label": label, "screenshot_path": matches[0],
+                         "local_copy": str(shot_path.relative_to(dest))})
     return {"clean": clean, "n": len(out_rows), "reasons": dict(reasons), "rows": out_rows}
 
 # ---- main --------------------------------------------------------------------
