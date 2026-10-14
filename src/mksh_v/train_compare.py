@@ -173,23 +173,29 @@ def degrade(image: Image.Image) -> Image.Image:
 def gate_report(
     *,
     delta_ci: dict,
-    text_sets: dict,  # {set_name: {"a1v": acc, "ocr": acc}}
-    text_margin: float = 0.02,
+    text_sets: dict,  # {set_name: {arm: acc}} for every arm
+    text_bars: dict,  # {set_name: absolute_bar} vs frozen MK-SH-1 v1.1
     delta_lo_margin: float = 0.02,
 ) -> dict:
-    """G1/G2 arithmetic with the frozen margins (G3/G4 computed in-kernel)."""
+    """G1/G2 arithmetic with the frozen margins (G3/G4 computed in-kernel).
+
+    G2 is anchored to the FROZEN MK-SH-1 v1.1 references (E35 s42), not to the
+    retrained OCR arm: a retrained comparator can degrade too and both could
+    slip through a relative gate. Every arm must clear every bar.
+    """
     g1 = delta_ci["ci95"][0] >= delta_lo_margin
-    g2 = {
-        name: bool(acc["a1v"] >= acc["ocr"] - text_margin)
-        for name, acc in text_sets.items()
-    }
+    g2, detail = {}, {}
+    for name, bars_acc in text_sets.items():
+        bar = text_bars[name]
+        detail[name] = {"bar": bar, "per_arm": dict(bars_acc)}
+        g2[name] = all(acc >= bar for acc in bars_acc.values())
     return {
         "G1_visual_advantage": {
             "delta": delta_ci["delta"], "ci95": delta_ci["ci95"],
             "bar": f"lower bound >= +{delta_lo_margin:.2f}", "passed": g1,
         },
         "G2_text_regression": {
-            "bar": f"a1v >= ocr - {text_margin:.2f} on every set",
-            "per_set": g2, "passed": all(g2.values()),
+            "bar": {n: b for n, b in text_bars.items()},
+            "per_set": detail, "passed": all(g2.values()),
         },
     }

@@ -112,11 +112,15 @@ def test_ablation_transforms_preserve_canvas():
 
 def test_gate_report_margins():
     delta_ci = {"delta": 0.05, "ci95": [0.021, 0.079], "n_groups": 50, "n": 5600}
-    text = {"testC": {"a1v": 0.98, "ocr": 0.99}, "task": {"a1v": 0.70, "ocr": 0.80}}
-    g = gate_report(delta_ci=delta_ci, text_sets=text)
+    text = {"testC": {"a1v": 0.98, "ocr": 0.99, "smol": 0.96},
+            "task": {"a1v": 0.81, "ocr": 0.79, "smol": 0.60}}
+    bars = {"testC": 0.959, "task": 0.780}  # frozen MK-SH-1 v1.1 - 2 pp
+    g = gate_report(delta_ci=delta_ci, text_sets=text, text_bars=bars)
     assert g["G1_visual_advantage"]["passed"] is True  # 2.1 pp >= 2.0 pp
-    assert g["G2_text_regression"]["per_set"]["testC"] is True  # within 2 pp
-    assert g["G2_text_regression"]["per_set"]["task"] is False  # -10 pp
-    assert g["G2_text_regression"]["passed"] is False
-    failing = gate_report(delta_ci={"delta": 0.05, "ci95": [0.019, 0.08]}, text_sets=text)
+    # testC: every arm >= 0.959 -> True; task: smol 0.60 < 0.780 -> False
+    assert g["G2_text_regression"]["per_set"]["testC"]["per_arm"]["smol"] == 0.96
+    assert all(v >= bars["testC"] for v in g["G2_text_regression"]["per_set"]["testC"]["per_arm"].values())
+    assert g["G2_text_regression"]["passed"] is False  # task fails for smol
+    failing = gate_report(delta_ci={"delta": 0.05, "ci95": [0.019, 0.08]},
+                          text_sets=text, text_bars=bars)
     assert failing["G1_visual_advantage"]["passed"] is False  # 1.9 pp < 2.0 pp

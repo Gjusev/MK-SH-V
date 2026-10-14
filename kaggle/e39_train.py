@@ -1,26 +1,27 @@
 """E39: compared training, synthetic-only (criteria: docs/E39_CRITERIA_*.md at
-freeze time). ONE job, both arms, real eval included when its dataset is
-attached. NOT LAUNCHED until the criteria are frozen and the user gives GO.
+freeze). ONE GPU orchestrator + self-spawning per-GPU workers. NOT LAUNCHED
+until the criteria are frozen and the user gives GO.
 
 Arms (seed 42 head-to-head; the finalist also runs seeds 43/44):
-  A1-V      NeoMME + marker head, init = E37 C3 checkpoint, 768 px
-  OCR->MK1  Tesseract(original PNG) -> state, MK-SH-1 fine-tuned (E35 recipe)
+  a1v   NeoMME + marker head, init = E37 C3 checkpoint, 1024 px, mb 4 x 8
+  ocr   precomputed Tesseract text (gjusev/mkshv-e39-ocr) -> MK-SH-1, mb 8 x 4
+  smol  SmolVLM2-500M, first-token option-letter logits, mb 4 x 8 (smoke-gated)
 
-Selection is dev-only: dev-half every 500 steps, best weights kept by
-macro-dev; test is opened once, with the BEST (not last) weights.
+Every arm mixes E35 text replay: 1 of every 4 microbatches, steps unchanged.
+Selection is dev-only (frozen half, best checkpoint restored); test opens
+once at the end. G2 anchors to frozen MK-SH-1 v1.1 (testC 0.959 / task 0.780
+after -2 pp), not to a retrained arm. Quota bills the SESSION wall at double
+rate: phase 1 runs a1v on gpu0 while ocr+smol run on gpu1.
 
-Expected attachments:
-  dataset gjusev/mkshv-e37-ckpt : c3_final.safetensors (A1-V init; an absent
-                                  file triggers the pre-declared C3-rerun
-                                  fallback), mksh1_v12.safetensors (OCR init)
-  dataset gjusev/mokka-decisions-bundle : E35 text sets (G2) + fallback mix
-  secrets: HF_TOKEN (read-only, per-notebook) - checked FIRST, before any
-  download, so a misconfigured notebook burns no quota. The token is never
-  printed, logged or written to files.
+Expected attachments: gjusev/mkshv-e37-ckpt (c3_final.safetensors,
+mksh1_v12.safetensors), gjusev/mokka-decisions-bundle (E35 replay + G2),
+gjusev/mkshv-e39-ocr (ocr.jsonl). Secret HF_TOKEN checked FIRST, per
+notebook; never printed, logged or written to files.
 """
 
 from __future__ import annotations
 
+import argparse
 import dataclasses
 import hashlib
 import json
@@ -28,42 +29,43 @@ import os
 import random
 import subprocess
 import sys
-import threading
 import time
 from pathlib import Path
 
 WORK = Path("/kaggle/working")
 E38_REPOS = {"E38a": "Gjusev/MK-SH-V-E38a", "E38b": "Gjusev/MK-SH-V-E38b"}
+REAL_EVAL_REPO = "Gjusev/MK-SH-V-E38c"  # provisional; skipped cleanly if absent
+SMOL_ID = "HuggingFaceTB/SmolVLM2-500M-Video"  # exact id pinned at freeze
 STEPS = 2000
+SMOKE_STEPS = 20
 EFFECTIVE_BATCH = 32
-MICROBATCH = 8
-ACCUMULATION = EFFECTIVE_BATCH // MICROBATCH
-IMAGE_SIZE = 768
+ARM_MICROBATCH = {"a1v": 4, "ocr": 8, "smol": 4}
+IMAGE_SIZE = 1024
 MAX_STATE_TOKENS = 700
 MAX_OPTION_TOKENS = 96
 DEV_EVERY = 500
 DEV_HALF_SEED = 39
-TEXT_MARGIN = 0.02
+TEXT_BARS = {"testC": 0.959, "task": 0.780}  # frozen MK-SH-1 v1.1 - 2 pp
 DELTA_LO_MARGIN = 0.02
 SWAP_DROP_BAR = 0.15
 REAL_EVAL_KILL = 0.95
-CKPT_SHA_PREFIXES = {  # full shas pinned at criteria freeze
-    "c3_final.safetensors": "bac7c72242d236f8",   # E37 C3 (A1-V init)
-    "mksh1_v12.safetensors": "ea66cdde",          # MK-SH-1 v1.2 (OCR init)
+REPLAY_EVERY = 4  # every 4th microbatch is E35 text replay
+CKPT_SHA_PREFIXES = {
+    "c3_final.safetensors": "bac7c72242d236f8",
+    "mksh1_v12.safetensors": "ea66cdde",
 }
-# real-eval repo (probe outcome: CORD->field_threshold ~188, GUI-Odyssey->
-# task_done ~500 pending re-probe r2; DocLayNet out). Provisional name; the
-# kernel only uses it if it exists and is readable.
-REAL_EVAL_REPO = "Gjusev/MK-SH-V-E38c"
+LETTERS = "ABCDEFGH"
 
 
 def log(msg: str) -> None:
     print(f"[e39 {time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+# ---------------------------------------------------------------------------
+# shared plumbing
+# ---------------------------------------------------------------------------
 def check_secret_and_repos() -> None:
-    """Cheap auth gate FIRST: abort before any download/training if unusable."""
-    from kaggle_secrets import UserSecretsClient  # Kaggle-only
+    from kaggle_secrets import UserSecretsClient
 
     token = UserSecretsClient().get_secret("HF_TOKEN")  # never printed/logged
     if not token:
@@ -75,79 +77,40 @@ def check_secret_and_repos() -> None:
     api = HfApi()
     who = api.whoami()
     for repo in E38_REPOS.values():
-        files = api.list_repo_files(repo, repo_type="dataset")
-        if not any(f.endswith("rows.jsonl") for f in files):
+        if not any(f.endswith("rows.jsonl")
+                   for f in api.list_repo_files(repo, repo_type="dataset")):
             raise SystemExit(f"E39 ABORT: {repo} readable but has no rows.jsonl")
-    log(f"HF auth OK (user {who.get('name', '?')}); both E38 repos readable")
+    log(f"HF auth OK (user {who.get('name', '?')}); E38 repos readable")
 
 
 def pip_install() -> None:
-    pkgs = [
-        "git+https://github.com/Gjusev/MK-SH-1@9e1a226e",
-        "transformers==5.19.0",
-        "pillow>=10.1",
-        "huggingface_hub>=0.34",
-        "pytesseract>=0.3",
-    ]
-    subprocess.run([sys.executable, "-m", "pip", "install", "-q", *pkgs], check=True)
-    subprocess.run(["apt-get", "-qq", "install", "-y",
-                    "tesseract-ocr", "tesseract-ocr-deu", "tesseract-ocr-spa",
-                    "tesseract-ocr-fra"], check=False)
-    out = subprocess.run(["tesseract", "--version"], capture_output=True, text=True)
-    log("tesseract: " + ((out.stdout or out.stderr).splitlines() or ["?"])[0])
+    subprocess.run([sys.executable, "-m", "pip", "install", "-q",
+                    "git+https://github.com/Gjusev/MK-SH-1@9e1a226e",
+                    "transformers==5.19.0", "pillow>=10.1",
+                    "huggingface_hub>=0.34"], check=True)
 
 
-_TESS_LANG = {"en": "eng", "de": "deu", "es": "spa", "fr": "fra"}
+def find_bundle() -> Path:
+    for cand in Path("/kaggle/input").rglob("BUNDLE_MANIFEST.json"):
+        return cand.parent
+    raise SystemExit("E39 ABORT: gjusev/mokka-decisions-bundle not attached "
+                     "(E35 replay mix + G2 text sets)")
 
 
-def _ocr_one(job):
-    import pytesseract
-    from PIL import Image
-
-    path, lang = job
-    try:
-        text = pytesseract.image_to_string(Image.open(path), lang=_TESS_LANG.get(lang, "eng"))
-        return path, text, None
-    except Exception as exc:  # measured failure, never dropped silently
-        return path, "", f"{type(exc).__name__}: {exc}"
+def find_ocr_cache() -> Path:
+    for cand in Path("/kaggle/input").rglob("ocr.jsonl"):
+        return cand
+    raise SystemExit("E39 ABORT: ocr.jsonl not attached "
+                     "(expected from the gjusev/mkshv-e39-ocr dataset)")
 
 
-OCR_TEXT: dict[str, str] = {}
-
-
-def start_ocr_thread(jobs: list) -> threading.Thread:
-    """OCR on CPUs concurrently with GPU training; fills OCR_TEXT when done."""
-    from concurrent.futures import ProcessPoolExecutor
-
-    def run():
-        t0 = time.time()
-        ocr, errors = {}, {}
-        with ProcessPoolExecutor(max_workers=3) as pool:
-            for path, text, err in pool.map(_ocr_one, jobs, chunksize=16):
-                if err:
-                    errors[path] = err
-                ocr[path] = text
-        OCR_TEXT.update(ocr)
-        (WORK / "ocr_manifest.json").write_text(json.dumps({
-            "n": len(ocr), "errors": errors, "wall_s": round(time.time() - t0, 1),
-            "per_image_mean_s": round((time.time() - t0) / max(len(ocr), 1), 3),
-        }, indent=2), encoding="utf-8")
-        log(f"OCR thread done: {len(ocr)} images, {len(errors)} errors")
-
-    thread = threading.Thread(target=run, daemon=True)
-    thread.start()
-    return thread
-
-
-def ocr_real_rows_sync(rows: list, images_root: Path) -> None:
-    """OCR the (small) real-eval image set synchronously before its eval."""
-    from concurrent.futures import ProcessPoolExecutor
-
-    jobs = [(str(images_root / r["image"]), r.get("language", "en")) for r in rows]
-    with ProcessPoolExecutor(max_workers=3) as pool:
-        for path, text, err in pool.map(_ocr_one, jobs, chunksize=8):
-            OCR_TEXT[path] = text
-    log(f"real-eval OCR done: {len(jobs)} images")
+def expected_checkpoint(name: str) -> Path | None:
+    for cand in sorted(Path("/kaggle/input").rglob(name)):
+        got = hashlib.sha256(cand.read_bytes()).hexdigest()
+        if got.startswith(CKPT_SHA_PREFIXES[name]):
+            return cand
+        log(f"sha mismatch for {name} at {cand}: {got[:16]}...")
+    return None
 
 
 def download_data() -> dict:
@@ -159,28 +122,24 @@ def download_data() -> dict:
         roots[key] = Path(snapshot_download(
             repo_id=repo, repo_type="dataset",
             allow_patterns=["manifest.json", "*/rows.jsonl", "*/train/*.png",
-                            "*/dev/*.png", "*/test/*.png"],
-        ))
+                            "*/dev/*.png", "*/test/*.png"]))
         log(f"downloaded {repo} ({time.time() - t0:.0f}s)")
     return roots
 
 
 def verify_rows_sha(roots: dict) -> None:
-    """The per-family rows.jsonl must match the repo manifest's frozen sha."""
     for key, root in roots.items():
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         for family, spec in manifest["families"].items():
             got = hashlib.sha256((root / spec["rows"]).read_bytes()).hexdigest()
             if got != spec["rows_sha256"]:
-                raise SystemExit(f"E39 ABORT: rows sha mismatch for {key}/{family}: {got}")
+                raise SystemExit(f"E39 ABORT: rows sha mismatch {key}/{family}: {got}")
     log("rows.jsonl sha256 verified against both repo manifests")
 
 
-def find_bundle() -> Path:
-    for cand in Path("/kaggle/input").rglob("BUNDLE_MANIFEST.json"):
-        return cand.parent
-    raise SystemExit("E39 ABORT: gjusev/mokka-decisions-bundle dataset not attached "
-                     "(needed for the E35 text sets and the C3 fallback)")
+def image_key(row: dict, roots: dict) -> str:
+    repo = "E38a" if row["id"].startswith("e38a") else "E38b"
+    return f"{E38_REPOS[repo]}|{row['image']}"
 
 
 def image_path_of(row: dict, roots: dict) -> Path:
@@ -194,37 +153,38 @@ def open_image(row: dict, roots: dict):
     return Image.open(image_path_of(row, roots)).convert("RGB")
 
 
-def expected_checkpoint(name: str) -> Path | None:
-    for cand in sorted(Path("/kaggle/input").rglob(name)):
-        got = hashlib.sha256(cand.read_bytes()).hexdigest()
-        if got.startswith(CKPT_SHA_PREFIXES[name]):
-            return cand
-        log(f"sha mismatch for {name} at {cand}: {got[:16]}...")
-    return None
+def load_ocr_cache() -> dict[str, str]:
+    cache = {}
+    for line in find_ocr_cache().read_text(encoding="utf-8").splitlines():
+        if line.strip():
+            r = json.loads(line)
+            cache[r["key"]] = r["text"]
+    log(f"OCR cache loaded: {len(cache)} entries")
+    return cache
 
 
-def save_full_checkpoint(path: Path, model, opt, sched, scaler, step, cursor, rng_state) -> None:
-    """Rolling full-state checkpoint (overwritten in place: ~3 GB per run)."""
-    import torch
-
-    torch.save({
-        "model": model.state_dict(), "optimizer": opt.state_dict(),
-        "scheduler": sched.state_dict(), "scaler": scaler.state_dict(),
-        "step": step, "data_cursor": cursor, "rng_python": rng_state,
-        "rng_torch": torch.get_rng_state(), "rng_cuda": torch.cuda.get_rng_state_all(),
-    }, path)
-
-
-def save_best_weights(path: Path, model) -> None:
-    import torch
-
-    torch.save({"model": model.state_dict()}, path)
+def load_replay_mix(bundle: Path) -> list[dict]:
+    """E35 text mix (the C3 mix): extremes 248 + grid 944 + task 944."""
+    rows = []
+    for rel in ("e35-extremes/train_rows.jsonl", "e28-ext/train_rows.jsonl"):
+        rows += [json.loads(l) for l in (bundle / rel).read_text(encoding="utf-8")
+                 .splitlines() if l.strip()]
+    man = json.loads((bundle / "e29-mix/manifest.json").read_text(encoding="utf-8"))
+    want = set(man["original_train_ids"])
+    rows += [json.loads(l) for l in (bundle / "data/processed/v1/instances/train.jsonl")
+             .read_text(encoding="utf-8").splitlines()
+             if l.strip() and json.loads(l)["id"] in want]
+    return rows
 
 
-def load_best_weights(path: Path, model) -> None:
-    import torch
+def load_e38_rows(roots: dict) -> dict:
+    from mksh_v.train_compare import (E38A_FAMILIES, E38B_FAMILIES,
+                                      load_e38_rows, rows_by_split)
 
-    model.load_state_dict(torch.load(path, map_location="cpu", weights_only=True)["model"])
+    rows = (load_e38_rows(roots["E38a"], families=E38A_FAMILIES)
+            + load_e38_rows(roots["E38b"], families=E38B_FAMILIES))
+    return {sp: rows_by_split(rows, sp, drop_fr=False)
+            for sp in ("train", "dev", "test")}
 
 
 def lr_lambda_of(total_steps: int):
@@ -239,46 +199,56 @@ def lr_lambda_of(total_steps: int):
     return lr_lambda
 
 
+def save_full_checkpoint(path: Path, model, opt, sched, scaler, step, cursor, rng_state) -> None:
+    import torch
+
+    torch.save({"model": model.state_dict(), "optimizer": opt.state_dict(),
+                "scheduler": sched.state_dict(), "scaler": scaler.state_dict(),
+                "step": step, "data_cursor": cursor, "rng_python": rng_state,
+                "rng_torch": torch.get_rng_state(),
+                "rng_cuda": torch.cuda.get_rng_state_all()}, path)
+
+
+def save_best_weights(path: Path, model) -> None:
+    import torch
+
+    torch.save({"model": model.state_dict()}, path)
+
+
+def load_best_weights(path: Path, model) -> None:
+    import torch
+
+    model.load_state_dict(torch.load(path, map_location="cpu", weights_only=True)["model"])
+
+
 # ---------------------------------------------------------------------------
-# arm 1: A1-V
+# arm: a1v
 # ---------------------------------------------------------------------------
-def build_a1v(device, from_fallback: bool = False):
+def build_a1v(device):
     from mksh_v.arch_a1v import NeoMMEMarkerScorer
 
     model = NeoMMEMarkerScorer().to(device)
     model.ensure_markers(32)  # the C3 checkpoint's tables are 32-marker wide
     ckpt = expected_checkpoint("c3_final.safetensors")
-    if ckpt and not from_fallback:
+    if ckpt:
         from safetensors.torch import load_file
 
-        state = load_file(str(ckpt))
-        model.load_state_dict(state, strict=True)  # shapes must match exactly
+        model.load_state_dict(load_file(str(ckpt)), strict=True)
         log(f"A1-V init: E37 C3 checkpoint (sha verified) {ckpt}")
     else:
-        log("A1-V init: c3_final.safetensors absent -> C3-rerun fallback (pre-declared)")
+        log("A1-V init: c3_final absent -> C3-rerun fallback (pre-declared)")
         c3_rerun(model, device)
     return model
 
 
 def c3_rerun(model, device) -> None:
-    """C3 recipe rerun (E35 mix, seed 42): 3 phases x 5 epochs, fresh AdamW
-    per phase, rng 42^0xE35^phase — mirroring kaggle/e37_c3.py exactly."""
     import torch
 
     from mksh_v.arch_a1v import forward_a1v
     from mksh_v.train_compare import case_of_row
 
     bundle = find_bundle()
-    rows_mix = []
-    for rel in ("e35-extremes/train_rows.jsonl", "e28-ext/train_rows.jsonl"):
-        rows_mix += [json.loads(l) for l in (bundle / rel).read_text(encoding="utf-8")
-                     .splitlines() if l.strip()]
-    man = json.loads((bundle / "e29-mix/manifest.json").read_text(encoding="utf-8"))
-    want = set(man["original_train_ids"])
-    rows_mix += [json.loads(l) for l in (bundle / "data/processed/v1/instances/train.jsonl")
-                 .read_text(encoding="utf-8").splitlines()
-                 if l.strip() and json.loads(l)["id"] in want]
-    cases = [case_of_row(r) for r in rows_mix]
+    cases = [case_of_row(r) for r in load_replay_mix(bundle)]
     encoded = model.encode_cases(cases, max_state_tokens=MAX_STATE_TOKENS,
                                  max_option_tokens=MAX_OPTION_TOKENS)
     model.train()
@@ -292,17 +262,17 @@ def c3_rerun(model, device) -> None:
         rng.shuffle(order)
         for _ in range(total):
             opt.zero_grad(set_to_none=True)
-            for _ in range(ACCUMULATION):
-                if cursor + MICROBATCH > len(order):
+            for _ in range(4):
+                if cursor + 8 > len(order):
                     rng.shuffle(order)
                     cursor = 0
-                idx = order[cursor:cursor + MICROBATCH]
-                cursor += MICROBATCH
+                idx = order[cursor:cursor + 8]
+                cursor += 8
                 batch = model.build_batch([encoded[i] for i in idx], [None] * len(idx), device)
                 with torch.autocast("cuda", dtype=torch.float16):
                     logits = forward_a1v(model, batch).float()
                     loss = torch.nn.functional.cross_entropy(
-                        logits, batch["targets"], ignore_index=-100) / ACCUMULATION
+                        logits, batch["targets"], ignore_index=-100) / 4
                 scaler.scale(loss).backward()
             scaler.unscale_(opt)
             torch.nn.utils.clip_grad_norm_(
@@ -319,443 +289,664 @@ def c3_rerun(model, device) -> None:
     log(f"C3 rerun done; weights sha256 {h.hexdigest()[:16]} (declared divergence)")
 
 
-def train_a1v(model, train_rows, roots, dev_sel, device, *, seed, tag) -> dict:
-    import torch
+# ---------------------------------------------------------------------------
+# arm: smol (SmolVLM2 first-token letter scoring; smoke-gated)
+# ---------------------------------------------------------------------------
+class SmolScorer:
+    """Image + options prompt; scores options by first-token letter logits."""
 
-    from mksh_v.arch_a1v import evaluate_a1v, forward_a1v
-    from mksh_v.train_compare import case_of_row, macro_family_accuracy
+    def __init__(self, device, model_id: str = SMOL_ID):
+        from transformers import AutoModelForImageTextToText, AutoProcessor
 
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
-    random.seed(seed)
-    model.train()
-    cases = [case_of_row(r) for r in train_rows]
-    encoded = model.encode_cases(cases, max_state_tokens=MAX_STATE_TOKENS,
-                                 max_option_tokens=MAX_OPTION_TOKENS)
-    dev_cases = [case_of_row(r) for r in dev_sel]
-    opt = torch.optim.AdamW(model.parameter_groups(2e-5, 1e-4), weight_decay=0.01)
-    scaler = torch.amp.GradScaler("cuda")
-    sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda_of(STEPS))
-    rng = random.Random(seed)
-    order, cursor = list(range(len(cases))), 0
-    rng.shuffle(order)
-    best = {"dev_half_macro": -1.0, "dev_half_acc": -1.0, "step": 0}
-    best_path = WORK / f"best_a1v_{tag}.pt"
-    full_path = WORK / f"ckpt_a1v_{tag}_latest.pt"  # rolling, overwritten
-    curves = []
-    for step in range(1, STEPS + 1):
-        opt.zero_grad(set_to_none=True)
-        for _ in range(ACCUMULATION):
-            if cursor + MICROBATCH > len(order):
-                rng.shuffle(order)
-                cursor = 0
-            idx = order[cursor:cursor + MICROBATCH]
-            cursor += MICROBATCH
-            batch = model.build_batch(
-                [encoded[i] for i in idx],
-                [open_image(train_rows[i], roots) for i in idx],  # lazy: RAM stays flat
-                device, max_side=IMAGE_SIZE)
-            with torch.autocast("cuda", dtype=torch.float16):
-                logits = forward_a1v(model, batch).float()
-                loss = torch.nn.functional.cross_entropy(
-                    logits, batch["targets"], ignore_index=-100) / ACCUMULATION
-            scaler.scale(loss).backward()
-        scaler.unscale_(opt)
-        torch.nn.utils.clip_grad_norm_([p for g in opt.param_groups for p in g["params"]], 1.0)
-        scaler.step(opt)
-        scaler.update()
-        sched.step()
-        if step % DEV_EVERY == 0 or step == STEPS:
-            model.eval()
-            ev = evaluate_a1v(model, dev_cases,
-                              [open_image(r, roots) for r in dev_sel], device=device,
-                              max_side=IMAGE_SIZE, batch_decisions=16,
-                              max_state_tokens=MAX_STATE_TOKENS,
-                              max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
-            recs = [dict(r, family=rr["family"]) for r, rr in zip(ev["rows"], dev_sel)]
-            macro = macro_family_accuracy(recs)
-            curves.append({"step": step, "dev_half_macro": round(macro, 4),
-                           "dev_half_acc": round(ev["accuracy"], 4)})
-            log(f"A1-V[{tag}] step {step}/{STEPS} dev-half macro {macro:.4f}")
-            if (macro, ev["accuracy"]) >= (best["dev_half_macro"], best["dev_half_acc"]):
-                best = {"dev_half_macro": macro, "dev_half_acc": ev["accuracy"], "step": step}
-                save_best_weights(best_path, model)
-            model.train()
-        if step % 500 == 0:
-            save_full_checkpoint(full_path, model, opt, sched, scaler, step, cursor,
-                                 rng.getstate())
-    (WORK / f"curves_a1v_{tag}.jsonl").write_text(
-        "".join(json.dumps(c) + "\n" for c in curves), encoding="utf-8")
-    load_best_weights(best_path, model)  # selection decides, not the last step
-    model.to(device)
-    return {**{k: (round(v, 4) if isinstance(v, float) else v) for k, v in best.items()},
-            "best_path": str(best_path)}
+        self.device = device
+        self.processor = AutoProcessor.from_pretrained(model_id)
+        self.model = AutoModelForImageTextToText.from_pretrained(model_id).to(device)
+        self.model.float()
+        tok = self.processor.tokenizer
+        self.letter_ids = [tok(c, add_special_tokens=False)["input_ids"][0]
+                           for c in LETTERS]
+
+    def prompt_of(self, case, k: int) -> str:
+        opts = "\n".join(f"{LETTERS[i]}) {case.options[i].description}"
+                         for i in range(k))
+        return (f"{case.state}\nQuestion: {case.question}\nOptions:\n{opts}\n"
+                "Answer with the letter only. Answer:")
+
+    def batch_logits(self, cases, images):
+        """(B, len(LETTERS)) letter logits at the answer position (fp32)."""
+        import torch
+
+        texts = [self.prompt_of(c, len(c.options)) for c in cases]
+        if images and images[0] is not None:
+            feats = self.processor(text=texts, images=list(images),
+                                   padding=True, return_tensors="pt").to(self.device)
+        else:
+            feats = self.processor(text=texts, padding=True,
+                                   return_tensors="pt").to(self.device)
+        with torch.autocast("cuda", dtype=torch.float16):
+            out = self.model(**feats)
+        last = out.logits[:, -1, :].float()  # (B, vocab)
+        ids = torch.tensor(self.letter_ids, device=last.device)
+        return last[:, ids]
+
+    def parameters(self):
+        return self.model.parameters()
 
 
 # ---------------------------------------------------------------------------
-# arm 2: OCR -> MK-SH-1
+# worker: trains ONE arm+seed on its GPU
 # ---------------------------------------------------------------------------
-def ocr_case_of(row: dict, roots: dict | None):
-    """E38/real row -> case with OCR text as state; rows without an image
-    (E35 text sets in G2) keep their own state verbatim. Empty OCR text is
-    kept (an empty extraction is a measured fact, not a fallback)."""
+def ocr_case_of(row: dict, roots: dict | None, ocr: dict):
     from mksh_v.train_compare import case_of_row
 
     c = case_of_row(row)
     if roots is None or not row.get("image"):
         return c
-    key = str(image_path_of(row, roots))
-    if key in OCR_TEXT:
-        return dataclasses.replace(c, state=OCR_TEXT[key])
-    return c
+    text = ocr.get(image_key(row, roots))
+    return dataclasses.replace(c, state=text) if text is not None else c
 
 
-def train_ocr(model, tok, train_rows, roots, dev_sel, device, *, seed, tag) -> dict:
+def run_worker(args) -> None:
+    """--arm --seed --gpu --steps; writes runs/<arm>_s<seed>/{best.pt,...}."""
+    device = "cuda"
+    out_dir = WORK / "runs" / f"{args.arm}_s{args.seed}"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    torch_seed = args.seed
     import torch
 
-    from mokka_decisions.arch_julia import collate_julia, evaluate_julia_arch
-    from mksh_v.train_compare import macro_family_accuracy, qtype_of_row
+    torch.manual_seed(torch_seed)
+    torch.cuda.manual_seed_all(torch_seed)
+    random.seed(torch_seed)
 
-    torch.manual_seed(seed)
-    random.seed(seed)
-    model.train()
-    keys = ("input_ids", "attention_mask", "marker_pos", "marker_mask", "qtype")
-    train_cases = [ocr_case_of(r, roots) for r in train_rows]
-    qt = {c.id: qtype_of_row(r) for c, r in zip(train_cases, train_rows)}
-    opt = torch.optim.AdamW(model.parameter_groups(2e-5, 1e-4), weight_decay=0.01)
+    roots = download_data()
+    verify_rows_sha(roots)
+    splits = load_e38_rows(roots)
+    bundle = find_bundle()
+    ocr = load_ocr_cache() if args.arm in ("ocr",) else {}
+    from mksh_v.train_compare import case_of_row, fixed_dev_half, macro_family_accuracy, qtype_of_row
+
+    dev_half = fixed_dev_half(splits["dev"], seed=DEV_HALF_SEED, fraction=0.5)
+    dev_sel = [r for r in splits["dev"] if r["id"] in dev_half]
+    replay_rows = load_replay_mix(bundle)
+    replay_cases = [case_of_row(r) for r in replay_rows]
+    replay_qt = {c.id: qtype_of_row(r) for c, r in zip(replay_cases, replay_rows)}
+    train_rows = splits["train"]
+
+    micro = ARM_MICROBATCH[args.arm]
+    accum = EFFECTIVE_BATCH // micro
+
+    # ---- build the arm -------------------------------------------------------
+    if args.arm == "a1v":
+        model = build_a1v(device)  # ensure_markers(32) already done inside
+        train_cases = [case_of_row(r) for r in train_rows]
+        enc = model.encode_cases(train_cases, max_state_tokens=MAX_STATE_TOKENS,
+                                 max_option_tokens=MAX_OPTION_TOKENS)
+        rep_enc = model.encode_cases(replay_cases, max_state_tokens=MAX_STATE_TOKENS,
+                                     max_option_tokens=MAX_OPTION_TOKENS)
+        tok = None
+        opt_groups = model.parameter_groups(2e-5, 1e-4)
+    elif args.arm == "ocr":
+        from mokka_decisions.arch_julia import JuliaArchScorer
+        from safetensors.torch import load_file
+
+        mk1_path = expected_checkpoint("mksh1_v12.safetensors")
+        if mk1_path is None:
+            raise SystemExit("worker ABORT: mksh1_v12.safetensors not attached")
+        model = JuliaArchScorer("jhu-clsp/mmBERT-small").to(device)
+        model.load_state_dict(load_file(str(mk1_path)))
+        from transformers import AutoTokenizer
+
+        tok = AutoTokenizer.from_pretrained("jhu-clsp/mmBERT-small")
+        train_cases = [ocr_case_of(r, roots, ocr) for r in train_rows]
+        enc = None
+        rep_enc = None
+        opt_groups = model.parameter_groups(2e-5, 1e-4)
+    else:  # smol
+        model = SmolScorer(device)
+        train_cases = [case_of_row(r) for r in train_rows]
+        enc = rep_enc = tok = None
+        opt_groups = [{"params": [p for p in model.parameters() if p.requires_grad],
+                       "lr": 2e-5}]
+
+    # ---- eval helper for the dev half ---------------------------------------
+    def eval_dev():
+        from mksh_v.arch_a1v import evaluate_a1v
+        from mokka_decisions.arch_julia import evaluate_julia_arch
+
+        model.eval() if not isinstance(model, SmolScorer) else model.model.eval()
+        recs = []
+        with torch.no_grad():
+            if args.arm == "a1v":
+                ev = evaluate_a1v(model, [case_of_row(r) for r in dev_sel],
+                                  [open_image(r, roots) for r in dev_sel],
+                                  device=device, max_side=IMAGE_SIZE, batch_decisions=16,
+                                  max_state_tokens=MAX_STATE_TOKENS,
+                                  max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
+                rows = ev["rows"]
+            elif args.arm == "ocr":
+                cases = [ocr_case_of(r, roots, ocr) for r in dev_sel]
+                qts = {c.id: qtype_of_row(r) for c, r in zip(cases, dev_sel)}
+                ev = evaluate_julia_arch(model, tok, cases, qts, device=device,
+                                         batch_decisions=32, collect_rows=True)
+                rows = ev["rows"]
+            else:
+                rows = []
+                for s in range(0, len(dev_sel), 16):
+                    part = dev_sel[s:s + 16]
+                    cases = [case_of_row(r) for r in part]
+                    imgs = [open_image(r, roots) for r in part]
+                    logits = model.batch_logits(cases, imgs)
+                    probs = logits.softmax(-1)
+                    for j, r in enumerate(part):
+                        k = len(cases[j].options)
+                        gold = cases[j].option_ids.index(cases[j].target_option)
+                        pred = int(probs[j, :k].argmax().item())
+                        rows.append({"correct": int(pred == gold)})
+        for r, rr in zip(rows, dev_sel):
+            recs.append(dict(r, family=rr["family"]))
+        return macro_family_accuracy(recs), sum(r["correct"] for r in rows) / len(rows)
+
+    # ---- training loop with E35 replay --------------------------------------
+    opt = torch.optim.AdamW(opt_groups, weight_decay=0.01)
     scaler = torch.amp.GradScaler("cuda")
-    sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda_of(STEPS))
-    rng = random.Random(seed)
-    order, cursor = list(range(len(train_cases))), 0
+    sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda_of(args.steps))
+    rng = random.Random(args.seed)
+    order = list(range(len(train_rows)))
     rng.shuffle(order)
+    rep_order = list(range(len(replay_cases)))
+    rng.shuffle(rep_order)
+    cursor = rep_cursor = 0
     best = {"dev_half_macro": -1.0, "dev_half_acc": -1.0, "step": 0}
-    best_path = WORK / f"best_ocr_{tag}.pt"
-    full_path = WORK / f"ckpt_ocr_{tag}_latest.pt"
+    best_path = out_dir / "best.pt"
+    full_path = out_dir / "ckpt_latest.pt"
     curves = []
-    for step in range(1, STEPS + 1):
+    is_smol = isinstance(model, SmolScorer)
+    if not is_smol:
+        model.train()
+
+    from mokka_decisions.arch_julia import collate_julia
+
+    keys = ("input_ids", "attention_mask", "marker_pos", "marker_mask", "qtype")
+
+    def next_synthetic(m):
+        nonlocal cursor
+        if cursor + m > len(order):
+            rng.shuffle(order)
+            cursor = 0
+        idx = order[cursor:cursor + m]
+        cursor += m
+        return idx
+
+    def next_replay(m):
+        nonlocal rep_cursor
+        if rep_cursor + m > len(rep_order):
+            rng.shuffle(rep_order)
+            rep_cursor = 0
+        idx = rep_order[rep_cursor:rep_cursor + m]
+        rep_cursor += m
+        return idx
+
+    for step in range(1, args.steps + 1):
         opt.zero_grad(set_to_none=True)
-        for _ in range(ACCUMULATION):
-            if cursor + MICROBATCH > len(order):
-                rng.shuffle(order)
-                cursor = 0
-            idx = order[cursor:cursor + MICROBATCH]
-            cursor += MICROBATCH
-            chunk_cases = [train_cases[i] for i in idx]
-            batch = collate_julia(tok, chunk_cases, {c.id: qt[c.id] for c in chunk_cases},
-                                  1024, 256, device)
-            with torch.autocast("cuda", dtype=torch.float16):
-                logits = model(**{k: batch[k] for k in keys})
-                loss = torch.nn.functional.cross_entropy(
-                    logits.float(), batch["targets"], ignore_index=-100) / ACCUMULATION
+        for slot in range(accum):
+            use_replay = (slot % REPLAY_EVERY) == (REPLAY_EVERY - 1)
+            if args.arm == "a1v":
+                if use_replay:
+                    idx = next_replay(micro)
+                    batch = model.build_batch([rep_enc[i] for i in idx],
+                                              [None] * len(idx), device)
+                else:
+                    idx = next_synthetic(micro)
+                    batch = model.build_batch(
+                        [enc[i] for i in idx],
+                        [open_image(train_rows[i], roots) for i in idx],
+                        device, max_side=IMAGE_SIZE)
+                from mksh_v.arch_a1v import forward_a1v
+
+                with torch.autocast("cuda", dtype=torch.float16):
+                    logits = forward_a1v(model, batch).float()
+                    loss = torch.nn.functional.cross_entropy(
+                        logits, batch["targets"], ignore_index=-100) / accum
+            elif args.arm == "ocr":
+                if use_replay:
+                    idx = next_replay(micro)
+                    chunk = [replay_cases[i] for i in idx]
+                    qts = {c.id: replay_qt[c.id] for c in chunk}
+                else:
+                    idx = next_synthetic(micro)
+                    chunk = [train_cases[i] for i in idx]
+                    qts = {c.id: qtype_of_row(train_rows[i]) for i in idx}
+                batch = collate_julia(tok, chunk, qts, 1024, 256, device)
+                with torch.autocast("cuda", dtype=torch.float16):
+                    logits = model(**{k: batch[k] for k in keys})
+                    loss = torch.nn.functional.cross_entropy(
+                        logits.float(), batch["targets"], ignore_index=-100) / accum
+            else:  # smol
+                if use_replay:
+                    idx = next_replay(micro)
+                    chunk = [replay_cases[i] for i in idx]
+                else:
+                    idx = next_synthetic(micro)
+                    chunk = [train_cases[i] for i in idx]
+                imgs = None if use_replay else [
+                    open_image(train_rows[i], roots) for i in idx]
+                logits = model.batch_logits(chunk, imgs)
+                golds = torch.tensor(
+                    [c.option_ids.index(c.target_option) for c in chunk],
+                    device=logits.device)
+                loss = torch.nn.functional.cross_entropy(logits, golds) / accum
             scaler.scale(loss).backward()
         scaler.unscale_(opt)
-        torch.nn.utils.clip_grad_norm_([p for g in opt.param_groups for p in g["params"]], 1.0)
+        torch.nn.utils.clip_grad_norm_(
+            [p for g in opt.param_groups for p in g["params"]], 1.0)
         scaler.step(opt)
         scaler.update()
         sched.step()
-        if step % DEV_EVERY == 0 or step == STEPS:
-            model.eval()
-            dev_cases = [ocr_case_of(r, roots) for r in dev_sel]
-            dev_qt = {c.id: qtype_of_row(r) for c, r in zip(dev_cases, dev_sel)}
-            ev = evaluate_julia_arch(model, tok, dev_cases, dev_qt, device=device,
-                                     batch_decisions=32, collect_rows=True)
-            recs = [dict(r, family=rr["family"]) for r, rr in zip(ev["rows"], dev_sel)]
-            macro = macro_family_accuracy(recs)
+        if step % DEV_EVERY == 0 or step == args.steps:
+            macro, acc = eval_dev()
             curves.append({"step": step, "dev_half_macro": round(macro, 4),
-                           "dev_half_acc": round(ev["accuracy"], 4)})
-            log(f"OCR[{tag}] step {step}/{STEPS} dev-half macro {macro:.4f}")
-            if (macro, ev["accuracy"]) >= (best["dev_half_macro"], best["dev_half_acc"]):
-                best = {"dev_half_macro": macro, "dev_half_acc": ev["accuracy"], "step": step}
-                save_best_weights(best_path, model)
-            model.train()
+                           "dev_half_acc": round(acc, 4)})
+            log(f"{args.arm}[s{args.seed}] step {step}/{args.steps} "
+                f"dev-half macro {macro:.4f}")
+            if (macro, acc) >= (best["dev_half_macro"], best["dev_half_acc"]):
+                best = {"dev_half_macro": macro, "dev_half_acc": acc, "step": step}
+                save_best_weights(best_path, model.model if is_smol else model)
+            if not is_smol:
+                model.train()
         if step % 500 == 0:
-            save_full_checkpoint(full_path, model, opt, sched, scaler, step, cursor,
-                                 rng.getstate())
-    (WORK / f"curves_ocr_{tag}.jsonl").write_text(
+            save_full_checkpoint(full_path, model.model if is_smol else model,
+                                 opt, sched, scaler, step, cursor, rng.getstate())
+    (out_dir / "curves.jsonl").write_text(
         "".join(json.dumps(c) + "\n" for c in curves), encoding="utf-8")
-    load_best_weights(best_path, model)
-    return {**{k: (round(v, 4) if isinstance(v, float) else v) for k, v in best.items()},
-            "best_path": str(best_path)}
+    (out_dir / "summary.json").write_text(json.dumps(
+        {**{k: (round(v, 4) if isinstance(v, float) else v) for k, v in best.items()},
+         "arm": args.arm, "seed": args.seed, "steps": args.steps}, indent=2),
+        encoding="utf-8")
+    log(f"worker done: {args.arm} s{args.seed} best {best}")
+
+
+def spawn(arm: str, seed: int, gpu: int, steps: int) -> tuple:
+    """Worker as subprocess with output to a FILE (a PIPE nobody reads while
+    another proc runs would fill its buffer and deadlock the worker)."""
+    log_dir = WORK / "runs" / f"{arm}_s{seed}"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    log_path = log_dir / f"worker_gpu{gpu}.log"
+    env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu))
+    fh = open(log_path, "a", encoding="utf-8")
+    proc = subprocess.Popen(
+        [sys.executable, os.path.abspath(__file__), "--worker",
+         "--arm", arm, "--seed", str(seed), "--gpu", str(gpu),
+         "--steps", str(steps)],
+        env=env, stdout=fh, stderr=subprocess.STDOUT, text=True)
+    return proc, fh, log_path
+
+
+def run_and_log(spawned: tuple, label: str) -> None:
+    proc, fh, log_path = spawned
+    proc.wait()
+    fh.close()
+    for line in log_path.read_text(encoding="utf-8").splitlines():
+        print(f"[{label}] {line}", flush=True)
+    if proc.returncode != 0:
+        raise SystemExit(f"E39 ABORT: worker {label} exited {proc.returncode}")
 
 
 # ---------------------------------------------------------------------------
-# chunked evaluation (RAM-safe: images opened per chunk)
+# orchestrator
 # ---------------------------------------------------------------------------
-def eval_a1v_chunked(model, rows, roots, device, *, chunk=400, transform=None,
-                     image_index_map=None):
-    from mksh_v.arch_a1v import evaluate_a1v
-    from mksh_v.train_compare import case_of_row
-
-    model.eval()
-    out_rows, correct, n = [], 0, 0
-    for s in range(0, len(rows), chunk):
-        part = rows[s:s + chunk]
-        if image_index_map is not None:  # ablation: image of a DIFFERENT case
-            imgs = [open_image(rows[image_index_map[s + j]], roots) for j in range(len(part))]
-        else:
-            imgs = [open_image(r, roots) for r in part]
-        if transform is not None:
-            imgs = [transform(im) for im in imgs]
-        ev = evaluate_a1v(model, [case_of_row(r) for r in part], imgs, device=device,
-                          max_side=IMAGE_SIZE, batch_decisions=16,
-                          max_state_tokens=MAX_STATE_TOKENS,
-                          max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
-        out_rows += [dict(r, family=rr.get("family", "text"),
-                          language=rr.get("language", "en"),
-                          group_id=rr.get("group_id", rr["id"]))
-                     for r, rr in zip(ev["rows"], part)]
-        correct += sum(r["correct"] for r in ev["rows"])
-        n += ev["n"]
-    return out_rows, (correct / n if n else None)
-
-
-def eval_ocr_chunked(model, tok, rows, roots, device, *, chunk=800):
-    from mokka_decisions.arch_julia import evaluate_julia_arch
-    from mksh_v.train_compare import qtype_of_row
-
-    model.eval()
-    out_rows, correct, n = [], 0, 0
-    for s in range(0, len(rows), chunk):
-        part = rows[s:s + chunk]
-        cases = [ocr_case_of(r, roots) for r in part]
-        qts = {c.id: qtype_of_row(r) for c, r in zip(cases, part)}
-        ev = evaluate_julia_arch(model, tok, cases, qts, device=device,
-                                 batch_decisions=32, collect_rows=True)
-        out_rows += [dict(r, family=rr.get("family", "text"),
-                          language=rr.get("language", "en"),
-                          group_id=rr.get("group_id", rr["id"]))
-                     for r, rr in zip(ev["rows"], part)]
-        correct += sum(r["correct"] for r in ev["rows"])
-        n += ev["n"]
-    return out_rows, (correct / n if n else None)
-
-
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--worker", action="store_true")
+    parser.add_argument("--arm", choices=("a1v", "ocr", "smol"))
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--gpu", type=int, default=0)
+    parser.add_argument("--steps", type=int, default=STEPS)
+    args = parser.parse_args()
+    if args.worker:
+        run_worker(args)
+        return
+
     t_start = time.time()
     WORK.mkdir(parents=True, exist_ok=True)
     check_secret_and_repos()  # FIRST: no quota burnt on a bad secret
     pip_install()
-
     import torch
 
-    if not torch.cuda.is_available():
-        raise SystemExit("E39 ABORT: no CUDA device assigned")
-    if "T4" not in torch.cuda.get_device_name(0):
-        raise SystemExit(f"E39 ABORT: expected a T4, got {torch.cuda.get_device_name(0)}")
+    if not torch.cuda.is_available() or torch.cuda.device_count() < 2:
+        raise SystemExit("E39 ABORT: needs the T4x2 session (2 GPUs)")
     torch.manual_seed(42)
     torch.cuda.manual_seed_all(42)
     import transformers
 
     env = {"torch": torch.__version__, "cuda": torch.version.cuda,
            "transformers": transformers.__version__,
-           "gpu": torch.cuda.get_device_name(0),
+           "gpu_count": torch.cuda.device_count(),
            "gpu_mem_gb": round(torch.cuda.get_device_properties(0).total_memory / 2**30, 2)}
     (WORK / "env.json").write_text(json.dumps(env, indent=2), encoding="utf-8")
     log(f"env: {env}")
-    device = "cuda"
-    find_bundle()  # fail fast on a missing attachment, before any training
+    find_bundle()
+    find_ocr_cache()
 
+    # warm the HF cache once so workers start fast
     roots = download_data()
     verify_rows_sha(roots)
-    from mksh_v.train_compare import (
-        E38A_FAMILIES, E38B_FAMILIES, fixed_dev_half, load_e38_rows, rows_by_split,
-    )
-
-    rows = (load_e38_rows(roots["E38a"], families=E38A_FAMILIES)
-            + load_e38_rows(roots["E38b"], families=E38B_FAMILIES))
-    splits = {sp: rows_by_split(rows, sp, drop_fr=False) for sp in ("train", "dev", "test")}
+    splits = load_e38_rows(roots)
     log(f"rows: train {len(splits['train'])} dev {len(splits['dev'])} "
-        f"test {len(splits['test'])} (FR kept inside test, gated separately)")
+        f"test {len(splits['test'])}")
+    from mksh_v.train_compare import fixed_dev_half
+
     dev_half = fixed_dev_half(splits["dev"], seed=DEV_HALF_SEED, fraction=0.5)
-    dev_sel = [r for r in splits["dev"] if r["id"] in dev_half]
-    # the frozen selection half is evidence: auditable, identical on resume
-    (WORK / "dev_half_ids.json").write_text(
-        json.dumps({"seed": DEV_HALF_SEED, "n": len(dev_half), "ids": sorted(dev_half)}),
+    (WORK / "dev_half_ids.json").write_text(json.dumps(
+        {"seed": DEV_HALF_SEED, "n": len(dev_half), "ids": sorted(dev_half)}),
         encoding="utf-8")
 
+    # smoke-first: 20 steps of each arm on gpu1 while gpu0 idles briefly
+    log("smoke: 20 steps per arm (gpu0 a1v; gpu1 ocr then smol)")
+    run_and_log(spawn("a1v", 42, 0, SMOKE_STEPS), "smoke-a1v")
+    run_and_log(spawn("ocr", 42, 1, SMOKE_STEPS), "smoke-ocr")
+    run_and_log(spawn("smol", 42, 1, SMOKE_STEPS), "smoke-smol")
+
+    # phase 1: compared runs, seed 42
+    log("phase 1: a1v s42 on gpu0; ocr s42 then smol s42 on gpu1")
+    p_a1v = spawn("a1v", 42, 0, STEPS)
+    run_and_log(spawn("ocr", 42, 1, STEPS), "ocr-s42")
+    run_and_log(spawn("smol", 42, 1, STEPS), "smol-s42")
+    run_and_log(p_a1v, "a1v-s42")
+
+    def summary_of(arm: str, seed: int) -> dict:
+        return json.loads((WORK / "runs" / f"{arm}_s{seed}" / "summary.json")
+                          .read_text(encoding="utf-8"))
+
+    s42 = {arm: summary_of(arm, 42) for arm in ("a1v", "ocr", "smol")}
+    non_visual = max(("ocr", "smol"), key=lambda a: s42[a]["dev_half_macro"])
+    finalist = ("a1v" if s42["a1v"]["dev_half_macro"] >= s42[non_visual]["dev_half_macro"]
+                else non_visual)
+    log(f"finalist={finalist} (dev macro a1v {s42['a1v']['dev_half_macro']} vs "
+        f"{non_visual} {s42[non_visual]['dev_half_macro']})")
+
+    # phase 2: finalist seeds 43/44, one per GPU
+    log(f"phase 2: finalist {finalist} seeds 43/44 in parallel")
+    run_and_log(spawn(finalist, 43, 0, STEPS), f"{finalist}-s43")
+    run_and_log(spawn(finalist, 44, 1, STEPS), f"{finalist}-s44")
+
+    # phase 3: evals + gates (this process)
+    from mksh_v.arch_a1v import NeoMMEMarkerScorer, evaluate_a1v
+    from mksh_v.train_compare import (case_of_row, gate_report,
+                                      paired_delta_ci, qtype_of_row)
+
+    ocr = load_ocr_cache()
+    device = "cuda:0"
+    a1v = NeoMMEMarkerScorer().to(device)
+    a1v.ensure_markers(16)
+    load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
+    a1v.to(device)
+
+    from mokka_decisions.arch_julia import JuliaArchScorer, evaluate_julia_arch
     from transformers import AutoTokenizer
 
     tok = AutoTokenizer.from_pretrained("jhu-clsp/mmBERT-small")
-
+    mk1 = JuliaArchScorer("jhu-clsp/mmBERT-small").to(device)
     mk1_path = expected_checkpoint("mksh1_v12.safetensors")
-    if mk1_path is None:
-        raise SystemExit("E39 ABORT: mksh1_v12.safetensors (MK-SH-1 v1.2, sha ea66cdde...) "
-                         "not attached via the gjusev/mkshv-e37-ckpt dataset")
-
-    # OCR runs on CPUs while the GPU trains arm 1 (train+dev+test images only;
-    # cal splits are not downloaded)
-    ocr_thread = start_ocr_thread(
-        [(str(image_path_of(r, roots)), r["language"])
-         for sp in ("train", "dev", "test") for r in splits[sp]])
-
-    # -- arm 1: A1-V seed 42 ---------------------------------------------------
-    a1v = build_a1v(device)
-    best_a1v = train_a1v(a1v, splits["train"], roots, dev_sel, device, seed=42, tag="s42")
-    ocr_thread.join()
-    if not OCR_TEXT:
-        raise SystemExit("E39 ABORT: OCR produced nothing (check ocr_manifest.json)")
-
-    # -- arm 2: OCR -> MK-SH-1 seed 42 ------------------------------------------
-    from mokka_decisions.arch_julia import JuliaArchScorer
     from safetensors.torch import load_file
 
-    mk1 = JuliaArchScorer("jhu-clsp/mmBERT-small").to(device)
     mk1.load_state_dict(load_file(str(mk1_path)))
-    log(f"OCR arm init: MK-SH-1 v1.2 {mk1_path}")
-    best_ocr = train_ocr(mk1, tok, splits["train"], roots, dev_sel, device, seed=42, tag="s42")
+    load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
 
-    finalist = "a1v" if best_a1v["dev_half_macro"] >= best_ocr["dev_half_macro"] else "ocr"
-    log(f"finalist by dev-half macro: {finalist} "
-        f"({best_a1v['dev_half_macro']:.4f} vs {best_ocr['dev_half_macro']:.4f})")
+    smol = SmolScorer(device)
+    load_best_weights(WORK / "runs/smol_s42/best.pt", smol.model)
 
     test_nonfr = [r for r in splits["test"] if r["language"] != "fr"]
     test_fr = [r for r in splits["test"] if r["language"] == "fr"]
 
-    # -- finalist seeds 43/44 (whichever arm won; each eval'd on test) ----------
-    seed_reports = []
+    def eval_rows(arm, rows, *, transform=None, image_index_map=None):
+        """Per-case rows + accuracy of one arm on rows (chunked, RAM-safe)."""
+        out_rows, correct, n = [], 0, 0
+        chunk = 400 if arm != "ocr" else 800
+        for s in range(0, len(rows), chunk):
+            part = rows[s:s + chunk]
+            if arm == "a1v":
+                if image_index_map is not None:
+                    imgs = [open_image(rows[image_index_map[s + j]], roots)
+                            for j in range(len(part))]
+                else:
+                    imgs = [open_image(r, roots) for r in part]
+                if transform is not None:
+                    imgs = [transform(im) for im in imgs]
+                ev = evaluate_a1v(a1v, [case_of_row(r) for r in part], imgs,
+                                  device=device, max_side=IMAGE_SIZE, batch_decisions=16,
+                                  max_state_tokens=MAX_STATE_TOKENS,
+                                  max_option_tokens=MAX_OPTION_TOKENS,
+                                  collect_rows=True)
+                rows_out, hits, cnt = ev["rows"], sum(r["correct"] for r in ev["rows"]), ev["n"]
+            elif arm == "ocr":
+                cases = [ocr_case_of(r, roots, ocr) for r in part]
+                qts = {c.id: qtype_of_row(r) for c, r in zip(cases, part)}
+                ev = evaluate_julia_arch(mk1, tok, cases, qts, device=device,
+                                         batch_decisions=32, collect_rows=True)
+                rows_out, hits, cnt = ev["rows"], sum(r["correct"] for r in ev["rows"]), ev["n"]
+            else:
+                rows_out = []
+                hits = cnt = 0
+                import torch as _t
+
+                with _t.no_grad():
+                    for s2 in range(0, len(part), 16):
+                        sub = part[s2:s2 + 16]
+                        cases = [case_of_row(r) for r in sub]
+                        if image_index_map is not None:
+                            imgs = [open_image(rows[image_index_map[s + s2 + j]], roots)
+                                    for j in range(len(sub))]
+                        else:
+                            imgs = [open_image(r, roots) for r in sub]
+                        logits = smol.batch_logits(cases, imgs)
+                        probs = logits.softmax(-1)
+                        for j, r in enumerate(sub):
+                            k = len(cases[j].options)
+                            gold = cases[j].option_ids.index(cases[j].target_option)
+                            pred = int(probs[j, :k].argmax().item())
+                            ok = int(pred == gold)
+                            rows_out.append({"correct": ok})
+                            hits += ok
+                            cnt += 1
+            out_rows += [dict(r, family=rr.get("family", "text"),
+                              language=rr.get("language", "en"),
+                              group_id=rr.get("group_id", rr["id"]))
+                         for r, rr in zip(rows_out, part)]
+            correct += hits
+            n += cnt
+        return out_rows, (correct / n if n else None)
+
+    test_rows = {}
+    test_acc = {}
+    for arm in ("a1v", non_visual):
+        test_rows[arm], test_acc[arm] = eval_rows(arm, test_nonfr)
+        (WORK / f"eval_test_nonfr__{arm}.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in test_rows[arm]), encoding="utf-8")
+    for arm in ("a1v", "ocr", "smol"):
+        fr_rows, fr_acc = eval_rows(arm, test_fr)
+        (WORK / f"eval_test_fr__{arm}.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in fr_rows), encoding="utf-8")
+        test_acc[f"{arm}_fr"] = fr_acc
+    # finalist seeds on non-FR test (reported); gates always use s42 bests
+    seed_reports = [dict(s42[a], arm=a) for a in ("a1v", "ocr", "smol")]
     for seed in (43, 44):
         if finalist == "a1v":
-            del a1v
-            torch.cuda.empty_cache()
-            a1v = build_a1v(device)
-            best = train_a1v(a1v, splits["train"], roots, dev_sel, device,
-                             seed=seed, tag=f"s{seed}")
-            _, acc_seed = eval_a1v_chunked(a1v, test_nonfr, roots, device)
+            load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
+            a1v.to(device)
+        elif finalist == "ocr":
+            load_best_weights(WORK / f"runs/ocr_s{seed}/best.pt", mk1)
+            mk1.to(device)
         else:
-            mk1 = JuliaArchScorer("jhu-clsp/mmBERT-small").to(device)
-            mk1.load_state_dict(load_file(str(mk1_path)))
-            best = train_ocr(mk1, tok, splits["train"], roots, dev_sel, device,
-                             seed=seed, tag=f"s{seed}")
-            _, acc_seed = eval_ocr_chunked(mk1, tok, test_nonfr, roots, device)
-        seed_reports.append({"seed": seed, "test_nonfr_acc": round(acc_seed, 4), **best})
-    # gates always use the seed-42 best weights
-    load_best_weights(best_a1v["best_path"], a1v)
+            load_best_weights(WORK / f"runs/smol_s{seed}/best.pt", smol.model)
+            smol.model.to(device)
+        _, acc_seed = eval_rows(finalist, test_nonfr)
+        seed_reports.append({"arm": finalist, "seed": seed,
+                             "test_nonfr_acc": round(acc_seed, 4),
+                             **summary_of(finalist, seed)})
+    # restore s42-best for the gates
+    load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
     a1v.to(device)
-    load_best_weights(best_ocr["best_path"], mk1)
+    load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
     mk1.to(device)
 
-    # -- test: opened ONCE; non-FR gates, FR reported ---------------------------
-    rows_a1v, acc_a1v = eval_a1v_chunked(a1v, test_nonfr, roots, device)
-    rows_ocr, acc_ocr = eval_ocr_chunked(mk1, tok, test_nonfr, roots, device)
-    for name, rr in (("a1v", rows_a1v), ("ocr", rows_ocr)):
-        (WORK / f"eval_test_nonfr__{name}.jsonl").write_text(
-            "".join(json.dumps(r) + "\n" for r in rr), encoding="utf-8")
-    fr_a1v_rows, acc_a1v_fr = eval_a1v_chunked(a1v, test_fr, roots, device)
-    fr_ocr_rows, acc_ocr_fr = eval_ocr_chunked(mk1, tok, test_fr, roots, device)
-    for name, rr in (("a1v", fr_a1v_rows), ("ocr", fr_ocr_rows)):
-        (WORK / f"eval_test_fr__{name}.jsonl").write_text(
-            "".join(json.dumps(r) + "\n" for r in rr), encoding="utf-8")
-    log(f"test non-FR: A1-V {acc_a1v:.4f} OCR {acc_ocr:.4f} | "
-        f"FR: {acc_a1v_fr:.4f}/{acc_ocr_fr:.4f}")
+    log(f"test non-FR: " + " ".join(f"{a}={test_acc[a]:.4f}" for a in test_rows))
 
-    # -- G1: paired-by-episode bootstrap ----------------------------------------
-    from mksh_v.train_compare import gate_report, paired_delta_ci
-
-    by_id_ocr = {r["id"]: r for r in rows_ocr}
+    # G1: paired-by-episode bootstrap, a1v vs best non-visual arm
+    by_id = {r["id"]: r for r in test_rows[non_visual]}
     delta_ci = paired_delta_ci(
-        [r["correct"] for r in rows_a1v],
-        [int(by_id_ocr[r["id"]]["correct"]) for r in rows_a1v],
-        [r["group_id"] for r in rows_a1v], n_boot=1000, seed=42)
+        [r["correct"] for r in test_rows["a1v"]],
+        [int(by_id[r["id"]]["correct"]) for r in test_rows["a1v"]],
+        [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
 
-    # -- G2: E35 text sets, CPU float32, both arms -------------------------------
+    # G2: E35 text sets, CPU float32, every arm vs frozen bars
     bundle = find_bundle()
     man29 = json.loads((bundle / "e29-mix/manifest.json").read_text(encoding="utf-8"))
     want = set(man29["original_dev_ids"])
     task_rows = [json.loads(l) for l in (bundle / "data/processed/v1/eval/dev_eval.jsonl")
                  .read_text(encoding="utf-8").splitlines()
                  if l.strip() and json.loads(l)["id"] in want]
+    a1v.to("cpu"); a1v.eval()
+    mk1.to("cpu"); mk1.eval()
+    smol.model.to("cpu"); smol.model.eval()
     text_sets = {}
-    a1v.to("cpu")
-    a1v.eval()
-    mk1.to("cpu")
-    mk1.eval()
-    from mksh_v.arch_a1v import evaluate_a1v
-    from mksh_v.train_compare import case_of_row
-
     for name, rr in (("testC", [json.loads(l) for l in (bundle / "e26-order/test_c_rows.jsonl")
                                  .read_text(encoding="utf-8").splitlines() if l.strip()]),
                      ("task", task_rows)):
+        accs = {}
         cases = [case_of_row(r) for r in rr]
         ev = evaluate_a1v(a1v, cases, None, device="cpu", batch_decisions=16,
                           max_state_tokens=MAX_STATE_TOKENS,
-                          max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
-        txt_rows, acc_txt = eval_ocr_chunked(mk1, tok, rr, None, "cpu", chunk=400)
-        with open(WORK / f"eval_text_{name}__both.jsonl", "w", encoding="utf-8") as fh:
-            for r in ev["rows"]:
-                fh.write(json.dumps({"arm": "a1v", **r}) + "\n")
-            for r in txt_rows:
-                fh.write(json.dumps({"arm": "ocr", **r}) + "\n")
-        text_sets[name] = {"a1v": round(ev["accuracy"], 4), "ocr": round(acc_txt, 4)}
-    gates = gate_report(delta_ci=delta_ci, text_sets=text_sets,
-                        text_margin=TEXT_MARGIN, delta_lo_margin=DELTA_LO_MARGIN)
+                          max_option_tokens=MAX_OPTION_TOKENS)
+        accs["a1v"] = round(ev["accuracy"], 4)
+        qts = {c.id: qtype_of_row(r) for c, r in zip(cases, rr)}
+        ev2 = evaluate_julia_arch(mk1, tok, cases, qts, device="cpu", batch_decisions=32)
+        accs["ocr"] = round(ev2["accuracy"], 4)
+        import torch as _t
 
-    # -- G3: ablation tripwire on the VISUAL arm (always A1-V, s42 best) ---------
+        with _t.no_grad():
+            hits = cnt = 0
+            for s2 in range(0, len(cases), 16):
+                sub = cases[s2:s2 + 16]
+                logits = smol.batch_logits(sub, [None] * len(sub))
+                for j, c in enumerate(sub):
+                    k = len(c.options)
+                    gold = c.option_ids.index(c.target_option)
+                    hits += int(int(logits[j, :k].argmax().item()) == gold)
+                    cnt += 1
+        accs["smol"] = round(hits / cnt, 4)
+        text_sets[name] = accs
+    gates = gate_report(delta_ci=delta_ci, text_sets=text_sets, text_bars=TEXT_BARS,
+                        delta_lo_margin=DELTA_LO_MARGIN)
+
+    # G3: ablation tripwire on the visual arm (a1v s42 best)
     from mksh_v.train_compare import blank_like, degrade, swap_map_within_blocks
 
     a1v.to(device)
     swap_map = swap_map_within_blocks(
         [f'{r["family"]}|{r["language"]}' for r in test_nonfr])
-    swap_rows, acc_swap = eval_a1v_chunked(a1v, test_nonfr, roots, device,
-                                           image_index_map=swap_map)
-    _, acc_blank = eval_a1v_chunked(a1v, test_nonfr, roots, device, transform=blank_like)
-    _, acc_degr = eval_a1v_chunked(a1v, test_nonfr, roots, device, transform=degrade)
+    swap_rows, acc_swap = eval_rows("a1v", test_nonfr, image_index_map=swap_map)
+    _, acc_blank = eval_rows("a1v", test_nonfr, transform=blank_like)
+    _, acc_degr = eval_rows("a1v", test_nonfr, transform=degrade)
     g3 = {"bar": f"swap drop >= {SWAP_DROP_BAR:.2f}",
-          "swap_drop": round(acc_a1v - acc_swap, 4), "swap_acc": round(acc_swap, 4),
-          "blank_acc": round(acc_blank, 4), "degraded_acc": round(acc_degr, 4)}
-    g3["passed"] = (acc_a1v - acc_swap) >= SWAP_DROP_BAR
-    (WORK / "eval_ablations__a1v.jsonl").write_text(
-        "".join(json.dumps(r) + "\n" for r in swap_rows), encoding="utf-8")
+          "swap_drop": round(test_acc["a1v"] - acc_swap, 4),
+          "swap_acc": round(acc_swap, 4), "blank_acc": round(acc_blank, 4),
+          "degraded_acc": round(acc_degr, 4)}
+    g3["passed"] = (test_acc["a1v"] - acc_swap) >= SWAP_DROP_BAR
     (WORK / "eval_ablations__a1v.json").write_text(json.dumps(g3, indent=2), encoding="utf-8")
 
-    # -- G4: real eval (repo may not exist yet; skipped cleanly) -----------------
-    g4 = {"status": "not_run",
-          "reason": f"{REAL_EVAL_REPO} not available (E38c pending)"}
-    real_rows_file = None
+    # G4: real eval (repo may not exist; skipped cleanly)
+    g4 = {"status": "not_run", "reason": f"{REAL_EVAL_REPO} not available (E38c pending)"}
     try:
         from huggingface_hub import list_repo_files, snapshot_download
 
         files = list_repo_files(REAL_EVAL_REPO, repo_type="dataset")
-        real_rows_file = next((f for f in files if f.endswith("rows.jsonl")), None)
+        rows_file = next((f for f in files if f.endswith("rows.jsonl")), None)
     except Exception as exc:
+        rows_file = None
         log(f"real eval skipped: {REAL_EVAL_REPO} not readable ({type(exc).__name__})")
-    if real_rows_file:
-        from huggingface_hub import snapshot_download
-
+    if rows_file:
         real_root_path = Path(snapshot_download(
             repo_id=REAL_EVAL_REPO, repo_type="dataset",
             allow_patterns=["*.jsonl", "*.png", "*.jpg", "*.jpeg"]))
-        real_rows = [json.loads(l) for l in (real_root_path / real_rows_file)
+        real_rows = [json.loads(l) for l in (real_root_path / rows_file)
                      .read_text(encoding="utf-8").splitlines() if l.strip()]
-        # real rows are not e38a/e38b-prefixed: point both keys at the real root
         real_root = {"E38a": real_root_path, "E38b": real_root_path}
-        ocr_real_rows_sync(real_rows, real_root_path)
-        real_rows_a1v, acc_real_a1v = eval_a1v_chunked(a1v, real_rows, real_root, device)
-        real_rows_ocr, acc_real_ocr = eval_ocr_chunked(mk1.to(device), tok, real_rows,
-                                                       real_root, device)
-        for name, rr in (("a1v", real_rows_a1v), ("ocr", real_rows_ocr)):
-            (WORK / f"eval_real__{name}.jsonl").write_text(
-                "".join(json.dumps(r) + "\n" for r in rr), encoding="utf-8")
-        g4 = {"status": "completed", "repo": REAL_EVAL_REPO,
-              "a1v": round(acc_real_a1v, 4), "ocr": round(acc_real_ocr, 4),
+        # OCR the real images (small set) on CPUs, then swap the roots/ocr
+        # context so eval_rows resolves paths against the real snapshot
+        from concurrent.futures import ProcessPoolExecutor
+
+        _TESS = {"en": "eng", "de": "deu", "es": "spa", "fr": "fra"}
+
+        def _ocr_job(p_lang):
+            p, lang = p_lang
+            import pytesseract
+            from PIL import Image
+
+            return pytesseract.image_to_string(
+                Image.open(p), lang=_TESS.get(lang, "eng"))
+
+        real_ocr = {}
+        with ProcessPoolExecutor(max_workers=3) as pool:
+            for r, text in zip(real_rows, pool.map(
+                    _ocr_job, [(str(real_root_path / r["image"]), r.get("language", "en"))
+                               for r in real_rows], chunksize=8)):
+                real_ocr[r["id"]] = text
+
+        def eval_real(arm, rows):
+            """eval_rows against the real snapshot: monkey-context, no globals."""
+            out_rows, correct, n = [], 0, 0
+            for s in range(0, len(rows), 200):
+                part = rows[s:s + 200]
+                if arm == "a1v":
+                    imgs = [open_image(r, real_root) for r in part]
+                    ev = evaluate_a1v(a1v, [case_of_row(r) for r in part], imgs,
+                                      device=device, max_side=IMAGE_SIZE,
+                                      batch_decisions=16,
+                                      max_state_tokens=MAX_STATE_TOKENS,
+                                      max_option_tokens=MAX_OPTION_TOKENS,
+                                      collect_rows=True)
+                    out_rows += ev["rows"]
+                    correct += sum(r["correct"] for r in ev["rows"])
+                    n += ev["n"]
+                else:
+                    cases = []
+                    for r in part:
+                        c = case_of_row(r)
+                        text = real_ocr.get(r["id"])
+                        if text is not None:
+                            c = dataclasses.replace(c, state=text)
+                        cases.append(c)
+                    qts = {c.id: qtype_of_row(r) for c, r in zip(cases, part)}
+                    ev = evaluate_julia_arch(mk1.to(device), tok, cases, qts,
+                                             device=device, batch_decisions=32,
+                                             collect_rows=True)
+                    out_rows += ev["rows"]
+                    correct += sum(r["correct"] for r in ev["rows"])
+                    n += ev["n"]
+            return out_rows, (correct / n if n else None)
+
+        accs_real = {}
+        for arm in ("a1v", non_visual):
+            real_rows_arm, acc = eval_real(arm, real_rows)
+            accs_real[arm] = round(acc, 4)
+            (WORK / f"eval_real__{arm}.jsonl").write_text(
+                "".join(json.dumps(r) + "\n" for r in real_rows_arm), encoding="utf-8")
+        g4 = {"status": "completed", "repo": REAL_EVAL_REPO, **accs_real,
               "kill_bar": REAL_EVAL_KILL,
-              "non_discriminating": bool(acc_real_a1v >= REAL_EVAL_KILL
-                                         and acc_real_ocr >= REAL_EVAL_KILL)}
+              "non_discriminating": all(v >= REAL_EVAL_KILL for v in accs_real.values())}
     (WORK / "e39_real_eval.json").write_text(json.dumps(g4, indent=2), encoding="utf-8")
 
     summary = {
-        "status": "completed",
-        "env": env,
-        "steps": STEPS, "image_size": IMAGE_SIZE, "effective_batch": EFFECTIVE_BATCH,
-        "finalist": finalist,
-        "selection": {"a1v_s42": best_a1v, "ocr_s42": best_ocr,
-                      "seed_reports": seed_reports},
-        "test_nonfr": {"a1v": round(acc_a1v, 4), "ocr": round(acc_ocr, 4)},
-        "test_fr": {"a1v": round(acc_a1v_fr, 4), "ocr": round(acc_ocr_fr, 4)},
-        "delta_ci": delta_ci,
-        "text_sets": text_sets,
-        "gates": gates,
-        "G3_ablations": g3,
-        "G4_real": g4,
+        "status": "completed", "env": env,
+        "steps": STEPS, "image_size": IMAGE_SIZE,
+        "effective_batch": EFFECTIVE_BATCH, "replay_every": REPLAY_EVERY,
+        "finalist": finalist, "best_non_visual": non_visual,
+        "selection": seed_reports,
+        "test_nonfr": {a: round(v, 4) for a, v in test_acc.items()
+                       if not a.endswith("_fr")},
+        "test_fr": {a[:-3]: round(v, 4) for a, v in test_acc.items() if a.endswith("_fr")},
+        "delta_ci": delta_ci, "text_sets": text_sets, "gates": gates,
+        "G3_ablations": g3, "G4_real": g4,
         "wall_s": round(time.time() - t_start, 1),
     }
     (WORK / "e39_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")

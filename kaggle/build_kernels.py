@@ -62,7 +62,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("names", nargs="*",
                     default=["e37_preflight", "e37_c1", "e37_c2", "e37_c4", "e37_c3",
-                             "e39_train"])
+                             "e39_ocrprep", "e39_train"])
     args = ap.parse_args()
     for name in args.names:
         build(name)
