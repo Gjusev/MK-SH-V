@@ -25,9 +25,9 @@ Last reviewed: 2026-10-14.
 | Source | License | Status | Allowed use |
 |---|---|---|---|
 | Own synthetic generator (HTML templates rendered with Playwright) | ours, Apache-2.0 | own | train / dev / calib / test |
-| [CORD](https://github.com/clovaai/cord) (Indonesian receipts) | CC BY 4.0 | verified (repo README) | train, attribution required |
-| [DocLayNet](https://github.com/DS4SD/DocLayNet/blob/main/LICENSE) | CDLA-Permissive-1.0 | verified (LICENSE) | train |
-| [GUI-Odyssey](https://huggingface.co/datasets/OpenGVLab/GUI-Odyssey) | CC BY 4.0 | verified (dataset card) | train, attribution required; newer version needs its own check |
+| [CORD](https://github.com/clovaai/cord) (Indonesian receipts) | CC BY 4.0 | re-verified 2026-10-14 (repo `LICENSE-CC-BY`; v2 data on HF `naver-clova-ix/cord-v2`, 800/100/100) | evaluation (E39); training not before a later frozen experiment; attribution required |
+| [DocLayNet](https://github.com/DS4SD/DocLayNet/blob/main/LICENSE) | CDLA-Permissive-1.0 | re-verified 2026-10-14 (LICENSE text: permissive, commercial OK, attribution + license notice on redistribution) | evaluation (E39); training not before a later frozen experiment; preserve attribution if republished |
+| [GUI-Odyssey](https://huggingface.co/datasets/OpenGVLab/GUI-Odyssey) | CC BY 4.0 | re-verified 2026-10-14 (dataset card, `cc-by-4.0`) | evaluation (E39); training not before a later frozen experiment; attribution required |
 | [ScreenQA](https://github.com/google-research-datasets/screen_qa) annotations | CC BY 4.0 | verified for annotations | blocked until Rico image license is verified |
 | Rico screenshots | unknown | unverified (official page 404) | none yet |
 | [AndroidControl](https://github.com/google-research/google-research/blob/master/android_control/README.md) | Apache-2.0 covers the repo; data license not stated | unverified | none yet |
