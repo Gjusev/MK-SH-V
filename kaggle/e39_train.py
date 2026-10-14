@@ -568,6 +568,10 @@ def main() -> None:
         f"test {len(splits['test'])} (FR kept inside test, gated separately)")
     dev_half = fixed_dev_half(splits["dev"], seed=DEV_HALF_SEED, fraction=0.5)
     dev_sel = [r for r in splits["dev"] if r["id"] in dev_half]
+    # the frozen selection half is evidence: auditable, identical on resume
+    (WORK / "dev_half_ids.json").write_text(
+        json.dumps({"seed": DEV_HALF_SEED, "n": len(dev_half), "ids": sorted(dev_half)}),
+        encoding="utf-8")
 
     from transformers import AutoTokenizer
 
