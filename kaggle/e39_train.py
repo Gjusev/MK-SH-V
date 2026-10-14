@@ -52,12 +52,11 @@ REAL_EVAL_ROWS_SHA = {  # verified in-kernel; mismatch -> real eval not_run
     "cord/rows.jsonl": "5d0dbc9e7ba3b3301bbcc1d52ecc2fb352b281dcb72c76bbe21ad34e23ab3f09",
     "gui_odyssey/rows.jsonl": "dcdbe6170752738cbb4a72a7f4cafbb56f4b30177cdb79add4c0e2c5a3c2a8da",
 }
-# SmolVLM2-500M does NOT exist (series is 256M / 2.2B). Working default: the
-# 256M tier (quota as computed); the 2.2B alternative needs new arithmetic.
-# The freezer picks; switching = one constant.
-SMOL_ID = "HuggingFaceTB/SmolVLM2-256M-Video-Instruct"  # sha 067788b187b95ebe7b2e040b3e4299e342e5b8fd
-SMOL_ID_ALT = "HuggingFaceTB/SmolVLM2-2.2B-Instruct"  # sha 482adb537c021c86670beed01cd58990d01e72e4
-JEV_ID = "sidman007/jev-vlm-4b"  # sha 8c56e46a2b47dee398bc71c39c355b9716dec21e; ADAPTER repo (custom_code)
+# SmolVLM2 comparator (verified on the Hub 2026-10-14): pinned id+revision.
+SMOL_ID = "HuggingFaceTB/SmolVLM2-500M-Video-Instruct"
+SMOL_REVISION = "7b375e1b73b11138ff12fe22c8f2822d8fe03467"
+JEV_ID = "sidman007/jev-vlm-4b"  # ADAPTER repo with custom_code
+JEV_REVISION = "8c56e46a2b47dee398bc71c39c355b9716dec21e"
 STEPS = 2000
 SMOKE_STEPS = 20
 EFFECTIVE_BATCH = 32
@@ -327,12 +326,13 @@ def c3_rerun(model, device) -> None:
 class SmolScorer:
     """Image + options prompt; scores options by first-token letter logits."""
 
-    def __init__(self, device, model_id: str = SMOL_ID):
+    def __init__(self, device, model_id: str = SMOL_ID, revision: str = SMOL_REVISION):
         from transformers import AutoModelForImageTextToText, AutoProcessor
 
         self.device = device
-        self.processor = AutoProcessor.from_pretrained(model_id)
-        self.model = AutoModelForImageTextToText.from_pretrained(model_id).to(device)
+        self.processor = AutoProcessor.from_pretrained(model_id, revision=revision)
+        self.model = AutoModelForImageTextToText.from_pretrained(
+            model_id, revision=revision).to(device)
         self.model.float()
         tok = self.processor.tokenizer
         self.letter_ids = [tok(c, add_special_tokens=False)["input_ids"][0]
@@ -1182,9 +1182,11 @@ def main() -> None:
         try:
             from transformers import AutoModel, AutoProcessor
 
-            processor = AutoProcessor.from_pretrained(JEV_ID, trust_remote_code=True)
+            processor = AutoProcessor.from_pretrained(
+                JEV_ID, revision=JEV_REVISION, trust_remote_code=True)
             model = AutoModel.from_pretrained(
-                JEV_ID, trust_remote_code=True, dtype=torch.float16).to("cuda:1")
+                JEV_ID, revision=JEV_REVISION, trust_remote_code=True,
+                dtype=torch.float16).to("cuda:1")
             model.eval()
 
             def ask(case, image):

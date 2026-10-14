@@ -33,18 +33,15 @@ evaluates them on real data.
 - OCR-arm init: `mksh1_v12.safetensors` = MK-SH-1 v1.2, sha256
   `ea66cdde2271b98efda9dbb5d4437b59aa422cb34daca85d4203508aa56264d5`
   (576 788 228 B), same dataset.
-- SmolVLM2 arm: **the pinned "SmolVLM2-500M" does not exist** — the series is
-  256M / 2.2B only (verified on the Hub 2026-10-14). Verified candidates,
-  both Apache-2.0, ungated: `HuggingFaceTB/SmolVLM2-256M-Video-Instruct`
-  (sha `067788b187b95ebe7b2e040b3e4299e342e5b8fd`; working default — quota
-  as computed) and `HuggingFaceTB/SmolVLM2-2.2B-Instruct`
-  (sha `482adb537c021c86670beed01cd58990d01e72e4`; needs new arithmetic).
-  **The freezer picks one and re-checks data-licenses at freeze.**
+- SmolVLM2 arm: `HuggingFaceTB/SmolVLM2-500M-Video-Instruct`, revision
+  `7b375e1b73b11138ff12fe22c8f2822d8fe03467`, Apache-2.0, ungated (verified
+  on the Hub 2026-10-14); loaded at the pinned revision in-kernel.
 - jev-vlm-4b comparator: `sidman007/jev-vlm-4b`, revision
   `8c56e46a2b47dee398bc71c39c355b9716dec21e`, Apache-2.0 (verified on the
-  Hub 2026-10-14). **It is an adapter repo with custom_code**
-  (`adapter/adapter_config.json`, `modeling_jevvlm.py`): if it does not load
-  in the pinned environment → `not_run` with the exact error, no patches.
+  Hub 2026-10-14), loaded at the pinned revision. **It is an adapter repo
+  with custom_code** (`adapter/adapter_config.json`, `modeling_jevvlm.py`):
+  if it does not load in the pinned environment → `not_run` with the exact
+  error, no patches.
 - Real-eval set: `Gjusev/MK-SH-V-E38c`, PRIVATE, FIXED revision
   `98dde3d2b3dd0fd319ff44d059656a2d2864c66e` (never `main`; manifest.json
   sha256 `c4aa04f823ff9a78d8b7916350c715735c1f1d900d424dc4f5a19c5e4ac95ed2`).
