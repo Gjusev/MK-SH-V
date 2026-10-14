@@ -658,11 +658,11 @@ def main() -> None:
                           .read_text(encoding="utf-8"))
 
     s42 = {arm: summary_of(arm, 42) for arm in ("a1v", "ocr", "smol")}
-    non_visual = max(("ocr", "smol"), key=lambda a: s42[a]["dev_half_macro"])
-    finalist = ("a1v" if s42["a1v"]["dev_half_macro"] >= s42[non_visual]["dev_half_macro"]
-                else non_visual)
+    # the release candidates are OUR two systems (roadmap); SmolVLM2 is a
+    # reported visual comparator, not a finalist candidate
+    finalist = "a1v" if s42["a1v"]["dev_half_macro"] >= s42["ocr"]["dev_half_macro"] else "ocr"
     log(f"finalist={finalist} (dev macro a1v {s42['a1v']['dev_half_macro']} vs "
-        f"{non_visual} {s42[non_visual]['dev_half_macro']})")
+        f"ocr {s42['ocr']['dev_half_macro']}; smol reported: {s42['smol']['dev_half_macro']})")
 
     # phase 2: finalist seeds 43/44, one per GPU
     log(f"phase 2: finalist {finalist} seeds 43/44 in parallel")
@@ -758,7 +758,7 @@ def main() -> None:
 
     test_rows = {}
     test_acc = {}
-    for arm in ("a1v", non_visual):
+    for arm in ("a1v", "ocr", "smol"):  # gates read a1v/ocr; smol is reported
         test_rows[arm], test_acc[arm] = eval_rows(arm, test_nonfr)
         (WORK / f"eval_test_nonfr__{arm}.jsonl").write_text(
             "".join(json.dumps(r) + "\n" for r in test_rows[arm]), encoding="utf-8")
@@ -769,16 +769,13 @@ def main() -> None:
         test_acc[f"{arm}_fr"] = fr_acc
     # finalist seeds on non-FR test (reported); gates always use s42 bests
     seed_reports = [dict(s42[a], arm=a) for a in ("a1v", "ocr", "smol")]
-    for seed in (43, 44):
+    for seed in (43, 44):  # finalist is always a1v or ocr
         if finalist == "a1v":
             load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
             a1v.to(device)
-        elif finalist == "ocr":
+        else:
             load_best_weights(WORK / f"runs/ocr_s{seed}/best.pt", mk1)
             mk1.to(device)
-        else:
-            load_best_weights(WORK / f"runs/smol_s{seed}/best.pt", smol.model)
-            smol.model.to(device)
         _, acc_seed = eval_rows(finalist, test_nonfr)
         seed_reports.append({"arm": finalist, "seed": seed,
                              "test_nonfr_acc": round(acc_seed, 4),
@@ -791,12 +788,19 @@ def main() -> None:
 
     log(f"test non-FR: " + " ".join(f"{a}={test_acc[a]:.4f}" for a in test_rows))
 
-    # G1: paired-by-episode bootstrap, a1v vs best non-visual arm
-    by_id = {r["id"]: r for r in test_rows[non_visual]}
+    # G1 (roadmap): A1-V vs OCR->MK-SH-1, paired by episode
+    by_id_ocr = {r["id"]: r for r in test_rows["ocr"]}
     delta_ci = paired_delta_ci(
         [r["correct"] for r in test_rows["a1v"]],
-        [int(by_id[r["id"]]["correct"]) for r in test_rows["a1v"]],
+        [int(by_id_ocr[r["id"]]["correct"]) for r in test_rows["a1v"]],
         [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
+    # reported comparator (no gate): A1-V vs SmolVLM2 with the same CI
+    by_id_smol = {r["id"]: r for r in test_rows["smol"]}
+    delta_ci_smol = paired_delta_ci(
+        [r["correct"] for r in test_rows["a1v"]],
+        [int(by_id_smol[r["id"]]["correct"]) for r in test_rows["a1v"]],
+        [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
+    smol_clearly_ahead = delta_ci_smol["ci95"][1] < 0  # claim rule, fixed now
 
     # G2: E35 text sets, CPU float32, every arm vs frozen bars
     bundle = find_bundle()
@@ -908,7 +912,7 @@ def main() -> None:
                     out_rows += ev["rows"]
                     correct += sum(r["correct"] for r in ev["rows"])
                     n += ev["n"]
-                else:
+                elif arm == "ocr":
                     cases = []
                     for r in part:
                         c = case_of_row(r)
@@ -923,10 +927,27 @@ def main() -> None:
                     out_rows += ev["rows"]
                     correct += sum(r["correct"] for r in ev["rows"])
                     n += ev["n"]
+                else:  # smol comparator on the real images
+                    import torch as _t
+
+                    with _t.no_grad():
+                        for s2 in range(0, len(part), 16):
+                            sub = part[s2:s2 + 16]
+                            cases = [case_of_row(r) for r in sub]
+                            imgs = [open_image(r, real_root) for r in sub]
+                            logits = smol.batch_logits(cases, imgs)
+                            for j, r in enumerate(sub):
+                                k = len(cases[j].options)
+                                gold = cases[j].option_ids.index(cases[j].target_option)
+                                ok = int(int(logits[j, :k].argmax().item()) == gold)
+                                out_rows.append({"correct": ok})
+                                correct += ok
+                                n += 1
             return out_rows, (correct / n if n else None)
 
         accs_real = {}
-        for arm in ("a1v", non_visual):
+        smol.model.to(device)  # back from the CPU G2 eval for the real images
+        for arm in ("a1v", "ocr", "smol"):  # kill rule reads a1v+ocr; smol reported
             real_rows_arm, acc = eval_real(arm, real_rows)
             accs_real[arm] = round(acc, 4)
             (WORK / f"eval_real__{arm}.jsonl").write_text(
@@ -940,12 +961,18 @@ def main() -> None:
         "status": "completed", "env": env,
         "steps": STEPS, "image_size": IMAGE_SIZE,
         "effective_batch": EFFECTIVE_BATCH, "replay_every": REPLAY_EVERY,
-        "finalist": finalist, "best_non_visual": non_visual,
+        "finalist": finalist,
         "selection": seed_reports,
         "test_nonfr": {a: round(v, 4) for a, v in test_acc.items()
                        if not a.endswith("_fr")},
         "test_fr": {a[:-3]: round(v, 4) for a, v in test_acc.items() if a.endswith("_fr")},
-        "delta_ci": delta_ci, "text_sets": text_sets, "gates": gates,
+        "delta_ci": delta_ci,
+        "comparator_smol": {"delta_ci": delta_ci_smol,
+                            "smol_clearly_ahead": smol_clearly_ahead,
+                            "claim_rule": "if ci95 upper bound < 0 the report and "
+                                          "model card declare it; no 'best small "
+                                          "visual model' claim"},
+        "text_sets": text_sets, "gates": gates,
         "G3_ablations": g3, "G4_real": g4,
         "wall_s": round(time.time() - t_start, 1),
     }

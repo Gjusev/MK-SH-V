@@ -44,12 +44,12 @@ below. One single job runs all arms and also evaluates them on real data.
 - **OCR→MK-SH-1**: Tesseract on the ORIGINAL PNG (precomputed by the CPU
   kernel over E38a+E38b train/dev/test) → OCR text becomes `state`;
   MK-SH-1 fine-tuned with the E35 recipe (`julia_sequence` 1024/256).
-- **SmolVLM2-500M**: comparator per roadmap; scores options by first-token
-  logits (declared design: image + `Question … Options: A)… B)… Answer:`,
-  softmax over the option-letter logits). Fine-tuned with the same recipe.
-  Included because the two-GPU arithmetic leaves ≥ 15 % headroom on both
-  quota bases; dropped to conditional if the measured headroom after the
-  compared phase falls below that.
+- **SmolVLM2-500M**: **reported visual comparator, no gate** (it is a visual
+  arm — "best non-visual" comparisons are wrong by construction). Scores
+  options by first-token logits (declared design: image + `Question …
+  Options: A)… B)… Answer:`, softmax over the option-letter logits),
+  fine-tuned with the same recipe. The release candidates (and the
+  finalist) are our two systems: A1-V and OCR→MK-SH-1.
 
 ## Text-replay (anti-forgetting, fixed for every arm)
 
@@ -87,10 +87,15 @@ comparators cannot co-degrade through a relative gate.
 All accuracies on the **non-FR test slice** (4 200 cases; the 1 400 FR rows
 are reported separately and never gate — FR is eval-only by design):
 
-- **G1 visual advantage**: Δ = acc(A1-V s42) − acc(best non-visual arm s42)
-  on non-FR test. PASS iff the 95 % paired-bootstrap CI of Δ (resampling
-  whole `group_id` episodes, 1 000 resamples, seed 42) has its **lower bound
-  ≥ +2,0 pp**.
+- **G1 visual advantage (roadmap gate)**: Δ = acc(A1-V s42) −
+  acc(OCR→MK-SH-1 s42) on non-FR test. PASS iff the 95 % paired-bootstrap CI
+  of Δ (resampling whole `group_id` episodes, 1 000 resamples, seed 42) has
+  its **lower bound ≥ +2,0 pp**.
+- **Reported comparator (no gate, claim rule fixed now)**: Δ(A1-V s42 −
+  SmolVLM2 s42) with the same paired CI. If its **upper bound < 0**
+  (SmolVLM2 clearly ahead), the report and the model card declare it and no
+  "best small visual model" claim is made. This is not a stop: the roadmap
+  only stops when there is no advantage over OCR.
 - **G2 no text forgetting** (anchored to the FROZEN MK-SH-1 v1.1 references,
   E35 s42: testC 0,979, task 0,800 — not to any retrained arm): on the frozen
   E35 text sets (CPU float32), **every arm** must reach testC ≥ **0,959** and
