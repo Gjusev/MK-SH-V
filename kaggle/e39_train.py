@@ -2,20 +2,31 @@
 freeze). ONE GPU orchestrator + self-spawning per-GPU workers. NOT LAUNCHED
 until the criteria are frozen and the user gives GO.
 
-Arms (seed 42 head-to-head; the finalist also runs seeds 43/44):
-  a1v   NeoMME + marker head, init = E37 C3 checkpoint, 1024 px, mb 4 x 8
-  ocr   precomputed Tesseract text (gjusev/mkshv-e39-ocr) -> MK-SH-1, mb 8 x 4
-  smol  SmolVLM2-500M, first-token option-letter logits, mb 4 x 8 (smoke-gated)
+Priority order (frozen; the kernel executes in this order and cuts the tail
+if the session wall budget runs out — (a)-(c) protect the scientific
+question):
+  (a) A1-V s42 at 1024 px + eval
+  (b) OCR->MK-SH-1 s42 (the OCR+rules comparator is CPU, from ocrprep)
+  (c) statistical comparison G1-G4 + per-family analysis
+  (d) finalist seeds 43/44
+  (e) resolution sweep 768/1024/1536 (inference) + optional 1536 training
+  (f) jev-vlm-4b zero-shot reference + SmolVLM2 comparator
 
-Every arm mixes E35 text replay: 1 of every 4 microbatches, steps unchanged.
+Tables carry a `regimen` column: task-trained (a1v, ocr, smol, dev-fitted
+rules) vs zero-shot (jev-vlm-4b). No sentence compares A1-V with a zero-shot
+model without that label. G4 interpretation rule (frozen): if G1 passes on
+synthetic but the real-eval Delta(A1-V - OCR) CI includes 0 or is negative,
+the result is reported as "synthetic-only advantage, no transfer evidence"
+and no general visual-advantage claim is made.
+
+Every trained arm mixes E35 text replay (1 of every 4 microbatches).
 Selection is dev-only (frozen half, best checkpoint restored); test opens
-once at the end. G2 anchors to frozen MK-SH-1 v1.1 (testC 0.959 / task 0.780
-after -2 pp), not to a retrained arm. Quota bills the SESSION wall at double
-rate: phase 1 runs a1v on gpu0 while ocr+smol run on gpu1.
+once. G2 anchors to frozen MK-SH-1 v1.1 (testC 0.959 / task 0.780 after
+-2 pp). Quota bills the SESSION wall at double rate.
 
 Expected attachments: gjusev/mkshv-e37-ckpt (c3_final.safetensors,
-mksh1_v12.safetensors), gjusev/mokka-decisions-bundle (E35 replay + G2),
-gjusev/mkshv-e39-ocr (ocr.jsonl). Secret HF_TOKEN checked FIRST, per
+mksh1_v12.safetensors), gjusev/mokka-decisions-bundle, gjusev/mkshv-e39-ocr
+(ocr.jsonl + rules_predictions.jsonl). Secret HF_TOKEN checked FIRST, per
 notebook; never printed, logged or written to files.
 """
 
@@ -29,6 +40,7 @@ import os
 import random
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -36,11 +48,15 @@ WORK = Path("/kaggle/working")
 E38_REPOS = {"E38a": "Gjusev/MK-SH-V-E38a", "E38b": "Gjusev/MK-SH-V-E38b"}
 REAL_EVAL_REPO = "Gjusev/MK-SH-V-E38c"  # provisional; skipped cleanly if absent
 SMOL_ID = "HuggingFaceTB/SmolVLM2-500M-Video"  # exact id pinned at freeze
+JEV_ID = "sidman007/jev-vlm-4b"  # revision SHA pinned at freeze
 STEPS = 2000
 SMOKE_STEPS = 20
 EFFECTIVE_BATCH = 32
 ARM_MICROBATCH = {"a1v": 4, "ocr": 8, "smol": 4}
-IMAGE_SIZE = 1024
+IMAGE_SIZE = 1024  # validated end-to-end by C4; 1536 has 100-step C1 evidence only
+RES_SWEEP = (768, 1024, 1536)
+TRAIN_1536_EST_S = 11_580  # C1: 5.79 s/step x 2000 (optional phase (e) train)
+MAX_WALL_S = 41_400  # 11.5 h of the 12 h session cap
 MAX_STATE_TOKENS = 700
 MAX_OPTION_TOKENS = 96
 DEV_EVERY = 500
@@ -55,6 +71,8 @@ CKPT_SHA_PREFIXES = {
     "mksh1_v12.safetensors": "ea66cdde",
 }
 LETTERS = "ABCDEFGH"
+REGIMEN = {"a1v": "task-trained", "ocr": "task-trained", "smol": "task-trained",
+           "rules": "task-trained (dev-fitted rules)", "jev": "zero-shot"}
 
 
 def log(msg: str) -> None:
@@ -87,7 +105,10 @@ def pip_install() -> None:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q",
                     "git+https://github.com/Gjusev/MK-SH-1@9e1a226e",
                     "transformers==5.19.0", "pillow>=10.1",
-                    "huggingface_hub>=0.34"], check=True)
+                    "huggingface_hub>=0.34", "pytesseract>=0.3"], check=True)
+    subprocess.run(["apt-get", "-qq", "install", "-y", "tesseract-ocr",
+                    "tesseract-ocr-deu", "tesseract-ocr-spa", "tesseract-ocr-fra"],
+                   check=False)
 
 
 def find_bundle() -> Path:
@@ -242,6 +263,8 @@ def build_a1v(device):
 
 
 def c3_rerun(model, device) -> None:
+    """C3 recipe rerun (E35 mix, seed 42): 3 phases x 5 epochs, fresh AdamW
+    per phase, rng 42^0xE35^phase — mirroring kaggle/e37_c3.py exactly."""
     import torch
 
     from mksh_v.arch_a1v import forward_a1v
@@ -347,23 +370,25 @@ def ocr_case_of(row: dict, roots: dict | None, ocr: dict):
 
 
 def run_worker(args) -> None:
-    """--arm --seed --gpu --steps; writes runs/<arm>_s<seed>/{best.pt,...}."""
+    """--arm --seed --gpu --steps [--size]; writes runs/<tag>/{best.pt,...}."""
     device = "cuda"
-    out_dir = WORK / "runs" / f"{args.arm}_s{args.seed}"
+    size = args.size or IMAGE_SIZE
+    tag = f"{args.arm}_s{args.seed}" + (f"_sz{size}" if size != IMAGE_SIZE else "")
+    out_dir = WORK / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
-    torch_seed = args.seed
     import torch
 
-    torch.manual_seed(torch_seed)
-    torch.cuda.manual_seed_all(torch_seed)
-    random.seed(torch_seed)
+    torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
+    random.seed(args.seed)
 
     roots = download_data()
     verify_rows_sha(roots)
     splits = load_e38_rows(roots)
     bundle = find_bundle()
-    ocr = load_ocr_cache() if args.arm in ("ocr",) else {}
-    from mksh_v.train_compare import case_of_row, fixed_dev_half, macro_family_accuracy, qtype_of_row
+    ocr = load_ocr_cache() if args.arm == "ocr" else {}
+    from mksh_v.train_compare import (case_of_row, fixed_dev_half,
+                                      macro_family_accuracy, qtype_of_row)
 
     dev_half = fixed_dev_half(splits["dev"], seed=DEV_HALF_SEED, fraction=0.5)
     dev_sel = [r for r in splits["dev"] if r["id"] in dev_half]
@@ -375,7 +400,6 @@ def run_worker(args) -> None:
     micro = ARM_MICROBATCH[args.arm]
     accum = EFFECTIVE_BATCH // micro
 
-    # ---- build the arm -------------------------------------------------------
     if args.arm == "a1v":
         model = build_a1v(device)  # ensure_markers(32) already done inside
         train_cases = [case_of_row(r) for r in train_rows]
@@ -398,8 +422,7 @@ def run_worker(args) -> None:
 
         tok = AutoTokenizer.from_pretrained("jhu-clsp/mmBERT-small")
         train_cases = [ocr_case_of(r, roots, ocr) for r in train_rows]
-        enc = None
-        rep_enc = None
+        enc = rep_enc = None
         opt_groups = model.parameter_groups(2e-5, 1e-4)
     else:  # smol
         model = SmolScorer(device)
@@ -408,18 +431,20 @@ def run_worker(args) -> None:
         opt_groups = [{"params": [p for p in model.parameters() if p.requires_grad],
                        "lr": 2e-5}]
 
-    # ---- eval helper for the dev half ---------------------------------------
     def eval_dev():
         from mksh_v.arch_a1v import evaluate_a1v
         from mokka_decisions.arch_julia import evaluate_julia_arch
 
-        model.eval() if not isinstance(model, SmolScorer) else model.model.eval()
-        recs = []
+        if isinstance(model, SmolScorer):
+            model.model.eval()
+        else:
+            model.eval()
+        rows = []
         with torch.no_grad():
             if args.arm == "a1v":
                 ev = evaluate_a1v(model, [case_of_row(r) for r in dev_sel],
                                   [open_image(r, roots) for r in dev_sel],
-                                  device=device, max_side=IMAGE_SIZE, batch_decisions=16,
+                                  device=device, max_side=size, batch_decisions=16,
                                   max_state_tokens=MAX_STATE_TOKENS,
                                   max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
                 rows = ev["rows"]
@@ -430,7 +455,6 @@ def run_worker(args) -> None:
                                          batch_decisions=32, collect_rows=True)
                 rows = ev["rows"]
             else:
-                rows = []
                 for s in range(0, len(dev_sel), 16):
                     part = dev_sel[s:s + 16]
                     cases = [case_of_row(r) for r in part]
@@ -440,13 +464,10 @@ def run_worker(args) -> None:
                     for j, r in enumerate(part):
                         k = len(cases[j].options)
                         gold = cases[j].option_ids.index(cases[j].target_option)
-                        pred = int(probs[j, :k].argmax().item())
-                        rows.append({"correct": int(pred == gold)})
-        for r, rr in zip(rows, dev_sel):
-            recs.append(dict(r, family=rr["family"]))
+                        rows.append({"correct": int(int(probs[j, :k].argmax().item()) == gold)})
+        recs = [dict(r, family=rr["family"]) for r, rr in zip(rows, dev_sel)]
         return macro_family_accuracy(recs), sum(r["correct"] for r in rows) / len(rows)
 
-    # ---- training loop with E35 replay --------------------------------------
     opt = torch.optim.AdamW(opt_groups, weight_decay=0.01)
     scaler = torch.amp.GradScaler("cuda")
     sched = torch.optim.lr_scheduler.LambdaLR(opt, lr_lambda_of(args.steps))
@@ -465,6 +486,7 @@ def run_worker(args) -> None:
         model.train()
 
     from mokka_decisions.arch_julia import collate_julia
+    from mksh_v.arch_a1v import forward_a1v
 
     keys = ("input_ids", "attention_mask", "marker_pos", "marker_mask", "qtype")
 
@@ -500,9 +522,7 @@ def run_worker(args) -> None:
                     batch = model.build_batch(
                         [enc[i] for i in idx],
                         [open_image(train_rows[i], roots) for i in idx],
-                        device, max_side=IMAGE_SIZE)
-                from mksh_v.arch_a1v import forward_a1v
-
+                        device, max_side=size)
                 with torch.autocast("cuda", dtype=torch.float16):
                     logits = forward_a1v(model, batch).float()
                     loss = torch.nn.functional.cross_entropy(
@@ -525,11 +545,11 @@ def run_worker(args) -> None:
                 if use_replay:
                     idx = next_replay(micro)
                     chunk = [replay_cases[i] for i in idx]
+                    imgs = None
                 else:
                     idx = next_synthetic(micro)
                     chunk = [train_cases[i] for i in idx]
-                imgs = None if use_replay else [
-                    open_image(train_rows[i], roots) for i in idx]
+                    imgs = [open_image(train_rows[i], roots) for i in idx]
                 logits = model.batch_logits(chunk, imgs)
                 golds = torch.tensor(
                     [c.option_ids.index(c.target_option) for c in chunk],
@@ -546,8 +566,7 @@ def run_worker(args) -> None:
             macro, acc = eval_dev()
             curves.append({"step": step, "dev_half_macro": round(macro, 4),
                            "dev_half_acc": round(acc, 4)})
-            log(f"{args.arm}[s{args.seed}] step {step}/{args.steps} "
-                f"dev-half macro {macro:.4f}")
+            log(f"{args.arm}[{tag}] step {step}/{args.steps} dev-half macro {macro:.4f}")
             if (macro, acc) >= (best["dev_half_macro"], best["dev_half_acc"]):
                 best = {"dev_half_macro": macro, "dev_half_acc": acc, "step": step}
                 save_best_weights(best_path, model.model if is_smol else model)
@@ -560,24 +579,26 @@ def run_worker(args) -> None:
         "".join(json.dumps(c) + "\n" for c in curves), encoding="utf-8")
     (out_dir / "summary.json").write_text(json.dumps(
         {**{k: (round(v, 4) if isinstance(v, float) else v) for k, v in best.items()},
-         "arm": args.arm, "seed": args.seed, "steps": args.steps}, indent=2),
-        encoding="utf-8")
-    log(f"worker done: {args.arm} s{args.seed} best {best}")
+         "arm": args.arm, "seed": args.seed, "steps": args.steps, "size": size},
+        indent=2), encoding="utf-8")
+    log(f"worker done: {tag} best {best}")
 
 
-def spawn(arm: str, seed: int, gpu: int, steps: int) -> tuple:
+def spawn(arm: str, seed: int, gpu: int, steps: int, size: int | None = None) -> tuple:
     """Worker as subprocess with output to a FILE (a PIPE nobody reads while
     another proc runs would fill its buffer and deadlock the worker)."""
-    log_dir = WORK / "runs" / f"{arm}_s{seed}"
+    tag = f"{arm}_s{seed}" + (f"_sz{size}" if size and size != IMAGE_SIZE else "")
+    log_dir = WORK / "runs" / tag
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = log_dir / f"worker_gpu{gpu}.log"
     env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu))
+    cmd = [sys.executable, os.path.abspath(__file__), "--worker",
+           "--arm", arm, "--seed", str(seed), "--gpu", str(gpu),
+           "--steps", str(steps)]
+    if size and size != IMAGE_SIZE:
+        cmd += ["--size", str(size)]
     fh = open(log_path, "a", encoding="utf-8")
-    proc = subprocess.Popen(
-        [sys.executable, os.path.abspath(__file__), "--worker",
-         "--arm", arm, "--seed", str(seed), "--gpu", str(gpu),
-         "--steps", str(steps)],
-        env=env, stdout=fh, stderr=subprocess.STDOUT, text=True)
+    proc = subprocess.Popen(cmd, env=env, stdout=fh, stderr=subprocess.STDOUT, text=True)
     return proc, fh, log_path
 
 
@@ -601,6 +622,7 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--steps", type=int, default=STEPS)
+    parser.add_argument("--size", type=int, default=None)
     args = parser.parse_args()
     if args.worker:
         run_worker(args)
@@ -627,7 +649,11 @@ def main() -> None:
     find_bundle()
     find_ocr_cache()
 
-    # warm the HF cache once so workers start fast
+    def budget_ok(need_s: float = 0.0) -> bool:
+        return (time.time() - t_start) + need_s < MAX_WALL_S
+
+    skipped: list[dict] = []
+
     roots = download_data()
     verify_rows_sha(roots)
     splits = load_e38_rows(roots)
@@ -640,36 +666,24 @@ def main() -> None:
         {"seed": DEV_HALF_SEED, "n": len(dev_half), "ids": sorted(dev_half)}),
         encoding="utf-8")
 
-    # smoke-first: 20 steps of each arm on gpu1 while gpu0 idles briefly
-    log("smoke: 20 steps per arm (gpu0 a1v; gpu1 ocr then smol)")
+    # smoke-first (cheap): the two gated arms; smol smokes in phase (f)
     run_and_log(spawn("a1v", 42, 0, SMOKE_STEPS), "smoke-a1v")
     run_and_log(spawn("ocr", 42, 1, SMOKE_STEPS), "smoke-ocr")
-    run_and_log(spawn("smol", 42, 1, SMOKE_STEPS), "smoke-smol")
 
-    # phase 1: compared runs, seed 42
-    log("phase 1: a1v s42 on gpu0; ocr s42 then smol s42 on gpu1")
+    # ---- (a)+(b): A1-V s42 on gpu0, OCR->MK-SH-1 s42 on gpu1 ----------------
     p_a1v = spawn("a1v", 42, 0, STEPS)
     run_and_log(spawn("ocr", 42, 1, STEPS), "ocr-s42")
-    run_and_log(spawn("smol", 42, 1, STEPS), "smol-s42")
     run_and_log(p_a1v, "a1v-s42")
 
-    def summary_of(arm: str, seed: int) -> dict:
-        return json.loads((WORK / "runs" / f"{arm}_s{seed}" / "summary.json")
-                          .read_text(encoding="utf-8"))
+    def summary_of(tag: str) -> dict:
+        return json.loads((WORK / "runs" / tag / "summary.json").read_text(encoding="utf-8"))
 
-    s42 = {arm: summary_of(arm, 42) for arm in ("a1v", "ocr", "smol")}
-    # the release candidates are OUR two systems (roadmap); SmolVLM2 is a
-    # reported visual comparator, not a finalist candidate
+    s42 = {arm: summary_of(f"{arm}_s42") for arm in ("a1v", "ocr")}
     finalist = "a1v" if s42["a1v"]["dev_half_macro"] >= s42["ocr"]["dev_half_macro"] else "ocr"
     log(f"finalist={finalist} (dev macro a1v {s42['a1v']['dev_half_macro']} vs "
-        f"ocr {s42['ocr']['dev_half_macro']}; smol reported: {s42['smol']['dev_half_macro']})")
+        f"ocr {s42['ocr']['dev_half_macro']})")
 
-    # phase 2: finalist seeds 43/44, one per GPU
-    log(f"phase 2: finalist {finalist} seeds 43/44 in parallel")
-    run_and_log(spawn(finalist, 43, 0, STEPS), f"{finalist}-s43")
-    run_and_log(spawn(finalist, 44, 1, STEPS), f"{finalist}-s44")
-
-    # phase 3: evals + gates (this process)
+    # ---- (c): statistical comparison G1-G4 + per-family -----------------------
     from mksh_v.arch_a1v import NeoMMEMarkerScorer, evaluate_a1v
     from mksh_v.train_compare import (case_of_row, gate_report,
                                       paired_delta_ci, qtype_of_row)
@@ -691,17 +705,50 @@ def main() -> None:
 
     mk1.load_state_dict(load_file(str(mk1_path)))
     load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
-
-    smol = SmolScorer(device)
-    load_best_weights(WORK / "runs/smol_s42/best.pt", smol.model)
+    smol = None  # created in phase (f) only
 
     test_nonfr = [r for r in splits["test"] if r["language"] != "fr"]
     test_fr = [r for r in splits["test"] if r["language"] == "fr"]
 
-    def eval_rows(arm, rows, *, transform=None, image_index_map=None):
+    # CPU legibility probe starts now and overlaps all GPU work below (input
+    # for the phase-(e) error analysis; CPU-only, no quota impact)
+    LEGIBILITY: dict[tuple, bool] = {}
+    ft_test_rows = [r for r in test_nonfr if r["family"] == "field_threshold"
+                    and r.get("total") is not None]
+    _TESS_RES = {"en": "eng", "de": "deu", "es": "spa", "fr": "fra"}
+
+    def _legibility_job(job):
+        import pytesseract
+        from PIL import Image
+
+        path, lang, total, res = job
+        img = Image.open(path).convert("RGB")
+        w, h = img.size
+        scale = min(1.0, res / max(w, h))
+        if scale < 1.0:
+            img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))),
+                             Image.BILINEAR)
+        text = pytesseract.image_to_string(img, lang=_TESS_RES.get(lang, "eng"))
+        s = f"{total:.2f}"
+        return (path, res), (s in text or s.replace(".", ",") in text)
+
+    def run_legibility():
+        from concurrent.futures import ProcessPoolExecutor
+
+        jobs = [(str(image_path_of(r, roots)), r["language"], r["total"], res)
+                for r in ft_test_rows for res in RES_SWEEP]
+        with ProcessPoolExecutor(max_workers=3) as pool:
+            for key, ok in pool.map(_legibility_job, jobs, chunksize=8):
+                LEGIBILITY[key] = ok
+
+    legibility_thread = threading.Thread(target=run_legibility, daemon=True)
+    legibility_thread.start()
+
+    def eval_rows(arm, rows, *, transform=None, image_index_map=None, max_side=None):
         """Per-case rows + accuracy of one arm on rows (chunked, RAM-safe)."""
         out_rows, correct, n = [], 0, 0
         chunk = 400 if arm != "ocr" else 800
+        max_side = max_side or IMAGE_SIZE
         for s in range(0, len(rows), chunk):
             part = rows[s:s + chunk]
             if arm == "a1v":
@@ -713,7 +760,7 @@ def main() -> None:
                 if transform is not None:
                     imgs = [transform(im) for im in imgs]
                 ev = evaluate_a1v(a1v, [case_of_row(r) for r in part], imgs,
-                                  device=device, max_side=IMAGE_SIZE, batch_decisions=16,
+                                  device=device, max_side=max_side, batch_decisions=16,
                                   max_state_tokens=MAX_STATE_TOKENS,
                                   max_option_tokens=MAX_OPTION_TOKENS,
                                   collect_rows=True)
@@ -724,12 +771,10 @@ def main() -> None:
                 ev = evaluate_julia_arch(mk1, tok, cases, qts, device=device,
                                          batch_decisions=32, collect_rows=True)
                 rows_out, hits, cnt = ev["rows"], sum(r["correct"] for r in ev["rows"]), ev["n"]
-            else:
+            else:  # smol
                 rows_out = []
                 hits = cnt = 0
-                import torch as _t
-
-                with _t.no_grad():
+                with torch.no_grad():
                     for s2 in range(0, len(part), 16):
                         sub = part[s2:s2 + 16]
                         cases = [case_of_row(r) for r in sub]
@@ -743,8 +788,7 @@ def main() -> None:
                         for j, r in enumerate(sub):
                             k = len(cases[j].options)
                             gold = cases[j].option_ids.index(cases[j].target_option)
-                            pred = int(probs[j, :k].argmax().item())
-                            ok = int(pred == gold)
+                            ok = int(int(probs[j, :k].argmax().item()) == gold)
                             rows_out.append({"correct": ok})
                             hits += ok
                             cnt += 1
@@ -756,37 +800,16 @@ def main() -> None:
             n += cnt
         return out_rows, (correct / n if n else None)
 
-    test_rows = {}
-    test_acc = {}
-    for arm in ("a1v", "ocr", "smol"):  # gates read a1v/ocr; smol is reported
+    test_rows, test_acc = {}, {}
+    for arm in ("a1v", "ocr"):
         test_rows[arm], test_acc[arm] = eval_rows(arm, test_nonfr)
         (WORK / f"eval_test_nonfr__{arm}.jsonl").write_text(
             "".join(json.dumps(r) + "\n" for r in test_rows[arm]), encoding="utf-8")
-    for arm in ("a1v", "ocr", "smol"):
+    for arm in ("a1v", "ocr"):
         fr_rows, fr_acc = eval_rows(arm, test_fr)
         (WORK / f"eval_test_fr__{arm}.jsonl").write_text(
             "".join(json.dumps(r) + "\n" for r in fr_rows), encoding="utf-8")
         test_acc[f"{arm}_fr"] = fr_acc
-    # finalist seeds on non-FR test (reported); gates always use s42 bests
-    seed_reports = [dict(s42[a], arm=a) for a in ("a1v", "ocr", "smol")]
-    for seed in (43, 44):  # finalist is always a1v or ocr
-        if finalist == "a1v":
-            load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
-            a1v.to(device)
-        else:
-            load_best_weights(WORK / f"runs/ocr_s{seed}/best.pt", mk1)
-            mk1.to(device)
-        _, acc_seed = eval_rows(finalist, test_nonfr)
-        seed_reports.append({"arm": finalist, "seed": seed,
-                             "test_nonfr_acc": round(acc_seed, 4),
-                             **summary_of(finalist, seed)})
-    # restore s42-best for the gates
-    load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
-    a1v.to(device)
-    load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
-    mk1.to(device)
-
-    log(f"test non-FR: " + " ".join(f"{a}={test_acc[a]:.4f}" for a in test_rows))
 
     # G1 (roadmap): A1-V vs OCR->MK-SH-1, paired by episode
     by_id_ocr = {r["id"]: r for r in test_rows["ocr"]}
@@ -794,15 +817,37 @@ def main() -> None:
         [r["correct"] for r in test_rows["a1v"]],
         [int(by_id_ocr[r["id"]]["correct"]) for r in test_rows["a1v"]],
         [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
-    # reported comparator (no gate): A1-V vs SmolVLM2 with the same CI
-    by_id_smol = {r["id"]: r for r in test_rows["smol"]}
-    delta_ci_smol = paired_delta_ci(
-        [r["correct"] for r in test_rows["a1v"]],
-        [int(by_id_smol[r["id"]]["correct"]) for r in test_rows["a1v"]],
-        [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
-    smol_clearly_ahead = delta_ci_smol["ci95"][1] < 0  # claim rule, fixed now
+    g1_by_family = {}
+    for family in sorted({r["family"] for r in test_rows["a1v"]}):
+        sub = [r for r in test_rows["a1v"] if r["family"] == family]
+        g1_by_family[family] = paired_delta_ci(
+            [r["correct"] for r in sub],
+            [int(by_id_ocr[r["id"]]["correct"]) for r in sub],
+            [r["group_id"] for r in sub], n_boot=1000, seed=42)
 
-    # G2: E35 text sets, CPU float32, every arm vs frozen bars
+    # rules comparator (frozen rules from ocrprep): per-family claim rule
+    rules_rows = {}
+    for cand in Path("/kaggle/input").rglob("rules_predictions.jsonl"):
+        for line in cand.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                if r["split"] == "test":
+                    rules_rows[r["id"]] = r
+    rules_vs_a1v = {}
+    for family in sorted({r["family"] for r in test_rows["a1v"]}):
+        sub = [r for r in test_rows["a1v"]
+               if r["family"] == family and r["id"] in rules_rows]
+        if not sub:
+            continue
+        ci = paired_delta_ci(
+            [int(rules_rows[r["id"]]["pred"] == rules_rows[r["id"]]["target"]) for r in sub],
+            [r["correct"] for r in sub],
+            [r["group_id"] for r in sub], n_boot=1000, seed=42)
+        # claim rule: rules match-or-beat A1-V when the CI lower bound of
+        # (rules - a1v) is >= 0 -> no visual-advantage claim in that family
+        rules_vs_a1v[family] = {**ci, "claim_blocked": ci["ci95"][0] >= 0.0}
+
+    # G2: E35 text sets, CPU float32, gated arms vs frozen bars
     bundle = find_bundle()
     man29 = json.loads((bundle / "e29-mix/manifest.json").read_text(encoding="utf-8"))
     want = set(man29["original_dev_ids"])
@@ -811,34 +856,18 @@ def main() -> None:
                  if l.strip() and json.loads(l)["id"] in want]
     a1v.to("cpu"); a1v.eval()
     mk1.to("cpu"); mk1.eval()
-    smol.model.to("cpu"); smol.model.eval()
     text_sets = {}
     for name, rr in (("testC", [json.loads(l) for l in (bundle / "e26-order/test_c_rows.jsonl")
                                  .read_text(encoding="utf-8").splitlines() if l.strip()]),
                      ("task", task_rows)):
-        accs = {}
         cases = [case_of_row(r) for r in rr]
         ev = evaluate_a1v(a1v, cases, None, device="cpu", batch_decisions=16,
                           max_state_tokens=MAX_STATE_TOKENS,
                           max_option_tokens=MAX_OPTION_TOKENS)
-        accs["a1v"] = round(ev["accuracy"], 4)
         qts = {c.id: qtype_of_row(r) for c, r in zip(cases, rr)}
         ev2 = evaluate_julia_arch(mk1, tok, cases, qts, device="cpu", batch_decisions=32)
-        accs["ocr"] = round(ev2["accuracy"], 4)
-        import torch as _t
-
-        with _t.no_grad():
-            hits = cnt = 0
-            for s2 in range(0, len(cases), 16):
-                sub = cases[s2:s2 + 16]
-                logits = smol.batch_logits(sub, [None] * len(sub))
-                for j, c in enumerate(sub):
-                    k = len(c.options)
-                    gold = c.option_ids.index(c.target_option)
-                    hits += int(int(logits[j, :k].argmax().item()) == gold)
-                    cnt += 1
-        accs["smol"] = round(hits / cnt, 4)
-        text_sets[name] = accs
+        text_sets[name] = {"a1v": round(ev["accuracy"], 4),
+                           "ocr": round(ev2["accuracy"], 4)}
     gates = gate_report(delta_ci=delta_ci, text_sets=text_sets, text_bars=TEXT_BARS,
                         delta_lo_margin=DELTA_LO_MARGIN)
 
@@ -848,7 +877,7 @@ def main() -> None:
     a1v.to(device)
     swap_map = swap_map_within_blocks(
         [f'{r["family"]}|{r["language"]}' for r in test_nonfr])
-    swap_rows, acc_swap = eval_rows("a1v", test_nonfr, image_index_map=swap_map)
+    _, acc_swap = eval_rows("a1v", test_nonfr, image_index_map=swap_map)
     _, acc_blank = eval_rows("a1v", test_nonfr, transform=blank_like)
     _, acc_degr = eval_rows("a1v", test_nonfr, transform=degrade)
     g3 = {"bar": f"swap drop >= {SWAP_DROP_BAR:.2f}",
@@ -858,8 +887,10 @@ def main() -> None:
     g3["passed"] = (test_acc["a1v"] - acc_swap) >= SWAP_DROP_BAR
     (WORK / "eval_ablations__a1v.json").write_text(json.dumps(g3, indent=2), encoding="utf-8")
 
-    # G4: real eval (repo may not exist; skipped cleanly)
+    # G4: real eval (repo may not exist; skipped cleanly). CORD and
+    # GUI-Odyssey go in the MAIN table; frozen interpretation rule computed.
     g4 = {"status": "not_run", "reason": f"{REAL_EVAL_REPO} not available (E38c pending)"}
+    real_ctx = None
     try:
         from huggingface_hub import list_repo_files, snapshot_download
 
@@ -875,11 +906,7 @@ def main() -> None:
         real_rows = [json.loads(l) for l in (real_root_path / rows_file)
                      .read_text(encoding="utf-8").splitlines() if l.strip()]
         real_root = {"E38a": real_root_path, "E38b": real_root_path}
-        # OCR the real images (small set) on CPUs, then swap the roots/ocr
-        # context so eval_rows resolves paths against the real snapshot
         from concurrent.futures import ProcessPoolExecutor
-
-        _TESS = {"en": "eng", "de": "deu", "es": "spa", "fr": "fra"}
 
         def _ocr_job(p_lang):
             p, lang = p_lang
@@ -887,7 +914,7 @@ def main() -> None:
             from PIL import Image
 
             return pytesseract.image_to_string(
-                Image.open(p), lang=_TESS.get(lang, "eng"))
+                Image.open(p), lang=_TESS_RES.get(lang, "eng"))
 
         real_ocr = {}
         with ProcessPoolExecutor(max_workers=3) as pool:
@@ -895,16 +922,18 @@ def main() -> None:
                     _ocr_job, [(str(real_root_path / r["image"]), r.get("language", "en"))
                                for r in real_rows], chunksize=8)):
                 real_ocr[r["id"]] = text
+        real_ctx = {"rows": real_rows, "root": real_root,
+                    "ocr": real_ocr, "root_path": real_root_path}
 
-        def eval_real(arm, rows):
-            """eval_rows against the real snapshot: monkey-context, no globals."""
+        def eval_real(arm, rows, *, max_side=None):
+            max_side = max_side or IMAGE_SIZE
             out_rows, correct, n = [], 0, 0
             for s in range(0, len(rows), 200):
                 part = rows[s:s + 200]
                 if arm == "a1v":
                     imgs = [open_image(r, real_root) for r in part]
                     ev = evaluate_a1v(a1v, [case_of_row(r) for r in part], imgs,
-                                      device=device, max_side=IMAGE_SIZE,
+                                      device=device, max_side=max_side,
                                       batch_decisions=16,
                                       max_state_tokens=MAX_STATE_TOKENS,
                                       max_option_tokens=MAX_OPTION_TOKENS,
@@ -927,10 +956,8 @@ def main() -> None:
                     out_rows += ev["rows"]
                     correct += sum(r["correct"] for r in ev["rows"])
                     n += ev["n"]
-                else:  # smol comparator on the real images
-                    import torch as _t
-
-                    with _t.no_grad():
+                else:  # smol on real images
+                    with torch.no_grad():
                         for s2 in range(0, len(part), 16):
                             sub = part[s2:s2 + 16]
                             cases = [case_of_row(r) for r in sub]
@@ -945,20 +972,252 @@ def main() -> None:
                                 n += 1
             return out_rows, (correct / n if n else None)
 
-        accs_real = {}
-        smol.model.to(device)  # back from the CPU G2 eval for the real images
-        for arm in ("a1v", "ocr", "smol"):  # kill rule reads a1v+ocr; smol reported
+        accs_real, real_rows_by_arm = {}, {}
+        for arm in ("a1v", "ocr"):
             real_rows_arm, acc = eval_real(arm, real_rows)
             accs_real[arm] = round(acc, 4)
+            real_rows_by_arm[arm] = real_rows_arm
             (WORK / f"eval_real__{arm}.jsonl").write_text(
                 "".join(json.dumps(r) + "\n" for r in real_rows_arm), encoding="utf-8")
+        # frozen interpretation rule: real Delta(a1v - ocr) CI
+        real_by_id = {r["id"]: r for r in real_rows_by_arm["ocr"]}
+        real_delta_ci = paired_delta_ci(
+            [r["correct"] for r in real_rows_by_arm["a1v"]],
+            [int(real_by_id[r["id"]]["correct"]) for r in real_rows_by_arm["a1v"]],
+            [r.get("group_id", r["id"]) for r in real_rows_by_arm["a1v"]],
+            n_boot=1000, seed=42)
         g4 = {"status": "completed", "repo": REAL_EVAL_REPO, **accs_real,
+              "delta_ci_a1v_vs_ocr": real_delta_ci,
               "kill_bar": REAL_EVAL_KILL,
               "non_discriminating": all(v >= REAL_EVAL_KILL for v in accs_real.values())}
     (WORK / "e39_real_eval.json").write_text(json.dumps(g4, indent=2), encoding="utf-8")
 
+    # ---- (d): finalist seeds 43/44 --------------------------------------------
+    seed_reports = [dict(s42[a], arm=a, regimen=REGIMEN[a]) for a in ("a1v", "ocr")]
+    if budget_ok():
+        run_and_log(spawn(finalist, 43, 0, STEPS), f"{finalist}-s43")
+        run_and_log(spawn(finalist, 44, 1, STEPS), f"{finalist}-s44")
+        for seed in (43, 44):
+            if finalist == "a1v":
+                load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
+                a1v.to(device)
+            else:
+                load_best_weights(WORK / f"runs/ocr_s{seed}/best.pt", mk1)
+                mk1.to(device)
+            _, acc_seed = eval_rows(finalist, test_nonfr)
+            seed_reports.append({"arm": finalist, "regimen": REGIMEN[finalist],
+                                 "seed": seed, "test_nonfr_acc": round(acc_seed, 4),
+                                 **summary_of(f"{finalist}_s{seed}")})
+        load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
+        a1v.to(device)
+        load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
+        mk1.to(device)
+    else:
+        skipped.append({"phase": "(d) seeds", "reason": "wall budget"})
+
+    # ---- (e): resolution sweep (inference) + field_threshold error analysis --
+    sweep, error_analysis = {}, {}
+    if budget_ok():
+        for res in RES_SWEEP:
+            _, acc_dev_res = eval_rows("a1v", splits["dev"], max_side=res)
+            sweep[f"dev_{res}"] = round(acc_dev_res, 4)
+        legibility_thread.join()
+        ft_errors = [r for r in test_rows["a1v"]
+                     if r["family"] == "field_threshold" and not r["correct"]]
+        ft_total_by_id = {r["id"]: r for r in ft_test_rows}
+        for res in RES_SWEEP:
+            illegible = 0
+            for r in ft_errors:
+                base = ft_total_by_id.get(r["id"])
+                if base is None:
+                    continue
+                if not LEGIBILITY.get((str(image_path_of(base, roots)), res), True):
+                    illegible += 1
+            error_analysis[res] = {
+                "a1v_errors": len(ft_errors),
+                "errors_with_illegible_total": illegible,
+                "errors_with_legible_total": len(ft_errors) - illegible,
+                "legibility_rate_all_ft": round(
+                    sum(LEGIBILITY.values()) / len(LEGIBILITY) if LEGIBILITY else 0.0, 4)}
+        (WORK / "field_threshold_error_analysis.json").write_text(
+            json.dumps(error_analysis, indent=2), encoding="utf-8")
+        if real_ctx:
+            for res in RES_SWEEP:
+                _, acc = eval_real("a1v", real_ctx["rows"], max_side=res)
+                sweep[f"real_{res}"] = round(acc, 4)
+        log(f"resolution sweep: {sweep}")
+    else:
+        skipped.append({"phase": "(e) sweep", "reason": "wall budget"})
+
+    train_1536 = {"status": "not_run", "reason": "wall budget"}
+    if budget_ok(TRAIN_1536_EST_S + 1200):
+        run_and_log(spawn("a1v", 45, 1, STEPS, size=1536), "a1v-s45-sz1536")
+        s1536 = summary_of("a1v_s45_sz1536")
+        load_best_weights(WORK / "runs/a1v_s45_sz1536/best.pt", a1v)
+        a1v.to(device)
+        _, acc_1536 = eval_rows("a1v", test_nonfr, max_side=1536)
+        train_1536 = {"status": "completed", "regimen": "task-trained (descriptive)",
+                      "test_nonfr_acc": round(acc_1536, 4), **s1536}
+        load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
+        a1v.to(device)
+    (WORK / "train_1536.json").write_text(json.dumps(train_1536, indent=2), encoding="utf-8")
+
+    # ---- (f): jev-vlm-4b zero-shot reference + SmolVLM2 comparator ------------
+    smol_section = {"status": "not_run", "reason": "wall budget"}
+    delta_ci_smol = None
+    if budget_ok(9_000):
+        run_and_log(spawn("smol", 42, 1, SMOKE_STEPS), "smoke-smol")
+        run_and_log(spawn("smol", 42, 1, STEPS), "smol-s42")
+        smol = SmolScorer(device)
+        load_best_weights(WORK / "runs/smol_s42/best.pt", smol.model)
+        smol_rows, smol_acc = eval_rows("smol", test_nonfr)
+        (WORK / "eval_test_nonfr__smol.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in smol_rows), encoding="utf-8")
+        fr_rows_s, fr_acc_s = eval_rows("smol", test_fr)
+        (WORK / "eval_test_fr__smol.jsonl").write_text(
+            "".join(json.dumps(r) + "\n" for r in fr_rows_s), encoding="utf-8")
+        # text sets for smol (reported, not gating)
+        smol_text = {}
+        smol.model.to("cpu"); smol.model.eval()
+        for name, rr in (("testC", [json.loads(l) for l in (bundle / "e26-order/test_c_rows.jsonl")
+                                     .read_text(encoding="utf-8").splitlines() if l.strip()]),
+                         ("task", task_rows)):
+            cases = [case_of_row(r) for r in rr]
+            hits = cnt = 0
+            with torch.no_grad():
+                for s2 in range(0, len(cases), 16):
+                    logits = smol.batch_logits(cases[s2:s2 + 16], [None] * 16)
+                    for j, c in enumerate(cases[s2:s2 + 16]):
+                        hits += int(int(logits[j, :len(c.options)].argmax().item())
+                                    == c.option_ids.index(c.target_option))
+                        cnt += 1
+            smol_text[name] = round(hits / cnt, 4)
+        smol.model.to(device)
+        smol_real = None
+        if real_ctx:
+            _, smol_real = eval_real("smol", real_ctx["rows"])
+        by_id_smol = {r["id"]: r for r in smol_rows}
+        delta_ci_smol = paired_delta_ci(
+            [r["correct"] for r in test_rows["a1v"]],
+            [int(by_id_smol[r["id"]]["correct"]) for r in test_rows["a1v"]],
+            [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
+        smol_section = {"status": "completed", "regimen": REGIMEN["smol"],
+                        "dev_half_macro": summary_of("smol_s42")["dev_half_macro"],
+                        "test_nonfr_acc": round(smol_acc, 4),
+                        "test_fr_acc": round(fr_acc_s, 4),
+                        "text_sets": smol_text,
+                        "real_acc": round(smol_real, 4) if smol_real is not None else None}
+    else:
+        skipped.append({"phase": "(f) smol", "reason": "wall budget"})
+
+    jev_section = {"status": "not_run", "reason": "wall budget"}
+    if budget_ok(3_000):
+        from mksh_v.train_compare import accuracy_ci_by_group, ece_15, sha_sample
+
+        jev_sample = sha_sample(test_nonfr, per_family=200)
+        (WORK / "jev_sample_ids.json").write_text(json.dumps(
+            {"rule": "sha256(id)-ordered first 200 per family, non-FR test",
+             "ids": [r["id"] for r in jev_sample]}), encoding="utf-8")
+        try:
+            from transformers import AutoModel, AutoProcessor
+
+            processor = AutoProcessor.from_pretrained(JEV_ID, trust_remote_code=True)
+            model = AutoModel.from_pretrained(
+                JEV_ID, trust_remote_code=True, dtype=torch.float16).to("cuda:1")
+            model.eval()
+
+            def ask(case, image):
+                opts = "\n".join(f"{case.options[i].id}: {case.options[i].description}"
+                                 for i in range(len(case.options)))
+                prompt = (f"state: {case.state}\nquestion: {case.question}\n"
+                          f"options:\n{opts}\n"
+                          "Answer with the option id and its probability (System One).")
+                try:
+                    feats = processor(text=[prompt], images=[image],
+                                      return_tensors="pt").to("cuda:1")
+                    with torch.no_grad():
+                        out = model.generate(**feats, max_new_tokens=48)
+                    text_out = processor.batch_decode(out, skip_special_tokens=True)[0]
+                    low = text_out.lower()
+                    pred = next((o.id for o in case.options if o.id.lower() in low), None)
+                    import re as _re
+
+                    m = _re.search(r"(0\.\d+)", low)
+                    return pred, (float(m.group(1)) if m else None), text_out[:200]
+                except Exception as exc:
+                    return None, None, f"{type(exc).__name__}: {exc}"[:200]
+
+            from PIL import Image
+
+            jev_rows = []
+            for r in jev_sample:
+                pred, conf, raw = ask(case_of_row(r), open_image(r, roots))
+                jev_rows.append({"id": r["id"], "family": r["family"],
+                                 "group_id": r["group_id"], "pred": pred, "conf": conf,
+                                 "target": r["target_option"],
+                                 "correct": int(pred == r["target_option"]), "raw": raw})
+            real_jev = []
+            if real_ctx:
+                for r in real_ctx["rows"]:
+                    pred, conf, raw = ask(
+                        case_of_row(r),
+                        Image.open(real_ctx["root_path"] / r["image"]).convert("RGB"))
+                    real_jev.append({"id": r["id"], "family": r.get("family", "real"),
+                                     "group_id": r.get("group_id", r["id"]),
+                                     "pred": pred, "conf": conf,
+                                     "target": r["target_option"],
+                                     "correct": int(pred == r["target_option"])})
+            # per-family accuracy + CI, ECE, and paired delta vs a1v on the sample
+            by_family = {}
+            for r in jev_rows:
+                by_family.setdefault(r["family"], []).append(r)
+            per_family = {}
+            for fam, rs in sorted(by_family.items()):
+                per_family[fam] = accuracy_ci_by_group(
+                    [r["correct"] for r in rs], [r["group_id"] for r in rs])
+            confs = [r["conf"] for r in jev_rows if r["conf"] is not None]
+            corrects = [r["correct"] for r in jev_rows if r["conf"] is not None]
+            a1v_on_sample = {r["id"]: r for r in test_rows["a1v"]}
+            delta_jev = paired_delta_ci(
+                [r["correct"] for r in jev_rows],
+                [int(a1v_on_sample[r["id"]]["correct"]) for r in jev_rows],
+                [r["group_id"] for r in jev_rows], n_boot=1000, seed=42)
+            jev_section = {"status": "completed", "regimen": REGIMEN["jev"],
+                           "model": JEV_ID, "n_sample": len(jev_rows),
+                           "sample_acc_ci": accuracy_ci_by_group(
+                               [r["correct"] for r in jev_rows],
+                               [r["group_id"] for r in jev_rows]),
+                           "per_family": per_family,
+                           "ece": round(ece_15(confs, corrects), 4) if confs else None,
+                           "delta_jev_minus_a1v_ci": delta_jev,
+                           "real_acc": (round(sum(r["correct"] for r in real_jev)
+                                              / len(real_jev), 4) if real_jev else None),
+                           "framing": "existing ~15x larger model WITHOUT adaptation; "
+                                      "reference, not an equal-footing comparison"}
+            (WORK / "eval_jev.jsonl").write_text(
+                "".join(json.dumps(r) + "\n" for r in jev_rows), encoding="utf-8")
+            if real_jev:
+                (WORK / "eval_jev_real.jsonl").write_text(
+                    "".join(json.dumps(r) + "\n" for r in real_jev), encoding="utf-8")
+        except Exception as exc:
+            jev_section = {"status": "not_run",
+                           "reason": f"load failed ({type(exc).__name__}): {exc}"[:500]}
+    else:
+        skipped.append({"phase": "(f) jev", "reason": "wall budget"})
+
+    # transfer-evidence flag (frozen G4 interpretation rule)
+    transfer_evidence = None
+    if g4.get("status") == "completed":
+        ci = g4.get("delta_ci_a1v_vs_ocr", {}).get("ci95")
+        if gates["G1_visual_advantage"]["passed"] and ci and ci[1] <= 0:
+            transfer_evidence = "synthetic-only advantage, no transfer evidence"
+        elif gates["G1_visual_advantage"]["passed"]:
+            transfer_evidence = "transfer supported"
+
     summary = {
         "status": "completed", "env": env,
+        "priority_order": "(a) a1v+eval (b) ocr+rules (c) G1-G4 (d) seeds "
+                          "(e) sweep+1536 (f) jev+smol",
         "steps": STEPS, "image_size": IMAGE_SIZE,
         "effective_batch": EFFECTIVE_BATCH, "replay_every": REPLAY_EVERY,
         "finalist": finalist,
@@ -966,18 +1225,27 @@ def main() -> None:
         "test_nonfr": {a: round(v, 4) for a, v in test_acc.items()
                        if not a.endswith("_fr")},
         "test_fr": {a[:-3]: round(v, 4) for a, v in test_acc.items() if a.endswith("_fr")},
-        "delta_ci": delta_ci,
-        "comparator_smol": {"delta_ci": delta_ci_smol,
-                            "smol_clearly_ahead": smol_clearly_ahead,
+        "delta_ci": delta_ci, "g1_by_family": g1_by_family,
+        "rules_vs_a1v": rules_vs_a1v,
+        "text_sets": text_sets, "gates": gates,
+        "G3_ablations": g3, "G4_real": g4,
+        "transfer_evidence": transfer_evidence,
+        "resolution_sweep": sweep,
+        "field_threshold_error_analysis": error_analysis,
+        "train_1536": train_1536,
+        "comparator_smol": {**smol_section,
+                            "delta_ci": delta_ci_smol,
                             "claim_rule": "if ci95 upper bound < 0 the report and "
                                           "model card declare it; no 'best small "
                                           "visual model' claim"},
-        "text_sets": text_sets, "gates": gates,
-        "G3_ablations": g3, "G4_real": g4,
+        "comparator_jev": jev_section,
+        "regimen_labels": REGIMEN,
+        "skipped_phases": skipped,
         "wall_s": round(time.time() - t_start, 1),
     }
     (WORK / "e39_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    log(f"E39 done in {summary['wall_s']}s; gates: {json.dumps(gates)}")
+    log(f"E39 done in {summary['wall_s']}s; gates: {json.dumps(gates)}; "
+        f"skipped: {skipped}")
 
 
 if __name__ == "__main__":

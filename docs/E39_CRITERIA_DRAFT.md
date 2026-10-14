@@ -6,135 +6,178 @@ capability — and does any of it transfer to real documents/screens?**
 
 Decision adopted upstream (review council, 2026-10-14, `docs/decisions.md`):
 E39 trains **synthetic-only** (E38a+E38b). Real data (CORD, DocLayNet,
-GUI-Odyssey) is **evaluation only**; its mapping to the contract is being
-probed by a separate session and enters this file only through the G4 section
-below. One single job runs all arms and also evaluates them on real data.
+GUI-Odyssey) is **evaluation only**. One single job runs the arms and also
+evaluates them on real data.
 
 ## Pins (fill at freeze time)
 
 - mksh-v code commit: `TBD` (the commit that carries `kaggle/e39_train.py`)
-- Kaggle image / torch / CUDA / transformers / Python: `TBD` (same pinning
-  procedure as E37: env dump recorded in the job output)
-- Tesseract + language packs (eng/deu/spa/fra) versions: `TBD` (recorded from
-  the OCR-prep kernel; license re-checked at freeze in data-licenses.md)
-- Data: Hub privado `Gjusev/MK-SH-V-E38a` + `Gjusev/MK-SH-V-E38b` (per-family
-  rows.jsonl sha256 verified in-kernel against each repo manifest); read with
-  the Kaggle secret `HF_TOKEN` (fine-grained, read-only, per-notebook)
-- OCR cache: private Kaggle dataset `gjusev/mkshv-e39-ocr` (transport chain:
-  CPU-only kernel `gjusev/mkshv-e39-ocrprep` → CLI output download → CLI
-  dataset upload at GO; sha256 of `ocr.jsonl` in its manifest)
-- A1-V init: E37 C3 checkpoint `c3_final.safetensors`
-  sha256 `bac7c72242d236f8…` (full sha at freeze) via the private Kaggle
-  dataset `gjusev/mkshv-e37-ckpt`. **Pre-declared fallback** if transport
-  fails: re-run the C3 recipe in-job (E35 mix, seed 42, 3 phases × fresh
-  AdamW, rng 42^0xE35^phase) and record the sha obtained; divergence declared.
-- OCR-arm init: `mksh1_v12.safetensors` = MK-SH-1 v1.2 weights
-  (sha `ea66cdde…`), via the same `gjusev/mkshv-e37-ckpt` dataset
-- SmolVLM2 arm init: `HuggingFaceTB/SmolVLM2-500M…` (exact repo id pinned at
-  freeze; Apache-2.0 re-verified then)
-- Real-eval set: `Gjusev/MK-SH-V-E38c` (provisional name, may not exist yet —
-  skipped cleanly as `not_run` while absent)
+- Kaggle image / torch / CUDA / transformers / Python: `TBD` (env dump in the
+  job output, E37 procedure)
+- Tesseract + language packs (eng/deu/spa/fra) versions: `TBD` (from the
+  OCR-prep kernel; license re-checked at freeze in data-licenses.md)
+- Data: Hub privado `Gjusev/MK-SH-V-E38a` + `Gjusev/MK-SH-V-E38b`
+  (per-family rows.jsonl sha256 verified in-kernel against each manifest);
+  read with the Kaggle secret `HF_TOKEN` (fine-grained, read-only, per
+  notebook)
+- OCR cache + frozen rules: private Kaggle dataset `gjusev/mkshv-e39-ocr`
+  (`ocr.jsonl` with per-image text+confidence, `rules_predictions.jsonl`;
+  shas in its manifest). Transport: CPU kernel `gjusev/mkshv-e39-ocrprep` →
+  CLI output download → CLI dataset upload (GO-gated, ABSOLUTE `-p` paths)
+- A1-V init: E37 C3 checkpoint `c3_final.safetensors` sha256
+  `bac7c72242d236f8…` (full sha at freeze) via `gjusev/mkshv-e37-ckpt`.
+  Pre-declared fallback: C3 recipe rerun in-job (3 phases × fresh AdamW, rng
+  42^0xE35^phase), sha recorded, divergence declared.
+- OCR-arm init: `mksh1_v12.safetensors` = MK-SH-1 v1.2 (sha `ea66cdde…`),
+  same dataset
+- SmolVLM2 arm: exact repo id `TBD` at freeze (Apache-2.0 re-verified then)
+- jev-vlm-4b comparator: `sidman007/jev-vlm-4b`, revision SHA `TBD` at freeze
+  (Apache-2.0, custom_code); if custom_code does not load in the pinned
+  environment → `not_run` with the exact error, no patches
+- Real-eval set: `Gjusev/MK-SH-V-E38c` (provisional name, skipped cleanly
+  while absent)
+- Laya Vision (`nnlgsakib/laya-vision`): **`not_run`, declared** — no
+  published inference code; reimplementing it would not be a fair comparison.
 
-## Arms (3)
+## Arms, comparators and régimen
 
-- **A1-V**: NeoMME-260M + marker head (`mksh_v.arch_a1v`), init = E37 C3
-  checkpoint. Input: image at **1024 px** (the C1/C4 point: 5,56 s/step,
-  microbatch 4 × 8, 11,7 GB peak) + text tail (state, question, options).
-  768 px is a finalist-only descriptive ablation, run only if quota remains.
-- **OCR→MK-SH-1**: Tesseract on the ORIGINAL PNG (precomputed by the CPU
-  kernel over E38a+E38b train/dev/test) → OCR text becomes `state`;
-  MK-SH-1 fine-tuned with the E35 recipe (`julia_sequence` 1024/256).
-- **SmolVLM2-500M**: **reported visual comparator, no gate** (it is a visual
-  arm — "best non-visual" comparisons are wrong by construction). Scores
-  options by first-token logits (declared design: image + `Question …
-  Options: A)… B)… Answer:`, softmax over the option-letter logits),
-  fine-tuned with the same recipe. The release candidates (and the
-  finalist) are our two systems: A1-V and OCR→MK-SH-1.
+Every results table carries a `régimen` column: **task-trained** vs
+**zero-shot**. No sentence of the report compares A1-V with a zero-shot model
+without that label.
 
-## Text-replay (anti-forgetting, fixed for every arm)
+- **A1-V** (task-trained; gated): NeoMME-260M + marker head, init = E37 C3
+  checkpoint, image at **1024 px** (validated end-to-end by C4; mb 4×8,
+  5,56 s/step, 11,7 GB peak — 1536 only has 100-step C1 evidence with
+  14 608 MB reserved vs a 14,56 GB T4, an OOM risk).
+- **OCR→MK-SH-1** (task-trained; gated): Tesseract on the ORIGINAL PNG
+  (precomputed by the CPU kernel) → OCR text as `state`; MK-SH-1 fine-tuned
+  with the E35 recipe.
+- **OCR + deterministic rules** (task-trained, dev-fitted; comparator):
+  frozen rules over the OCR text for field_threshold (localized-total regex
+  + comparison with the question's threshold), doc_type (class keywords) and
+  form_complete (required-`*` fields empty or low-confidence OCR →
+  illegible). Tuned ONLY on the E38a dev split; frozen with this file.
+  Reported on test, real and per family.
+- **SmolVLM2-500M** (task-trained; reported visual comparator, no gate):
+  first-token option-letter logits, same recipe.
+- **jev-vlm-4b** (zero-shot; reference): evaluated without training on the
+  full real eval and on a sha256-ordered sample of 200 cases per family of
+  the non-FR test (~1 400). Framing: **an existing ~15× larger model without
+  adaptation — a reference, not an equal-footing comparison.**
 
-Both/all arms mix the **E35 text mix** (the C3 mix: extremes 248 + grid 944 +
-task 944, from `gjusev/mokka-decisions-bundle`) as replay: **1 of every 4
-microbatches** is a replay microbatch (text-only), total optimizer steps
+## Priority order (frozen; the kernel cuts the tail if quota runs out)
+
+(a) A1-V s42 at 1024 px + eval · (b) OCR→MK-SH-1 and OCR+rules · (c)
+statistical comparison G1–G4 + per-family analysis · (d) finalist seeds
+43/44 · (e) 768/1536 inference sweep and, if quota remains, a 1536-px
+training run · (f) jev-vlm-4b zero-shot and SmolVLM2. Steps (a)–(c) protect
+the scientific question. Wall budget guard: 11,5 h of the 12 h session cap;
+phases beyond it are recorded `not_run` with reason.
+
+## Text-replay (anti-forgetting, fixed for every trained arm)
+
+All trained arms mix the **E35 text mix** (extremes 248 + grid 944 + task
+944) as replay: **1 of every 4 microbatches**, total optimizer steps
 unchanged. G2 is anchored to frozen references precisely so that replay and
 comparators cannot co-degrade through a relative gate.
 
 ## Mixture and budget
 
-- Train = E38a+E38b `train` split verbatim (21 000 cases; 7 families × 3 000;
-  en/es/de) + E35 replay fraction above. No real data in training.
-- Effective batch 32: A1-V microbatch 4 × 8 (1024-px memory); OCR and
-  SmolVLM2 microbatch 8 × 4. **2 000 optimizer steps** (≈3,05 epochs),
-  AdamW 2e-5/1e-4, wd 0,01, warmup 5 %, clip 1,0, fp16 autocast, seed 42.
-- **Both GPUs of the T4×2 session**: the orchestrator spawns one worker per
-  GPU (phase 1: A1-V s42 on gpu0 ∥ OCR s42 then SmolVLM2 s42 on gpu1; phase
-  2: finalist seeds 43/44 in parallel, one per GPU). Quota bills the SESSION
-  wall at double rate regardless of how many GPUs are used.
-- Selection: dev ONLY. Dev half of 1 050 fixed ids (crc32-seeded, frozen list
-  written to evidence) evaluated every 500 steps; metric = macro-mean of the
-  7 family accuracies; the BEST checkpoint by that metric is kept (weights
-  saved at every dev improvement and restored before any test/gate
-  evaluation — the last step never decides). The test split (5 600) is opened
-  exactly once, at the end, with the best weights.
-- Finalist (better macro-dev) runs seeds 43 and 44 additionally, whichever
-  arm it is; each seed is also evaluated once on the non-FR test and
-  reported. Gates compare seed-42 head-to-head.
-- Smoke-first: every arm runs a 20-step smoke before its full budget; a smoke
-  failure aborts the job before the budget is spent.
+- Train = E38a+E38b `train` verbatim (21 000; 7 families × 3 000; en/es/de)
+  + E35 replay. No real data in training.
+- Effective batch 32 (a1v mb 4×8; ocr mb 8×4; smol mb 4×8). **2 000 steps**,
+  AdamW 2e-5/1e-4, wd 0,01, warmup 5 %, clip 1,0, fp16, seed 42.
+- **Both GPUs**: orchestrator + per-GPU workers; quota bills the session
+  wall at double rate either way.
+- Selection: dev ONLY (frozen 1 050-id half, crc32-seeded, ids written to
+  evidence), every 500 steps, metric = macro-mean of the 7 family
+  accuracies; BEST checkpoint kept and restored before any test/gate
+  evaluation. Test (5 600) opens exactly once, with the best weights.
+- Finalist (better macro-dev among a1v/ocr) runs seeds 43/44, whichever arm
+  it is; each evaluated once on non-FR test. Gates compare seed-42.
+- Smoke-first: 20 steps per arm before its full budget.
 
 ## Gates (numeric margins fixed now)
 
-All accuracies on the **non-FR test slice** (4 200 cases; the 1 400 FR rows
-are reported separately and never gate — FR is eval-only by design):
+All accuracies on the **non-FR test slice** (4 200; FR's 1 400 rows reported
+separately, never gate):
 
 - **G1 visual advantage (roadmap gate)**: Δ = acc(A1-V s42) −
-  acc(OCR→MK-SH-1 s42) on non-FR test. PASS iff the 95 % paired-bootstrap CI
-  of Δ (resampling whole `group_id` episodes, 1 000 resamples, seed 42) has
-  its **lower bound ≥ +2,0 pp**.
-- **Reported comparator (no gate, claim rule fixed now)**: Δ(A1-V s42 −
-  SmolVLM2 s42) with the same paired CI. If its **upper bound < 0**
-  (SmolVLM2 clearly ahead), the report and the model card declare it and no
-  "best small visual model" claim is made. This is not a stop: the roadmap
-  only stops when there is no advantage over OCR.
-- **G2 no text forgetting** (anchored to the FROZEN MK-SH-1 v1.1 references,
-  E35 s42: testC 0,979, task 0,800 — not to any retrained arm): on the frozen
-  E35 text sets (CPU float32), **every arm** must reach testC ≥ **0,959** and
-  task ≥ **0,780** (−2 pp). testC/task of both arms are reported.
-- **G3 ablation tripwire** (always on the VISUAL arm, A1-V s42-best, non-FR
-  test): with images swapped (roll by 1 within each family×language block),
-  accuracy must DROP ≥ 15 pp vs clean. Smaller drops mean text leakage and
-  block any claim. Absent (white page, same canvas) and degraded (half-res
-  round-trip) ablations are descriptive; 768-px re-eval of the finalist is
-  descriptive and only if quota remains.
-- **G4 real eval**: reads the private Hub repo `Gjusev/MK-SH-V-E38c`
-  (provisional name; `not_run` cleanly while it does not exist). Probe
-  outcome (2026-10-14): CORD → field_threshold (~188 real receipts, our
-  threshold rule, balanced) and GUI-Odyssey → task_done (~500 test episodes,
-  final=true vs early-capture=false pairs; re-probe r2 pending). DocLayNet
-  out. doc_type, screen_state, source_conflict, urgency and form_complete
-  have NO real eval — synthetic only. **Kill criterion (fixed now)**: if ALL
-  arms score ≥ 95 % on the real-eval set, the real eval does not
-  discriminate — recorded as `real-eval non-discriminating`, no transfer
-  claim either way.
+  acc(OCR→MK-SH-1 s42); PASS iff the 95 % paired-bootstrap CI of Δ
+  (whole `group_id` episodes, 1 000 resamples, seed 42) has its **lower
+  bound ≥ +2,0 pp**. Also reported: Δ with CI **per family** (no gate).
+- **G2 no text forgetting** (anchored to frozen MK-SH-1 v1.1, E35 s42 —
+  testC 0,979 / task 0,800): each gated arm must reach testC ≥ **0,959**
+  and task ≥ **0,780** (−2 pp), CPU float32. testC/task reported for every
+  arm that runs, with its régime label.
+- **G3 ablation tripwire** (visual arm, A1-V s42-best): swapped images (roll
+  by 1 within family×language) must DROP ≥ 15 pp; absent and degraded are
+  descriptive.
+- **G4 real eval + frozen interpretation rule**: reads `Gjusev/MK-SH-V-E38c`
+  (CORD → field_threshold ~188; GUI-Odyssey → task_done ~500 pending
+  re-probe r2; DocLayNet out; the other families have no real eval). CORD
+  and GUI-Odyssey are reported in the **main table**, not an annex. **Kill
+  criterion**: if every evaluated arm scores ≥ 95 %, the real eval does not
+  discriminate. **Interpretation rule (frozen)**: if G1 passes on synthetic
+  but the real Δ(A1-V − OCR) CI includes 0 or is negative, the result is
+  reported as **"ventaja solo sintética, sin evidencia de transferencia"**
+  and neither the model card nor any announcement claims a general visual
+  advantage. Release gates do not change.
+- **Claim rules (comparators, frozen now)**: (i) SmolVLM2 — if the CI of
+  Δ(A1-V − SmolVLM2) has upper bound < 0, it is declared in the report and
+  model card; no "best small visual model" claim; not a stop. (ii) rules —
+  in each family where the CI of Δ(rules − A1-V) has lower bound ≥ 0, no
+  visual-advantage claim is made for that family.
 
 ### Outcome rule
 
 - **GO-E40** iff G1 and G2 hold (G3 is a tripwire: failing it blocks claims
-  and forces a generator fix before any release). G4 informs the release
-  narrative; its role is pinned by the freezer when the probe lands.
-- If G1 fails: the visual advantage is not established at this budget —
-  negative result published, no visual release (roadmap).
-- One job (possibly split into sessions with resume if the 12 h session wall
-  is approached), one shot per seed, no retries that touch measurements.
+  and forces a generator fix). G4 informs the narrative per its frozen
+  interpretation rule.
+- If G1 fails: negative result published, no visual release (roadmap).
+- One job (or resumed sessions if the 12 h wall approaches), one shot per
+  seed, no retries that touch measurements.
+
+## Per-family power (fixed table; episodes = distinct group_id in non-FR test)
+
+Minimal true Δ so that the one-sided 95 % lower bound of the paired CI
+clears +2,0 pp (normal approximation, independent errors; episodes per
+family ≈ 420–509, aggregate ≈ 2 900):
+
+| accuracy del perdedor | por familia (n≈420) | por familia (n≈500) | agregado (n≈2 100) |
+|---|---|---|---|
+| 0,90 | 5,0 pp | 4,8 pp | 3,4 pp |
+| 0,95 | 3,9 pp | 3,8 pp | 2,9 pp |
+| 0,97 | 3,3 pp | 3,2 pp | 2,6 pp |
+| 0,99 | 2,0 pp | 2,0 pp | 2,0 pp |
+
+Reading: at parities of 0,97+ the aggregate gate detects ≈ +2,5 pp true
+deltas; per-family statements need ≈ +3,3 pp or more and are reported, not
+gated.
+
+## Resolution analysis (descriptive)
+
+- Inference sweep of the finalist A1-V at 768/1024/1536 on dev and on the
+  real set; recorded per resolution.
+- field_threshold error analysis separating **"cifra decisiva ilegible a esa
+  resolución"** (Tesseract cannot recover the ground-truth total from the
+  downscaled image) from **"error de decisión"**, per resolution.
+- Optional 1536-px training run at the end of phase (e) if the wall budget
+  allows (estimate 11 580 s from C1); descriptive, seed 45.
+
+## Calibration note (E40, recorded here so it is not lost)
+
+E40 must report risk–coverage curves **per family and per set** (synthetic
+test, FR, real) in addition to the global curve.
 
 ## Evidence
 
-`runs/e39-*/`: `env.json`, `dev_half_ids.json`, `ocr_manifest.json` (engine
-versions, per-image wall time, sha of ocr.jsonl), per-arm-run `curves.jsonl`
-(dev-half every 500 steps) and best-weight files, per-case rows for test
-(non-FR + FR), ablations, E35 text sets (both arms) and real eval,
-`e39_summary.json` with gates, rolling full-state checkpoints for resume
-(model, optimizer, scheduler, scaler, RNG, step, data cursor).
+`runs/e39-*/`: `env.json`, `dev_half_ids.json`, `ocr_manifest.json`,
+per-run `curves.jsonl` + best weights, per-case rows for test (non-FR + FR),
+ablations, E35 text sets, real eval (per arm), rules predictions, jev sample
+ids + rows + per-family CIs, `field_threshold_error_analysis.json`,
+`train_1536.json`, `e39_summary.json` with gates, régimen labels,
+`skipped_phases`, and rolling full-state checkpoints for resume.
 
 Kernels (user marks the `HF_TOKEN` secret on each notebook):
 - `gjusev/mkshv-e39-ocrprep` (CPU-only, no GPU quota)
@@ -144,19 +187,23 @@ Kernels (user marks the `HF_TOKEN` secret on each notebook):
 
 - GPU counter: 23 033,553 s used of 108 000 s → **84 966 s remaining**
   (refresh 2026-10-17T00:00Z); after refresh: **108 000 s**. T4×2 bills the
-  SESSION wall at double rate; using both GPUs does not bill extra.
+  SESSION wall at double rate regardless of GPUs used.
 
-Per-run GPU time at 1024 px: A1-V 2 000 × 5,56 s = 11 120 s; OCR ≈ 2 000 ×
-0,85 s (E35 estimate; measured by the job) = 1 700 s; SmolVLM2 ≈ 2 000 × 4 s
-(estimate) = 8 000 s. Evals+ablations+E35+real ≈ 5 000 s GPU; loads and
-downloads ≈ 1 500 s.
+Per-run GPU time: A1-V 2 000 × 5,56 s = 11 120 s; OCR ≈ 1 700 s (estimate);
+SmolVLM2 ≈ 8 000 s (estimate); jev zero-shot ≈ 2 000 s (sample + real,
+estimates); evals ≈ 5 000 s; sweep + error analysis ≈ 2 000 s; overhead
+≈ 2 000 s; optional 1536 train ≈ 11 580 s.
 
-- Phase 1 wall ≈ max(11 120, 1 700 + 8 000) = 11 120 s (3,1 h)
-- Phase 2 wall ≈ 11 120 s (3,1 h; finalist A1-V worst case, one seed per GPU)
-- Phase 3 (evals, sequential on gpu0) ≈ 1,4 h; overhead ≈ 0,4 h
-- **Session wall ≈ 8,0 h < 12 h cap** → counter ≈ 2 × 8,0 h = **57 600 s**
+Phase wall: (a)+(b) ≈ 11 120 s ∥ · (c) ≈ 1,7 h · (d) ≈ 3,1 h · (e) ≈ 0,9 h
+(+3,2 h si entra el 1536) · (f) ≈ 2,8 h.
 
-| base | restante tras E39 | holgura |
-|---|---|---|
-| 84 966 s (hoy) | 27 366 s | **32 %** ✓ ≥ 15 % → SmolVLM2 incluido |
-| 108 000 s (post-refresco) | 50 400 s | **47 %** ✓ → SmolVLM2 incluido |
+| escenario | wall | counter | holgura s/ 84 966 | holgura s/ 108 000 |
+|---|---|---|---|---|
+| (a)–(f) sin 1536-train | ≈ 9,5 h | ≈ 68 400 s | 19,5 % ✓ | 36,7 % ✓ |
+| (a)–(f) + 1536-train | ≈ 12,7 h ✗ (>12 h) | — | — | — |
+
+With the 12 h session cap the optional 1536 training does NOT fit in one
+session after everything else; it only runs if earlier phases finish under
+their estimates (wall guard decides at run time) or in a resumed session.
+Nothing else falls: 1024 px, OCR+rules, jev-vlm-4b and SmolVLM2 all fit on
+both quota bases with ≥ 15 % headroom.

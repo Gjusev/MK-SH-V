@@ -10,6 +10,7 @@ gate arithmetic. The training loops themselves live in the kernel
 
 from __future__ import annotations
 
+import hashlib
 import json
 import random
 import zlib
@@ -132,6 +133,64 @@ def fixed_dev_half(rows: Sequence[dict], *, seed: int = 39, fraction: float = 0.
 
 
 # -- ablation helpers ----------------------------------------------------------
+def sha_sample(rows: Sequence[dict], per_family: int = 200) -> list[dict]:
+    """Deterministic per-family sample: rows sorted by sha256(id), first
+    `per_family` per family. Frozen selection rule for zero-shot external
+    comparators (the sample ids are evidence)."""
+    by_family: dict[str, list[dict]] = defaultdict(list)
+    for r in rows:
+        by_family[r["family"]].append(r)
+    out = []
+    for family in sorted(by_family):
+        ordered = sorted(by_family[family],
+                         key=lambda r: hashlib.sha256(r["id"].encode()).hexdigest())
+        out.extend(ordered[:per_family])
+    return out
+
+
+def accuracy_ci_by_group(correct: Sequence[int], groups: Sequence[str], *,
+                         n_boot: int = 1000, alpha: float = 0.05,
+                         seed: int = 42) -> dict:
+    """Percentile CI for accuracy resampling whole groups (episodes)."""
+    by_group: dict[str, list[int]] = defaultdict(list)
+    for c, g in zip(correct, groups):
+        by_group[g].append(c)
+    group_vals = [tuple(v) for v in by_group.values()]
+    point = sum(sum(v) for v in group_vals) / sum(len(v) for v in group_vals)
+    rng = random.Random(seed)
+    stats = []
+    for _ in range(n_boot):
+        acc = cnt = 0
+        for _ in range(len(group_vals)):
+            pick = group_vals[rng.randrange(len(group_vals))]
+            acc += sum(pick)
+            cnt += len(pick)
+        stats.append(acc / cnt)
+    stats.sort()
+    return {"accuracy": point,
+            "ci95": [stats[int(alpha / 2 * n_boot)],
+                     stats[min(int((1 - alpha / 2) * n_boot), n_boot - 1)]]}
+
+
+def ece_15(confidences: Sequence[float], corrects: Sequence[int],
+           bins: int = 15) -> float | None:
+    """Equal-width ECE over max-probability confidences (pure python)."""
+    if not confidences:
+        return None
+    buckets: list[list[tuple[float, int]]] = [[] for _ in range(bins)]
+    for conf, ok in zip(confidences, corrects):
+        buckets[min(int(conf * bins), bins - 1)].append((conf, int(ok)))
+    n = sum(len(b) for b in buckets)
+    ece = 0.0
+    for bucket in buckets:
+        if not bucket:
+            continue
+        size = len(bucket)
+        ece += size / n * abs(sum(c for c, _ in bucket) / size
+                              - sum(o for _, o in bucket) / size)
+    return ece
+
+
 def swap_map_within_blocks(block_keys: Sequence[str]) -> list[int]:
     """Index map dst -> src rolling by one inside each block.
 
