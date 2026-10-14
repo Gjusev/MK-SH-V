@@ -175,7 +175,7 @@ W_TABLE["chan"] = _w("", ("Email", "Phone", "Chat", "Portal"),
                      ("Correo", "Teléfono", "Chat", "Portal"),
                      ("E-Mail", "Telefon", "Chat", "Portal"),
                      ("E-mail", "Téléphone", "Chat", "Portail"))
-OWNERS = ("J. Mueller", "A. Petrova", "L. Fontaine", "S. Okonkwo", "M. Alvarez", "K. Bergstrom")
+OWNERS = ("J Mueller", "A Petrova", "L Fontaine", "S Okonkwo", "M Alvarez", "K Bergstrom")
 
 W_TABLE["impact_vals"] = _w("", ("minor", "moderate", "critical"),
                             ("minor", "moderate", "critical"),
