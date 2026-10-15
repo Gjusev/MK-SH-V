@@ -36,7 +36,30 @@ def log(msg: str) -> None:
     print(f"[ocrprep {time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+# Amendment A1 (pre-measurement): Kaggle's secrets service answered 400 on
+# every HF_TOKEN read, so each private Hub repo also ships as a private Kaggle
+# dataset with byte-identical files; attached copies are preferred.
+KAGGLE_DATA = {"Gjusev/MK-SH-V-E38a": "mkshv-e38a", "Gjusev/MK-SH-V-E38b": "mkshv-e38b",
+               "Gjusev/MK-SH-V-E38c": "mkshv-e38c"}
+
+
+def kaggle_copy(repo: str) -> Path | None:
+    """Root of the attached Kaggle copy of ``repo`` (dir holding manifest.json).
+    Follows symlinks: mounts may be links, and Path.rglob does not follow them."""
+    inp = Path("/kaggle/input")
+    slug = KAGGLE_DATA[repo]
+    for base in [inp / slug, *inp.glob(f"*/{slug}"), *inp.glob(f"*/*/{slug}")]:
+        if base.is_dir():
+            for dirpath, _dirs, files in os.walk(base, followlinks=True):
+                if "manifest.json" in files:
+                    return Path(dirpath)
+    return None
+
+
 def check_secret() -> None:
+    if all(kaggle_copy(r) for r in REPOS):
+        log("transport A1: all repos from attached Kaggle datasets; HF secret not needed")
+        return
     from kaggle_secrets import UserSecretsClient
 
     token = UserSecretsClient().get_secret("HF_TOKEN")  # never printed/logged
@@ -91,21 +114,28 @@ def main() -> None:
     from huggingface_hub import list_repo_files, snapshot_download
 
     jobs = []
+    job_keys: set[str] = set()
     rows_by_repo: dict[str, list[dict]] = {}
     for repo in REPOS:
-        try:
-            files = list_repo_files(repo, repo_type="dataset")
-        except Exception as exc:
-            log(f"{repo}: not readable ({type(exc).__name__}) -> skipped")
-            continue
-        rows_files = [f for f in files if f.endswith("rows.jsonl")]
-        if not rows_files:
-            log(f"{repo}: no rows.jsonl -> skipped")
-            continue
-        root = Path(snapshot_download(
-            repo_id=repo, repo_type="dataset",
-            allow_patterns=["*/rows.jsonl", "*/train/*.png", "*/dev/*.png",
-                            "*/test/*.png", "*.png", "*.jpg"]))
+        local = kaggle_copy(repo)
+        if local is not None:
+            root = local
+            rows_files = sorted(p.relative_to(root).as_posix() for p in root.rglob("rows.jsonl"))
+            log(f"{repo}: attached Kaggle copy at {root} ({len(rows_files)} rows files)")
+        else:
+            try:
+                files = list_repo_files(repo, repo_type="dataset")
+            except Exception as exc:
+                log(f"{repo}: not readable ({type(exc).__name__}) -> skipped")
+                continue
+            rows_files = [f for f in files if f.endswith("rows.jsonl")]
+            if not rows_files:
+                log(f"{repo}: no rows.jsonl -> skipped")
+                continue
+            root = Path(snapshot_download(
+                repo_id=repo, repo_type="dataset",
+                allow_patterns=["*/rows.jsonl", "*/train/*.png", "*/dev/*.png",
+                                "*/test/*.png", "*.png", "*.jpg"]))
         repo_rows = []
         for rf in rows_files:
             fam_dir = rf.rsplit("/", 1)[0]
@@ -121,9 +151,17 @@ def main() -> None:
                 if not img_path.exists():
                     log(f"missing image for {row['id']}: {img_path}")
                     continue
+                # A1: ONE key per image, shared by OCR and rules (E38c rows
+                # store family-relative paths, so row["image"] is not the key)
+                key = f"{repo}|{img_path.relative_to(root).as_posix()}"
+                row["_ocr_key"] = key
                 repo_rows.append(row)
-                jobs.append((str(img_path), row.get("language", "en"),
-                             f"{repo}|{img_path.relative_to(root).as_posix()}"))
+                if key not in job_keys:  # A1: each image OCR'd once
+                    job_keys.add(key)
+                    # A1: real images (E38c) are English/Indonesian whatever the
+                    # question language; synthetic ones are rendered in it
+                    lang = "en" if repo.endswith("E38c") else row.get("language", "en")
+                    jobs.append((str(img_path), lang, key))
         rows_by_repo[repo] = repo_rows
         log(f"{repo}: {len(repo_rows)} rows, {len(jobs)} total OCR jobs")
 
@@ -151,7 +189,7 @@ def main() -> None:
         for row in repo_rows:
             if row.get("family") not in RULE_FAMILIES:
                 continue
-            key = f"{repo}|{row['image']}"
+            key = row["_ocr_key"]
             if key not in ocr:
                 continue
             text, conf = ocr[key]

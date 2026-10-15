@@ -87,10 +87,79 @@ def log(msg: str) -> None:
     print(f"[e39 {time.strftime('%H:%M:%S')}] {msg}", flush=True)
 
 
+# Amendment A1 (pre-measurement): Kaggle's secrets service answered 400 on
+# every HF_TOKEN read, so each private Hub repo also ships as a private Kaggle
+# dataset with byte-identical files. Attached copies are preferred; the frozen
+# rows-sha checks are unchanged; the Hub path stays as fallback.
+KAGGLE_DATA = {"Gjusev/MK-SH-V-E38a": "mkshv-e38a", "Gjusev/MK-SH-V-E38b": "mkshv-e38b",
+               "Gjusev/MK-SH-V-E38c": "mkshv-e38c"}
+
+
+def kaggle_copy(repo: str) -> Path | None:
+    """Root of the attached Kaggle copy of ``repo`` (dir holding manifest.json).
+    Follows symlinks: mounts may be links, and Path.rglob does not follow them."""
+    inp = Path("/kaggle/input")
+    slug = KAGGLE_DATA[repo]
+    for base in [inp / slug, *inp.glob(f"*/{slug}"), *inp.glob(f"*/*/{slug}")]:
+        if base.is_dir():
+            for dirpath, _dirs, files in os.walk(base, followlinks=True):
+                if "manifest.json" in files:
+                    return Path(dirpath)
+    return None
+
+
+_TESS_RES = {"en": "eng", "de": "deu", "es": "spa", "fr": "fra"}
+
+
+def _fmt_amount(x: float, lang: str) -> str:
+    """Same thousands/decimal format the E38a generator renders (EN 1,234.56)."""
+    s = f"{x:,.2f}"
+    return s if lang == "en" else s.replace(",", "_").replace(".", ",").replace("_", ".")
+
+
+# Process-pool workers must live at module level (A1: they were nested in
+# main(), which ProcessPoolExecutor cannot pickle).
+def _legibility_job(job):
+    import pytesseract
+    from PIL import Image
+
+    path, lang, total, res = job
+    img = Image.open(path).convert("RGB")
+    w, h = img.size
+    scale = min(1.0, res / max(w, h))
+    if scale < 1.0:
+        img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))),
+                         Image.BILINEAR)
+    text = pytesseract.image_to_string(img, lang=_TESS_RES.get(lang, "eng"))
+    return (path, res), _fmt_amount(total, lang) in text
+
+
+def _real_ocr_job(p_lang):
+    import pytesseract
+    from PIL import Image
+
+    p, lang = p_lang
+    return pytesseract.image_to_string(Image.open(p), lang=_TESS_RES.get(lang, "eng"))
+
+
+class _RealEvalSkip(Exception):
+    """G4 cannot run on the frozen real-eval data (reason in the message)."""
+
+
+def ocr_state(state: str, text: str) -> str:
+    """A1: the OCR arm sees the case text PLUS the OCR of the image (the same
+    information A1-V gets), never the OCR alone: screen states carry the goal
+    or ticket that the image must be checked against."""
+    return f"{state}\n[OCR]\n{text}"
+
+
 # ---------------------------------------------------------------------------
 # shared plumbing
 # ---------------------------------------------------------------------------
 def check_secret_and_repos() -> None:
+    if all(kaggle_copy(r) for r in E38_REPOS.values()):
+        log("transport A1: E38a/E38b from attached Kaggle datasets; HF secret not needed")
+        return
     from kaggle_secrets import UserSecretsClient
 
     token = UserSecretsClient().get_secret("HF_TOKEN")  # never printed/logged
@@ -147,6 +216,11 @@ def download_data() -> dict:
 
     roots = {}
     for key, repo in E38_REPOS.items():
+        local = kaggle_copy(repo)
+        if local is not None:
+            roots[key] = local
+            log(f"{repo}: attached Kaggle copy at {local}")
+            continue
         t0 = time.time()
         roots[key] = Path(snapshot_download(
             repo_id=repo, repo_type="dataset",
@@ -375,7 +449,7 @@ def ocr_case_of(row: dict, roots: dict | None, ocr: dict):
     if roots is None or not row.get("image"):
         return c
     text = ocr.get(image_key(row, roots))
-    return dataclasses.replace(c, state=text) if text is not None else c
+    return dataclasses.replace(c, state=ocr_state(c.state, text)) if text is not None else c
 
 
 def run_worker(args) -> None:
@@ -724,23 +798,6 @@ def main() -> None:
     LEGIBILITY: dict[tuple, bool] = {}
     ft_test_rows = [r for r in test_nonfr if r["family"] == "field_threshold"
                     and r.get("total") is not None]
-    _TESS_RES = {"en": "eng", "de": "deu", "es": "spa", "fr": "fra"}
-
-    def _legibility_job(job):
-        import pytesseract
-        from PIL import Image
-
-        path, lang, total, res = job
-        img = Image.open(path).convert("RGB")
-        w, h = img.size
-        scale = min(1.0, res / max(w, h))
-        if scale < 1.0:
-            img = img.resize((max(1, round(w * scale)), max(1, round(h * scale))),
-                             Image.BILINEAR)
-        text = pytesseract.image_to_string(img, lang=_TESS_RES.get(lang, "eng"))
-        s = f"{total:.2f}"
-        return (path, res), (s in text or s.replace(".", ",") in text)
-
     def run_legibility():
         from concurrent.futures import ProcessPoolExecutor
 
@@ -902,155 +959,193 @@ def main() -> None:
     g4 = {"status": "not_run", "reason": f"{REAL_EVAL_REPO} not available"}
     real_ctx = None
     rows_files = []
+    real_local = kaggle_copy(REAL_EVAL_REPO)
+    if real_local is not None:
+        rows_files = [rel for rel in REAL_EVAL_ROWS_SHA if (real_local / rel).exists()]
+        log(f"transport A1: {REAL_EVAL_REPO} from attached Kaggle copy at {real_local}")
+    else:
+        try:
+            from huggingface_hub import list_repo_files
+
+            files = list_repo_files(REAL_EVAL_REPO, repo_type="dataset",
+                                    revision=REAL_EVAL_REVISION)
+            rows_files = [f for f in files if f in REAL_EVAL_ROWS_SHA]
+        except Exception as exc:
+            log(f"real eval skipped: {REAL_EVAL_REPO}@{REAL_EVAL_REVISION[:8]} "
+                f"not readable ({type(exc).__name__})")
+    # A1: G4 can never take the run down; any failure is recorded instead.
     try:
-        from huggingface_hub import list_repo_files, snapshot_download
+        if rows_files:
+            if real_local is not None:
+                real_root_path = real_local
+            else:
+                from huggingface_hub import snapshot_download
 
-        files = list_repo_files(REAL_EVAL_REPO, repo_type="dataset",
-                                revision=REAL_EVAL_REVISION)
-        rows_files = [f for f in files if f in REAL_EVAL_ROWS_SHA]
-    except Exception as exc:
-        log(f"real eval skipped: {REAL_EVAL_REPO}@{REAL_EVAL_REVISION[:8]} "
-            f"not readable ({type(exc).__name__})")
-    if rows_files:
-        real_root_path = Path(snapshot_download(
-            repo_id=REAL_EVAL_REPO, repo_type="dataset",
-            revision=REAL_EVAL_REVISION,
-            allow_patterns=["*.jsonl", "*.png", "*.jpg", "*.jpeg"]))
-        sha_ok = True
-        for rel, want_sha in REAL_EVAL_ROWS_SHA.items():
-            f = real_root_path / rel
-            if not f.exists():
-                sha_ok = False
-                g4 = {"status": "not_run",
-                      "reason": f"missing {rel} at revision {REAL_EVAL_REVISION[:8]}"}
-                break
-            got = hashlib.sha256(f.read_bytes()).hexdigest()
-            if got != want_sha:
-                sha_ok = False
-                g4 = {"status": "not_run",
-                      "reason": f"rows sha mismatch for {rel}: {got}"}
-                break
-        if sha_ok:
+                real_root_path = Path(snapshot_download(
+                    repo_id=REAL_EVAL_REPO, repo_type="dataset",
+                    revision=REAL_EVAL_REVISION,
+                    allow_patterns=["*.jsonl", "*.png", "*.jpg", "*.jpeg"]))
+            sha_ok = True
+            for rel, want_sha in REAL_EVAL_ROWS_SHA.items():
+                f = real_root_path / rel
+                if not f.exists():
+                    sha_ok = False
+                    g4 = {"status": "not_run",
+                          "reason": f"missing {rel} at revision {REAL_EVAL_REVISION[:8]}"}
+                    break
+                got = hashlib.sha256(f.read_bytes()).hexdigest()
+                if got != want_sha:
+                    sha_ok = False
+                    g4 = {"status": "not_run",
+                          "reason": f"rows sha mismatch for {rel}: {got}"}
+                    break
+            if not sha_ok:
+                raise _RealEvalSkip(g4["reason"])
             log("E38c rows sha256 verified (cord + gui_odyssey)")
-        if sha_ok:
-            real_rows = []
-            for rel in REAL_EVAL_ROWS_SHA:
-                real_rows += [json.loads(l) for l in (real_root_path / rel)
-                              .read_text(encoding="utf-8").splitlines() if l.strip()]
-            real_root = {"E38a": real_root_path, "E38b": real_root_path}
-        from concurrent.futures import ProcessPoolExecutor
+            if sha_ok:
+                real_rows = []
+                for rel in REAL_EVAL_ROWS_SHA:
+                    fam_dir = rel.rsplit("/", 1)[0]
+                    for l in (real_root_path / rel).read_text(encoding="utf-8").splitlines():
+                        if l.strip():
+                            r = json.loads(l)
+                            # A1: E38c rows store images relative to their family
+                            # dir (cord/, gui_odyssey/); every reader joins on the
+                            # repo root, so the path is made root-relative here.
+                            r["image"] = f"{fam_dir}/{r['image']}"
+                            real_rows.append(r)
+                missing = [r["id"] for r in real_rows if not (real_root_path / r["image"]).exists()]
+                if missing:
+                    raise _RealEvalSkip(f"{len(missing)} E38c images missing, e.g. {missing[:3]}")
+                real_root = {"E38a": real_root_path, "E38b": real_root_path}
+            from concurrent.futures import ProcessPoolExecutor
 
-        def _ocr_job(p_lang):
-            p, lang = p_lang
-            import pytesseract
-            from PIL import Image
+            real_ocr = {}
+            with ProcessPoolExecutor(max_workers=3) as pool:
+                for r, text in zip(real_rows, pool.map(
+                        _real_ocr_job, [(str(real_root_path / r["image"]), "en")  # A1: image text language
+                                        for r in real_rows], chunksize=8)):
+                    real_ocr[r["id"]] = text
+            real_ctx = {"rows": real_rows, "root": real_root,
+                        "ocr": real_ocr, "root_path": real_root_path}
 
-            return pytesseract.image_to_string(
-                Image.open(p), lang=_TESS_RES.get(lang, "eng"))
+            def eval_real(arm, rows, *, max_side=None):
+                max_side = max_side or IMAGE_SIZE
+                out_rows, correct, n = [], 0, 0
+                for s in range(0, len(rows), 200):
+                    part = rows[s:s + 200]
+                    if arm == "a1v":
+                        imgs = [open_image(r, real_root) for r in part]
+                        ev = evaluate_a1v(a1v, [case_of_row(r) for r in part], imgs,
+                                          device=device, max_side=max_side,
+                                          batch_decisions=16,
+                                          max_state_tokens=MAX_STATE_TOKENS,
+                                          max_option_tokens=MAX_OPTION_TOKENS,
+                                          collect_rows=True)
+                        out_rows += ev["rows"]
+                        correct += sum(r["correct"] for r in ev["rows"])
+                        n += ev["n"]
+                    elif arm == "ocr":
+                        cases = []
+                        for r in part:
+                            c = case_of_row(r)
+                            text = real_ocr.get(r["id"])
+                            if text is not None:
+                                c = dataclasses.replace(c, state=ocr_state(c.state, text))
+                            cases.append(c)
+                        qts = {c.id: qtype_of_row(r) for c, r in zip(cases, part)}
+                        ev = evaluate_julia_arch(mk1.to(device), tok, cases, qts,
+                                                 device=device, batch_decisions=32,
+                                                 collect_rows=True)
+                        out_rows += ev["rows"]
+                        correct += sum(r["correct"] for r in ev["rows"])
+                        n += ev["n"]
+                    else:  # smol on real images
+                        with torch.no_grad():
+                            for s2 in range(0, len(part), 16):
+                                sub = part[s2:s2 + 16]
+                                cases = [case_of_row(r) for r in sub]
+                                imgs = [open_image(r, real_root) for r in sub]
+                                logits = smol.batch_logits(cases, imgs)
+                                for j, r in enumerate(sub):
+                                    k = len(cases[j].options)
+                                    gold = cases[j].option_ids.index(cases[j].target_option)
+                                    ok = int(int(logits[j, :k].argmax().item()) == gold)
+                                    out_rows.append({"id": r["id"], "group_id": r.get("group_id", r["id"]),
+                                                     "correct": ok})
+                                    correct += ok
+                                    n += 1
+                return out_rows, (correct / n if n else None)
 
-        real_ocr = {}
-        with ProcessPoolExecutor(max_workers=3) as pool:
-            for r, text in zip(real_rows, pool.map(
-                    _ocr_job, [(str(real_root_path / r["image"]), r.get("language", "en"))
-                               for r in real_rows], chunksize=8)):
-                real_ocr[r["id"]] = text
-        real_ctx = {"rows": real_rows, "root": real_root,
-                    "ocr": real_ocr, "root_path": real_root_path}
+            accs_real, real_rows_by_arm = {}, {}
+            for arm in ("a1v", "ocr"):
+                real_rows_arm, acc = eval_real(arm, real_rows)
+                accs_real[arm] = round(acc, 4)
+                real_rows_by_arm[arm] = real_rows_arm
+                (WORK / f"eval_real__{arm}.jsonl").write_text(
+                    "".join(json.dumps(r) + "\n" for r in real_rows_arm), encoding="utf-8")
 
-        def eval_real(arm, rows, *, max_side=None):
-            max_side = max_side or IMAGE_SIZE
-            out_rows, correct, n = [], 0, 0
-            for s in range(0, len(rows), 200):
-                part = rows[s:s + 200]
-                if arm == "a1v":
-                    imgs = [open_image(r, real_root) for r in part]
-                    ev = evaluate_a1v(a1v, [case_of_row(r) for r in part], imgs,
-                                      device=device, max_side=max_side,
-                                      batch_decisions=16,
-                                      max_state_tokens=MAX_STATE_TOKENS,
-                                      max_option_tokens=MAX_OPTION_TOKENS,
-                                      collect_rows=True)
-                    out_rows += ev["rows"]
-                    correct += sum(r["correct"] for r in ev["rows"])
-                    n += ev["n"]
-                elif arm == "ocr":
-                    cases = []
-                    for r in part:
-                        c = case_of_row(r)
-                        text = real_ocr.get(r["id"])
-                        if text is not None:
-                            c = dataclasses.replace(c, state=text)
-                        cases.append(c)
-                    qts = {c.id: qtype_of_row(r) for c, r in zip(cases, part)}
-                    ev = evaluate_julia_arch(mk1.to(device), tok, cases, qts,
-                                             device=device, batch_decisions=32,
-                                             collect_rows=True)
-                    out_rows += ev["rows"]
-                    correct += sum(r["correct"] for r in ev["rows"])
-                    n += ev["n"]
-                else:  # smol on real images
-                    with torch.no_grad():
-                        for s2 in range(0, len(part), 16):
-                            sub = part[s2:s2 + 16]
-                            cases = [case_of_row(r) for r in sub]
-                            imgs = [open_image(r, real_root) for r in sub]
-                            logits = smol.batch_logits(cases, imgs)
-                            for j, r in enumerate(sub):
-                                k = len(cases[j].options)
-                                gold = cases[j].option_ids.index(cases[j].target_option)
-                                ok = int(int(logits[j, :k].argmax().item()) == gold)
-                                out_rows.append({"correct": ok})
-                                correct += ok
-                                n += 1
-            return out_rows, (correct / n if n else None)
+            def real_delta(rows_a1v, rows_ocr):
+                by_id = {r["id"]: r for r in rows_ocr}
+                return paired_delta_ci(
+                    [r["correct"] for r in rows_a1v],
+                    [int(by_id[r["id"]]["correct"]) for r in rows_a1v],
+                    [r.get("group_id", r["id"]) for r in rows_a1v],
+                    n_boot=1000, seed=42)
 
-        accs_real, real_rows_by_arm = {}, {}
-        for arm in ("a1v", "ocr"):
-            real_rows_arm, acc = eval_real(arm, real_rows)
-            accs_real[arm] = round(acc, 4)
-            real_rows_by_arm[arm] = real_rows_arm
-            (WORK / f"eval_real__{arm}.jsonl").write_text(
-                "".join(json.dumps(r) + "\n" for r in real_rows_arm), encoding="utf-8")
+            # frozen interpretation rule: real Delta(a1v - ocr) CI...
+            real_delta_ci = real_delta(real_rows_by_arm["a1v"], real_rows_by_arm["ocr"])
+            # ...plus the PRE-REGISTERED sensitivity: (i) all episodes vs (ii)
+            # task_done excluding purchase-goal episodes; if the readings differ
+            # in sign or in whether the CI excludes 0, (ii) governs
+            real_by_id_a1v = {r["id"]: r for r in real_rows_by_arm["a1v"]}
+            purchase_ids = {r["id"] for r in real_rows
+                            if "purchase" in r.get("state", "").lower()}
+            strict_a1v = [r for r in real_rows_by_arm["a1v"] if r["id"] not in purchase_ids]
+            strict_ocr = [r for r in real_rows_by_arm["ocr"] if r["id"] not in purchase_ids]
+            real_delta_ci_strict = real_delta(strict_a1v, strict_ocr)
 
-        def real_delta(rows_a1v, rows_ocr):
-            by_id = {r["id"]: r for r in rows_ocr}
-            return paired_delta_ci(
-                [r["correct"] for r in rows_a1v],
-                [int(by_id[r["id"]]["correct"]) for r in rows_a1v],
-                [r.get("group_id", r["id"]) for r in rows_a1v],
-                n_boot=1000, seed=42)
+            def excludes_zero(ci):
+                return ci["ci95"][0] > 0 or ci["ci95"][1] < 0
 
-        # frozen interpretation rule: real Delta(a1v - ocr) CI...
-        real_delta_ci = real_delta(real_rows_by_arm["a1v"], real_rows_by_arm["ocr"])
-        # ...plus the PRE-REGISTERED sensitivity: (i) all episodes vs (ii)
-        # task_done excluding purchase-goal episodes; if the readings differ
-        # in sign or in whether the CI excludes 0, (ii) governs
-        real_by_id_a1v = {r["id"]: r for r in real_rows_by_arm["a1v"]}
-        purchase_ids = {r["id"] for r in real_rows
-                        if "purchase" in r.get("state", "").lower()}
-        strict_a1v = [r for r in real_rows_by_arm["a1v"] if r["id"] not in purchase_ids]
-        strict_ocr = [r for r in real_rows_by_arm["ocr"] if r["id"] not in purchase_ids]
-        real_delta_ci_strict = real_delta(strict_a1v, strict_ocr)
+            def sign_of(ci):
+                return 1 if ci["delta"] > 0 else (-1 if ci["delta"] < 0 else 0)
 
-        def excludes_zero(ci):
-            return ci["ci95"][0] > 0 or ci["ci95"][1] < 0
-
-        def sign_of(ci):
-            return 1 if ci["delta"] > 0 else (-1 if ci["delta"] < 0 else 0)
-
-        differ = (sign_of(real_delta_ci) != sign_of(real_delta_ci_strict)
-                  or excludes_zero(real_delta_ci) != excludes_zero(real_delta_ci_strict))
-        governing = "strict_no_purchase" if differ else "full"
-        g4 = {"status": "completed", "repo": REAL_EVAL_REPO,
-              "revision": REAL_EVAL_REVISION,
-              "n_purchase_episodes_excluded": len(purchase_ids), **accs_real,
-              "delta_ci_a1v_vs_ocr": real_delta_ci,
-              "delta_ci_a1v_vs_ocr_strict": real_delta_ci_strict,
-              "sensitivity_readings_differ": differ,
-              "governing_reading": governing,
-              "governing_delta_ci": real_delta_ci_strict if differ else real_delta_ci,
-              "kill_bar": REAL_EVAL_KILL,
-              "non_discriminating": all(v >= REAL_EVAL_KILL for v in accs_real.values())}
+            differ = (sign_of(real_delta_ci) != sign_of(real_delta_ci_strict)
+                      or excludes_zero(real_delta_ci) != excludes_zero(real_delta_ci_strict))
+            governing = "strict_no_purchase" if differ else "full"
+            # criteria: OCR+rules is "reported on test, real and per family";
+            # A1 adds the real half (CORD field_threshold), same paired CI and
+            # claim rule as on synthetic test
+            rules_vs_a1v_real = {}
+            for family in sorted({r.get("family") for r in real_rows}):
+                fam_ids = {r["id"] for r in real_rows if r.get("family") == family}
+                sub = [r for r in real_rows_by_arm["a1v"]
+                       if r["id"] in fam_ids and r["id"] in rules_rows]
+                if sub:
+                    ci = paired_delta_ci(
+                        [int(rules_rows[r["id"]]["pred"] == rules_rows[r["id"]]["target"])
+                         for r in sub],
+                        [r["correct"] for r in sub],
+                        [r.get("group_id", r["id"]) for r in sub], n_boot=1000, seed=42)
+                    rules_vs_a1v_real[family] = {**ci, "n": len(sub),
+                                                 "claim_blocked": ci["ci95"][0] >= 0.0}
+            g4 = {"status": "completed", "repo": REAL_EVAL_REPO,
+                  "rules_vs_a1v_real": rules_vs_a1v_real,
+                  "revision": REAL_EVAL_REVISION,
+                  "n_purchase_episodes_excluded": len(purchase_ids), **accs_real,
+                  "delta_ci_a1v_vs_ocr": real_delta_ci,
+                  "delta_ci_a1v_vs_ocr_strict": real_delta_ci_strict,
+                  "sensitivity_readings_differ": differ,
+                  "governing_reading": governing,
+                  "governing_delta_ci": real_delta_ci_strict if differ else real_delta_ci,
+                  "kill_bar": REAL_EVAL_KILL,
+                  "non_discriminating": all(v >= REAL_EVAL_KILL for v in accs_real.values())}
+    except _RealEvalSkip as exc:
+        g4, real_ctx = {"status": "not_run", "reason": str(exc)}, None
+    except Exception as exc:  # noqa: BLE001 - recorded, not swallowed silently
+        log(f"G4 failed: {type(exc).__name__}: {exc}")
+        g4, real_ctx = {"status": "failed", "error": f"{type(exc).__name__}: {exc}"}, None
     (WORK / "e39_real_eval.json").write_text(json.dumps(g4, indent=2), encoding="utf-8")
 
     # ---- (d): finalist seeds 43/44 --------------------------------------------
