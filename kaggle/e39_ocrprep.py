@@ -29,7 +29,12 @@ from concurrent.futures import ProcessPoolExecutor
 from pathlib import Path
 
 WORK = Path("/kaggle/working")
+# A1 item 10: the single 29,562-image run hit Kaggle's 12 h CPU session wall
+# and wrote nothing (results were only written at the end). The OCR now runs
+# as one kernel per dataset (REPOS/OUTPUT_PREFIX are set per generated
+# variant) and flushes results incrementally, so a wall hit keeps the work.
 REPOS = ("Gjusev/MK-SH-V-E38a", "Gjusev/MK-SH-V-E38b", "Gjusev/MK-SH-V-E38c")
+OUTPUT_PREFIX = ""  # "e38a_" / "e38b_" / "e38c_" in the split variants
 
 
 def log(msg: str) -> None:
@@ -167,18 +172,22 @@ def main() -> None:
 
     log(f"OCR over {len(jobs)} images with 4 CPU workers")
     ocr, errors = {}, {}
+    ocr_path = WORK / f"{OUTPUT_PREFIX}ocr.jsonl"
+    ocr_fh = open(ocr_path, "w", encoding="utf-8")  # A1 item 10: incremental
     with ProcessPoolExecutor(max_workers=4) as pool:
-        for key, text, conf, err in pool.map(_ocr_one, jobs, chunksize=16):
+        done = 0
+        for key, text, conf, err in pool.map(_ocr_one, jobs, chunksize=4):
             if err:
                 errors[key] = err
             ocr[key] = (text, conf)
-
-    ocr_path = WORK / "ocr.jsonl"
-    with open(ocr_path, "w", encoding="utf-8") as fh:
-        for key in sorted(ocr):
-            text, conf = ocr[key]
-            fh.write(json.dumps({"key": key, "text": text, "conf": conf},
-                                ensure_ascii=False) + "\n")
+            ocr_fh.write(json.dumps({"key": key, "text": text, "conf": conf},
+                                    ensure_ascii=False) + "\n")
+            done += 1
+            if done % 200 == 0:  # survive a session wall with partial output
+                ocr_fh.flush()
+                log(f"OCR progress: {done}/{len(jobs)}")
+    ocr_fh.close()
+    log(f"OCR written: {len(ocr)} entries -> {ocr_path.name}")
 
     # -- frozen deterministic rules over the rule families ---------------------
     from mksh_v.rules_baseline import RULE_FAMILIES, predict_rule
@@ -202,7 +211,7 @@ def main() -> None:
                 st = dev_stats.setdefault(row["family"], {"n": 0, "ok": 0})
                 st["n"] += 1
                 st["ok"] += int(pred == row["target_option"])
-    rules_path = WORK / "rules_predictions.jsonl"
+    rules_path = WORK / f"{OUTPUT_PREFIX}rules_predictions.jsonl"
     with open(rules_path, "w", encoding="utf-8") as fh:
         for p in preds:
             fh.write(json.dumps(p, ensure_ascii=False) + "\n")
