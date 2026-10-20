@@ -774,7 +774,7 @@ def main() -> None:
     ocr = load_ocr_cache()
     device = "cuda:0"
     a1v = NeoMMEMarkerScorer().to(device)
-    a1v.ensure_markers(16)
+    a1v.ensure_markers(32)  # match the workers/C3 tables (16 would break the strict best.pt load)
     load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
     a1v.to(device)
 
