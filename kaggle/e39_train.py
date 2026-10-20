@@ -618,7 +618,7 @@ def run_worker(args) -> None:
                 else:
                     idx = next_synthetic(micro)
                     chunk = [train_cases[i] for i in idx]
-                    qts = {c.id: qtype_of_row(train_rows[i]) for i in idx}
+                    qts = {c.id: qtype_of_row(train_rows[i]) for c, i in zip(chunk, idx)}
                 batch = collate_julia(tok, chunk, qts, 1024, 256, device)
                 with torch.autocast("cuda", dtype=torch.float16):
                     logits = model(**{k: batch[k] for k in keys})
