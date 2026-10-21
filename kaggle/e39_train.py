@@ -40,7 +40,6 @@ import os
 import random
 import subprocess
 import sys
-import threading
 import time
 from pathlib import Path
 
@@ -200,6 +199,61 @@ def find_ocr_cache() -> Path:
         return cand
     raise SystemExit("E39 ABORT: ocr.jsonl not attached "
                      "(expected from the gjusev/mkshv-e39-ocr dataset)")
+
+
+# A1 item 14: the v5 run trained both s42 arms to completion and then hit the
+# wall in phase (c). Its s42 runs ship as the private dataset below and are
+# resumed (sha-verified) instead of retrained: one shot per seed.
+RESUME_DATA = "mkshv-e39-v5-runs"
+RESUME_SHA = {  # sha256 of the v5 best.pt files (pinned at A1 item 14)
+    "a1v_s42": "274dfef220028969a296fd87d371b3b5ca3f19e286745dec7590b72b36d65201",
+    "ocr_s42": "10ee0ba648da082b7530989109d0dd62e2d144fc40f478c481538038b7b8118d",
+}
+
+
+def resume_s42_runs() -> bool:
+    """Copy the attached v5 s42 runs into WORK/runs; False if not attached.
+    An attached copy that fails its sha check aborts (never silently retrains)."""
+    import shutil
+
+    inp = Path("/kaggle/input")
+    base = next((b for b in [inp / RESUME_DATA, *inp.glob(f"*/{RESUME_DATA}"),
+                             *inp.glob(f"*/*/{RESUME_DATA}")] if b.is_dir()), None)
+    if base is None:
+        return False
+    found = {}
+    for dirpath, _dirs, files in os.walk(base, followlinks=True):
+        tag = Path(dirpath).name
+        if tag in RESUME_SHA and "best.pt" in files and "summary.json" in files:
+            found[tag] = Path(dirpath)
+    if set(found) != set(RESUME_SHA):
+        raise SystemExit(f"E39 ABORT: {RESUME_DATA} attached but runs {sorted(found)} "
+                         f"!= {sorted(RESUME_SHA)}")
+    for tag, src in found.items():
+        got = hashlib.sha256((src / "best.pt").read_bytes()).hexdigest()
+        if got != RESUME_SHA[tag]:
+            raise SystemExit(f"E39 ABORT: {tag}/best.pt sha {got} != pinned {RESUME_SHA[tag]}")
+        dst = WORK / "runs" / tag
+        dst.mkdir(parents=True, exist_ok=True)
+        for f in src.iterdir():
+            if f.is_file():
+                shutil.copy2(f, dst / f.name)
+        log(f"resumed {tag} from {src} (sha {got[:16]})")
+    return True
+
+
+def load_legibility() -> dict[tuple, bool]:
+    """{(row id, res): legible} from legibility.jsonl next to the OCR cache."""
+    for cand in Path("/kaggle/input").rglob("legibility.jsonl"):
+        out = {}
+        for line in cand.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                r = json.loads(line)
+                out[(r["id"], int(r["res"]))] = bool(r["legible"])
+        log(f"legibility loaded: {len(out)} (row, res) entries from {cand}")
+        return out
+    log("legibility.jsonl not attached -> phase-(e) error analysis not_run")
+    return {}
 
 
 def expected_checkpoint(name: str) -> Path | None:
@@ -749,14 +803,18 @@ def main() -> None:
         {"seed": DEV_HALF_SEED, "n": len(dev_half), "ids": sorted(dev_half)}),
         encoding="utf-8")
 
-    # smoke-first (cheap): the two gated arms; smol smokes in phase (f)
-    run_and_log(spawn("a1v", 42, 0, SMOKE_STEPS), "smoke-a1v")
-    run_and_log(spawn("ocr", 42, 1, SMOKE_STEPS), "smoke-ocr")
+    if resume_s42_runs():
+        log("A1 item 14: s42 runs of both arms resumed from v5 (sha verified); "
+            "no smoke, no retraining (one shot per seed)")
+    else:
+        # smoke-first (cheap): the two gated arms; smol smokes in phase (f)
+        run_and_log(spawn("a1v", 42, 0, SMOKE_STEPS), "smoke-a1v")
+        run_and_log(spawn("ocr", 42, 1, SMOKE_STEPS), "smoke-ocr")
 
-    # ---- (a)+(b): A1-V s42 on gpu0, OCR->MK-SH-1 s42 on gpu1 ----------------
-    p_a1v = spawn("a1v", 42, 0, STEPS)
-    run_and_log(spawn("ocr", 42, 1, STEPS), "ocr-s42")
-    run_and_log(p_a1v, "a1v-s42")
+        # ---- (a)+(b): A1-V s42 on gpu0, OCR->MK-SH-1 s42 on gpu1 ------------
+        p_a1v = spawn("a1v", 42, 0, STEPS)
+        run_and_log(spawn("ocr", 42, 1, STEPS), "ocr-s42")
+        run_and_log(p_a1v, "a1v-s42")
 
     def summary_of(tag: str) -> dict:
         return json.loads((WORK / "runs" / tag / "summary.json").read_text(encoding="utf-8"))
@@ -793,22 +851,13 @@ def main() -> None:
     test_nonfr = [r for r in splits["test"] if r["language"] != "fr"]
     test_fr = [r for r in splits["test"] if r["language"] == "fr"]
 
-    # CPU legibility probe starts now and overlaps all GPU work below (input
-    # for the phase-(e) error analysis; CPU-only, no quota impact)
-    LEGIBILITY: dict[tuple, bool] = {}
+    # A1 item 14: the legibility probe (input of the descriptive phase-(e)
+    # error analysis) ran 1,800 tesseract calls on Kaggle CPU (~1 min each,
+    # measured). It is precomputed locally with the same `_legibility_job` and
+    # shipped as legibility.jsonl next to the OCR cache; keyed by (row id, res).
     ft_test_rows = [r for r in test_nonfr if r["family"] == "field_threshold"
                     and r.get("total") is not None]
-    def run_legibility():
-        from concurrent.futures import ProcessPoolExecutor
-
-        jobs = [(str(image_path_of(r, roots)), r["language"], r["total"], res)
-                for r in ft_test_rows for res in RES_SWEEP]
-        with ProcessPoolExecutor(max_workers=3) as pool:
-            for key, ok in pool.map(_legibility_job, jobs, chunksize=8):
-                LEGIBILITY[key] = ok
-
-    legibility_thread = threading.Thread(target=run_legibility, daemon=True)
-    legibility_thread.start()
+    LEGIBILITY = load_legibility()
 
     def eval_rows(arm, rows, *, transform=None, image_index_map=None, max_side=None):
         """Per-case rows + accuracy of one arm on rows (chunked, RAM-safe)."""
@@ -1018,14 +1067,14 @@ def main() -> None:
                 if missing:
                     raise _RealEvalSkip(f"{len(missing)} E38c images missing, e.g. {missing[:3]}")
                 real_root = {"E38a": real_root_path, "E38b": real_root_path}
-            from concurrent.futures import ProcessPoolExecutor
-
-            real_ocr = {}
-            with ProcessPoolExecutor(max_workers=3) as pool:
-                for r, text in zip(real_rows, pool.map(
-                        _real_ocr_job, [(str(real_root_path / r["image"]), "en")  # A1: image text language
-                                        for r in real_rows], chunksize=8)):
-                    real_ocr[r["id"]] = text
+            # A1 item 14: real-image OCR comes from the frozen OCR cache (the
+            # same 862 E38c images, keyed "<repo>|<root-relative path>"); it
+            # was recomputed here on Kaggle CPU and stalled v5 at the wall.
+            real_ocr = {r["id"]: ocr.get(f"{REAL_EVAL_REPO}|{r['image']}") for r in real_rows}
+            no_ocr = [i for i, t in real_ocr.items() if t is None]
+            if no_ocr:
+                raise _RealEvalSkip(f"{len(no_ocr)} E38c rows without cached OCR, e.g. {no_ocr[:3]}")
+            log(f"E38c OCR from cache: {len(real_ocr)} rows")
             real_ctx = {"rows": real_rows, "root": real_root,
                         "ocr": real_ocr, "root_path": real_root_path}
 
@@ -1151,8 +1200,11 @@ def main() -> None:
     # ---- (d): finalist seeds 43/44 --------------------------------------------
     seed_reports = [dict(s42[a], arm=a, regimen=REGIMEN[a]) for a in ("a1v", "ocr")]
     if budget_ok():
-        run_and_log(spawn(finalist, 43, 0, STEPS), f"{finalist}-s43")
+        # A1 item 14: one seed per GPU in parallel (the quota arithmetic
+        # assumed this; the code ran them one after the other)
+        p43 = spawn(finalist, 43, 0, STEPS)
         run_and_log(spawn(finalist, 44, 1, STEPS), f"{finalist}-s44")
+        run_and_log(p43, f"{finalist}-s43")
         for seed in (43, 44):
             if finalist == "a1v":
                 load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
@@ -1177,17 +1229,19 @@ def main() -> None:
         for res in RES_SWEEP:
             _, acc_dev_res = eval_rows("a1v", splits["dev"], max_side=res)
             sweep[f"dev_{res}"] = round(acc_dev_res, 4)
-        legibility_thread.join()
         ft_errors = [r for r in test_rows["a1v"]
                      if r["family"] == "field_threshold" and not r["correct"]]
         ft_total_by_id = {r["id"]: r for r in ft_test_rows}
         for res in RES_SWEEP:
+            if not LEGIBILITY:
+                error_analysis = {"status": "not_run", "reason": "legibility.jsonl not attached"}
+                break
             illegible = 0
             for r in ft_errors:
                 base = ft_total_by_id.get(r["id"])
                 if base is None:
                     continue
-                if not LEGIBILITY.get((str(image_path_of(base, roots)), res), True):
+                if not LEGIBILITY.get((base["id"], res), True):
                     illegible += 1
             error_analysis[res] = {
                 "a1v_errors": len(ft_errors),
