@@ -181,7 +181,8 @@ def pip_install() -> None:
     subprocess.run([sys.executable, "-m", "pip", "install", "-q",
                     "git+https://github.com/Gjusev/MK-SH-1@9e1a226e",
                     "transformers==5.19.0", "pillow>=10.1",
-                    "huggingface_hub>=0.34", "pytesseract>=0.3"], check=True)
+                    "huggingface_hub>=0.34", "pytesseract>=0.3",
+                    "num2words"], check=True)  # A1 item 15: SmolVLM processor needs it
     subprocess.run(["apt-get", "-qq", "install", "-y", "tesseract-ocr",
                     "tesseract-ocr-deu", "tesseract-ocr-spa", "tesseract-ocr-fra"],
                    check=False)
@@ -240,6 +241,51 @@ def resume_s42_runs() -> bool:
                 shutil.copy2(f, dst / f.name)
         log(f"resumed {tag} from {src} (sha {got[:16]})")
     return True
+
+
+# A1 item 15: v6 aborted in the SmolVLM2 smoke (its processor needs
+# `num2words`, missing from pip_install) AFTER the finalist seeds were already
+# trained. The trained seeds ship as this dataset and are resumed (one shot
+# per seed); the summary-writing may never again be killed by a reported,
+# non-gate phase.
+RESUME_DATA_V6 = "mkshv-e39-v6-runs"
+RESUME_SHA_V6 = {
+    "a1v_s43": "077d678737ec910cee74e313bf0272d5ea97d39310be312c6ec4725e3971ac9e",
+    "a1v_s44": "0f4ebeed1412a81581c949acec2ab90e320ab64e5b873af7f5d11d9e90373d2e",
+    "a1v_s45_sz1536": "aa7146365c8f31876f9ad2a1a50ce1276486993bbc1294a551cf2098464ad2c2",
+}
+
+
+def resume_runs(dataset: str, pins: dict) -> list:
+    """Copy sha-verified runs from an attached dataset into WORK/runs.
+    Returns the resumed tags ([] when the dataset is not attached); an
+    attached run that fails its sha check aborts (never silently retrains)."""
+    import shutil
+
+    inp = Path("/kaggle/input")
+    base = next((b for b in [inp / dataset, *inp.glob(f"*/{dataset}"),
+                             *inp.glob(f"*/*/{dataset}")] if b.is_dir()), None)
+    if base is None:
+        return []
+    found = {}
+    for dirpath, _dirs, files in os.walk(base, followlinks=True):
+        tag = Path(dirpath).name
+        if tag in pins and "best.pt" in files and "summary.json" in files:
+            found[tag] = Path(dirpath)
+    for tag, src in found.items():
+        got = hashlib.sha256((src / "best.pt").read_bytes()).hexdigest()
+        if got != pins[tag]:
+            raise SystemExit(f"E39 ABORT: {tag}/best.pt sha {got} != pinned {pins[tag]}")
+        dst = WORK / "runs" / tag
+        dst.mkdir(parents=True, exist_ok=True)
+        for f in src.iterdir():
+            if f.is_file():
+                shutil.copy2(f, dst / f.name)
+        log(f"resumed {tag} from {dataset} (sha {got[:16]})")
+    not_here = sorted(set(pins) - set(found))
+    if not_here:
+        log(f"resume {dataset}: not attached: {not_here}")
+    return sorted(found)
 
 
 def load_legibility() -> dict[tuple, bool]:
@@ -1199,27 +1245,38 @@ def main() -> None:
 
     # ---- (d): finalist seeds 43/44 --------------------------------------------
     seed_reports = [dict(s42[a], arm=a, regimen=REGIMEN[a]) for a in ("a1v", "ocr")]
+    resumed = resume_runs(RESUME_DATA_V6, RESUME_SHA_V6)  # A1 item 15
     if budget_ok():
-        # A1 item 14: one seed per GPU in parallel (the quota arithmetic
-        # assumed this; the code ran them one after the other)
-        p43 = spawn(finalist, 43, 0, STEPS)
-        run_and_log(spawn(finalist, 44, 1, STEPS), f"{finalist}-s44")
-        run_and_log(p43, f"{finalist}-s43")
-        for seed in (43, 44):
-            if finalist == "a1v":
-                load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
-                a1v.to(device)
+        # A1 item 15: a reported (non-gate) phase may never abort the run.
+        try:
+            if {f"{finalist}_s43", f"{finalist}_s44"} <= set(resumed):
+                log("seeds 43/44 resumed from v6 (no retraining)")
             else:
-                load_best_weights(WORK / f"runs/ocr_s{seed}/best.pt", mk1)
-                mk1.to(device)
-            _, acc_seed = eval_rows(finalist, test_nonfr)
-            seed_reports.append({"arm": finalist, "regimen": REGIMEN[finalist],
-                                 "seed": seed, "test_nonfr_acc": round(acc_seed, 4),
-                                 **summary_of(f"{finalist}_s{seed}")})
-        load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
-        a1v.to(device)
-        load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
-        mk1.to(device)
+                # A1 item 14: one seed per GPU in parallel (the quota arithmetic
+                # assumed this; the code ran them one after the other)
+                p43 = spawn(finalist, 43, 0, STEPS)
+                run_and_log(spawn(finalist, 44, 1, STEPS), f"{finalist}-s44")
+                run_and_log(p43, f"{finalist}-s43")
+            for seed in (43, 44):
+                if finalist == "a1v":
+                    load_best_weights(WORK / f"runs/a1v_s{seed}/best.pt", a1v)
+                    a1v.to(device)
+                else:
+                    load_best_weights(WORK / f"runs/ocr_s{seed}/best.pt", mk1)
+                    mk1.to(device)
+                _, acc_seed = eval_rows(finalist, test_nonfr)
+                seed_reports.append({"arm": finalist, "regimen": REGIMEN[finalist],
+                                     "seed": seed, "test_nonfr_acc": round(acc_seed, 4),
+                                     **summary_of(f"{finalist}_s{seed}")})
+            load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
+            a1v.to(device)
+            load_best_weights(WORK / "runs/ocr_s42/best.pt", mk1)
+            mk1.to(device)
+        except SystemExit as exc:
+            skipped.append({"phase": "(d) seeds", "reason": str(exc)[:400]})
+        except Exception as exc:  # noqa: BLE001 - recorded, never silent
+            skipped.append({"phase": "(d) seeds",
+                            "reason": f"{type(exc).__name__}: {exc}"[:400]})
     else:
         skipped.append({"phase": "(d) seeds", "reason": "wall budget"})
 
@@ -1261,62 +1318,77 @@ def main() -> None:
 
     train_1536 = {"status": "not_run", "reason": "wall budget"}
     if budget_ok(TRAIN_1536_EST_S + 1200):
-        run_and_log(spawn("a1v", 45, 1, STEPS, size=1536), "a1v-s45-sz1536")
-        s1536 = summary_of("a1v_s45_sz1536")
-        load_best_weights(WORK / "runs/a1v_s45_sz1536/best.pt", a1v)
-        a1v.to(device)
-        _, acc_1536 = eval_rows("a1v", test_nonfr, max_side=1536)
-        train_1536 = {"status": "completed", "regimen": "task-trained (descriptive)",
-                      "test_nonfr_acc": round(acc_1536, 4), **s1536}
-        load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
-        a1v.to(device)
+        try:  # A1 item 15: reported phase, never fatal
+            if "a1v_s45_sz1536" in resumed:
+                log("s45@1536 resumed from v6 (no retraining)")
+            else:
+                run_and_log(spawn("a1v", 45, 1, STEPS, size=1536), "a1v-s45-sz1536")
+            s1536 = summary_of("a1v_s45_sz1536")
+            load_best_weights(WORK / "runs/a1v_s45_sz1536/best.pt", a1v)
+            a1v.to(device)
+            _, acc_1536 = eval_rows("a1v", test_nonfr, max_side=1536)
+            train_1536 = {"status": "completed", "regimen": "task-trained (descriptive)",
+                          "test_nonfr_acc": round(acc_1536, 4), **s1536}
+            load_best_weights(WORK / "runs/a1v_s42/best.pt", a1v)
+            a1v.to(device)
+        except SystemExit as exc:
+            train_1536 = {"status": "failed", "reason": str(exc)[:400]}
+        except Exception as exc:  # noqa: BLE001
+            train_1536 = {"status": "failed",
+                          "reason": f"{type(exc).__name__}: {exc}"[:400]}
     (WORK / "train_1536.json").write_text(json.dumps(train_1536, indent=2), encoding="utf-8")
 
     # ---- (f): jev-vlm-4b zero-shot reference + SmolVLM2 comparator ------------
     smol_section = {"status": "not_run", "reason": "wall budget"}
     delta_ci_smol = None
     if budget_ok(9_000):
-        run_and_log(spawn("smol", 42, 1, SMOKE_STEPS), "smoke-smol")
-        run_and_log(spawn("smol", 42, 1, STEPS), "smol-s42")
-        smol = SmolScorer(device)
-        load_best_weights(WORK / "runs/smol_s42/best.pt", smol.model)
-        smol_rows, smol_acc = eval_rows("smol", test_nonfr)
-        (WORK / "eval_test_nonfr__smol.jsonl").write_text(
-            "".join(json.dumps(r) + "\n" for r in smol_rows), encoding="utf-8")
-        fr_rows_s, fr_acc_s = eval_rows("smol", test_fr)
-        (WORK / "eval_test_fr__smol.jsonl").write_text(
-            "".join(json.dumps(r) + "\n" for r in fr_rows_s), encoding="utf-8")
-        # text sets for smol (reported, not gating)
-        smol_text = {}
-        smol.model.to("cpu"); smol.model.eval()
-        for name, rr in (("testC", [json.loads(l) for l in (bundle / "e26-order/test_c_rows.jsonl")
-                                     .read_text(encoding="utf-8").splitlines() if l.strip()]),
-                         ("task", task_rows)):
-            cases = [case_of_row(r) for r in rr]
-            hits = cnt = 0
-            with torch.no_grad():
-                for s2 in range(0, len(cases), 16):
-                    logits = smol.batch_logits(cases[s2:s2 + 16], [None] * 16)
-                    for j, c in enumerate(cases[s2:s2 + 16]):
-                        hits += int(int(logits[j, :len(c.options)].argmax().item())
-                                    == c.option_ids.index(c.target_option))
-                        cnt += 1
-            smol_text[name] = round(hits / cnt, 4)
-        smol.model.to(device)
-        smol_real = None
-        if real_ctx:
-            _, smol_real = eval_real("smol", real_ctx["rows"])
-        by_id_smol = {r["id"]: r for r in smol_rows}
-        delta_ci_smol = paired_delta_ci(
-            [r["correct"] for r in test_rows["a1v"]],
-            [int(by_id_smol[r["id"]]["correct"]) for r in test_rows["a1v"]],
-            [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
-        smol_section = {"status": "completed", "regimen": REGIMEN["smol"],
-                        "dev_half_macro": summary_of("smol_s42")["dev_half_macro"],
-                        "test_nonfr_acc": round(smol_acc, 4),
-                        "test_fr_acc": round(fr_acc_s, 4),
-                        "text_sets": smol_text,
-                        "real_acc": round(smol_real, 4) if smol_real is not None else None}
+        try:  # A1 item 15: reported comparator, never fatal
+            run_and_log(spawn("smol", 42, 1, SMOKE_STEPS), "smoke-smol")
+            run_and_log(spawn("smol", 42, 1, STEPS), "smol-s42")
+            smol = SmolScorer(device)
+            load_best_weights(WORK / "runs/smol_s42/best.pt", smol.model)
+            smol_rows, smol_acc = eval_rows("smol", test_nonfr)
+            (WORK / "eval_test_nonfr__smol.jsonl").write_text(
+                "".join(json.dumps(r) + "\n" for r in smol_rows), encoding="utf-8")
+            fr_rows_s, fr_acc_s = eval_rows("smol", test_fr)
+            (WORK / "eval_test_fr__smol.jsonl").write_text(
+                "".join(json.dumps(r) + "\n" for r in fr_rows_s), encoding="utf-8")
+            # text sets for smol (reported, not gating)
+            smol_text = {}
+            smol.model.to("cpu"); smol.model.eval()
+            for name, rr in (("testC", [json.loads(l) for l in (bundle / "e26-order/test_c_rows.jsonl")
+                                         .read_text(encoding="utf-8").splitlines() if l.strip()]),
+                             ("task", task_rows)):
+                cases = [case_of_row(r) for r in rr]
+                hits = cnt = 0
+                with torch.no_grad():
+                    for s2 in range(0, len(cases), 16):
+                        logits = smol.batch_logits(cases[s2:s2 + 16], [None] * 16)
+                        for j, c in enumerate(cases[s2:s2 + 16]):
+                            hits += int(int(logits[j, :len(c.options)].argmax().item())
+                                        == c.option_ids.index(c.target_option))
+                            cnt += 1
+                smol_text[name] = round(hits / cnt, 4)
+            smol.model.to(device)
+            smol_real = None
+            if real_ctx:
+                _, smol_real = eval_real("smol", real_ctx["rows"])
+            by_id_smol = {r["id"]: r for r in smol_rows}
+            delta_ci_smol = paired_delta_ci(
+                [r["correct"] for r in test_rows["a1v"]],
+                [int(by_id_smol[r["id"]]["correct"]) for r in test_rows["a1v"]],
+                [r["group_id"] for r in test_rows["a1v"]], n_boot=1000, seed=42)
+            smol_section = {"status": "completed", "regimen": REGIMEN["smol"],
+                            "dev_half_macro": summary_of("smol_s42")["dev_half_macro"],
+                            "test_nonfr_acc": round(smol_acc, 4),
+                            "test_fr_acc": round(fr_acc_s, 4),
+                            "text_sets": smol_text,
+                            "real_acc": round(smol_real, 4) if smol_real is not None else None}
+        except SystemExit as exc:
+            smol_section = {"status": "not_run", "reason": str(exc)[:400]}
+        except Exception as exc:  # noqa: BLE001 - recorded, never silent
+            smol_section = {"status": "failed",
+                            "reason": f"{type(exc).__name__}: {exc}"[:400]}
     else:
         skipped.append({"phase": "(f) smol", "reason": "wall budget"})
 
