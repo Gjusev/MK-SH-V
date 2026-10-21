@@ -509,6 +509,11 @@ class SmolScorer:
             model_id, revision=revision).to(device)
         self.model.float()
         tok = self.processor.tokenizer
+        # E39-r2 fix 2: answers are read at the LAST position, so pad on the left
+        tok.padding_side = "left"
+        # E39-r2 fix 4: same visual budget as A1-V (longest side 1024, not 2048)
+        self.processor.image_processor.size = {"longest_edge": IMAGE_SIZE}
+        self.image_token = getattr(self.processor, "image_token", "<image>")
         self.letter_ids = [tok(c, add_special_tokens=False)["input_ids"][0]
                            for c in LETTERS]
 
@@ -524,7 +529,9 @@ class SmolScorer:
 
         texts = [self.prompt_of(c, len(c.options)) for c in cases]
         if images and images[0] is not None:
-            feats = self.processor(text=texts, images=list(images),
+            # E39-r2 fix 1: one <image> placeholder per image, images per sample
+            texts = [self.image_token + t for t in texts]
+            feats = self.processor(text=texts, images=[[im] for im in images],
                                    padding=True, return_tensors="pt").to(self.device)
         else:
             feats = self.processor(text=texts, padding=True,
@@ -665,8 +672,8 @@ def run_worker(args) -> None:
     full_path = out_dir / "ckpt_latest.pt"
     curves = []
     is_smol = isinstance(model, SmolScorer)
-    if not is_smol:
-        model.train()
+    # E39-r2 fix 3: train mode for every arm (HF loads SmolVLM2 in eval mode)
+    (model.model if is_smol else model).train()
 
     from mokka_decisions.arch_julia import collate_julia
     from mksh_v.arch_a1v import forward_a1v
@@ -753,8 +760,7 @@ def run_worker(args) -> None:
             if (macro, acc) >= (best["dev_half_macro"], best["dev_half_acc"]):
                 best = {"dev_half_macro": macro, "dev_half_acc": acc, "step": step}
                 save_best_weights(best_path, model.model if is_smol else model)
-            if not is_smol:
-                model.train()
+            (model.model if is_smol else model).train()  # E39-r2 fix 3
         if step % 500 == 0:
             save_full_checkpoint(full_path, model.model if is_smol else model,
                                  opt, sched, scaler, step, cursor, rng.getstate())
