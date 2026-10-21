@@ -44,7 +44,7 @@ sys.path.insert(0, str(_root))
 
 '''
 # kernels that import another protocol script as a module (shipped at pkg root)
-ROOT_MODULES = {"e39r2_comparators": ("e39_train.py",)}
+ROOT_MODULES = {"e39r2_comparators": ("e39_train.py",), "e41_train": ("e39_train.py",)}
 
 
 def build(name: str) -> pathlib.Path:
