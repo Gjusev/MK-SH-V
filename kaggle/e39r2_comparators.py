@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 WORK = Path("/kaggle/working")
-WALL_BUDGET_S = 6 * 3600  # quota guard: stop waiting / sampling after 6 h
+WALL_BUDGET_S = 4 * 3600  # quota guard (E40 runs concurrently): stop after 4 h
 JEV_SAMPLE_SHA = "12791f79e26eb9d0196bf1c72b08fd5236476c150ae07250d446786db475c592"
 NOUL_IDS = ["false", "true"]
 
