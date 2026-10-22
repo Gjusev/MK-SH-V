@@ -9,7 +9,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { pathToFileURL } from "node:url";
-const SKILL = "C:/Users/ahmia/.claude/skills/anatomy";
+const SKILL = process.env.ANATOMY_SKILL || "C:/Users/ahmia/.claude/skills/anatomy";
 const k = await import(pathToFileURL(SKILL + "/kit/iso-kit.mjs").href);
 const { kitScript } = await import(pathToFileURL(SKILL + "/scripts/inline-kit.mjs").href);
 
