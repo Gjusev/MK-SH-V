@@ -15,6 +15,9 @@ dependencies = [
   "mokka-decisions @ git+https://github.com/Gjusev/MK-SH-1@9e1a226e",
   "transformers>=5.17",
   "torch>=2.1",
+  "torchvision",
+  "safetensors",
+  "huggingface_hub>=0.34",
   "pillow>=10.1",
 ]
 

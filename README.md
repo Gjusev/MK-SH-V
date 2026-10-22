@@ -3,45 +3,51 @@
 <td><h1>MK-SH-V</h1><p><sub>a 260M visual decision model: calibrated probabilities, a choice, and a refusal below the gate</sub></p></td>
 </tr></table>
 
-A small open **visual decision model**: give it a document page or a phone or
-desktop screenshot, a state, a question and a list of described options, and
-it returns calibrated probabilities, a choice, and an explicit abstention when
-confidence sits below a gate whose risk was validated on held-out data. It is
-the visual sibling of [MK-SH-1](https://github.com/Gjusev/MK-SH-1): the same
-whale shark, with its band in the amber of the gate.
+A small open **visual decision model**. Give it a document page or a
+screenshot, a question and the options; it returns calibrated probabilities
+and a choice, or it refuses when its confidence sits below a gate whose risk
+was validated on held-out data. The visual sibling of
+[MK-SH-1](https://github.com/Gjusev/MK-SH-1).
 
 <p align="center">
   <a href="https://cdn.jsdelivr.net/gh/Gjusev/mk-sh-v@main/assets/mkshv-film.mp4"><img src="assets/mkshv-film.gif" width="100%" alt="MK-SH-V launch film: the model answers a real screenshot at 99.9 percent, refuses a real receipt at 50.7 percent below the gate tau 0.55, beats a 15 times larger model on real screenshots, and keeps 86 percent coverage with a 95 percent Clopper-Pearson risk bound of 3.2 percent on the held-out synthetic test"></a>
-  <br><sub>27-second film, every number measured (muted loop; click for the video with sound).</sub>
+  <br><sub>27-second film, every number measured. Muted loop; click for the video with sound.</sub>
 </p>
 
-Public model: `Gjusev/MK-SH-V` on Hugging Face (upload pending; `MODEL_CARD.md`
-is the release text). Interactive demo: `Gjusev/MK-SH-V-demo` (source in
-[`demo/`](demo/)). Weights: the two E41 checkpoints (seeds 42 and 43),
-NeoMME-260M fine-tuned on our synthetic generator plus real CC BY data (CORD
-receipts, GUI-Odyssey screenshots); calibration and the gate came after
-(E42), fitted on calibration splits disjoint from every reported set.
+<p align="center">
+  <a href="https://huggingface.co/Gjusev/MK-SH-V"><b>Model</b></a> ·
+  <a href="https://huggingface.co/spaces/Gjusev/MK-SH-V-demo"><b>Live demo</b></a> ·
+  <a href="#use-it"><b>Use it</b></a> ·
+  <a href="#measured-against-the-field"><b>Results</b></a> ·
+  <a href="https://github.com/Gjusev/MK-SH-1"><b>MK-SH-1</b></a>
+</p>
 
-```
-image:     a receipt photo, or a screenshot of an app
-state:     "Goal: print orders_nov.csv for the records"
-question:  "Does the screenshot show the goal as completed?"
-options:   [ false: "No"  true: "Yes" ]
-→  probabilities over the options (temperature-calibrated)
-   choice (or null + reason_code when the policy abstains)
-```
+| 0.826 | τ = 0.55 | 86 % |
+|:---|:---|:---|
+| accuracy on real screenshots, held out; a ~15× larger model run zero-shot scores 0.731 | the refusal gate, fitted on a calibration split by a rule frozen in advance | answered on the held-out synthetic test, with a 95 % Clopper-Pearson risk bound of 3.2 to 3.4 % |
 
-It is **not** a chat model and generates no text. One encoder pass reads the
-image and the text together; each option is marked inline and scored by a
-shared head; the softmax runs over the valid options only.
+## What it does
 
-## The decision contract
+Two real cases, run through the released weights and the shipped policy:
 
-One tower, a scalar score per option. The temperature is a monotone transform:
-it never changes a choice, only the confidences. The gate was fitted on a
-calibration split by a rule frozen before any held-out evaluation (E42): the
-smallest threshold whose Clopper-Pearson 95 % upper bound on selective risk
-stays within the 5 % budget.
+| Input | Question | Calibrated probabilities | Output |
+|---|---|---|---|
+| <img src="demo/examples/gui-notes-fin.png" width="72" alt="phone screenshot of a chat with meeting links, from GUI-Odyssey"> | Does the screenshot show the goal as completed? | true **0.999**, false 0.001 | **choice: true** |
+| <img src="demo/examples/cord-receipt-1.png" width="72" alt="photographed receipt with a total of 302.016 IDR, from CORD"> | Is the total on this document at least 45.662 IDR? | false 0.507, true 0.493 | **choice: null**, `below_validated_threshold` |
+
+The second row is the point. The receipt's total is 302.016 IDR, so the right
+answer is true; the model leaned to false by a hair, and the gate refused
+instead of answering wrong. On real receipts that refusal is the norm today
+(see [the gate, held out](#the-refusal-gate-held-out)): it is honest, not yet
+useful there.
+
+How a decision is made: one encoder pass reads the image and the text
+together, each option is marked inline and scored by a shared head, and the
+softmax runs over the valid options only. The temperature T only rescales
+confidence, so it never changes a choice. The gate tau was fitted on a
+calibration split (E42) as the smallest threshold whose Clopper-Pearson 95 %
+upper bound on selective risk stays within a 5 % budget. It is **not** a chat
+model and generates no text.
 
 ```mermaid
 flowchart LR
@@ -54,11 +60,46 @@ flowchart LR
     F -- no --> H["choice = null<br/>reason_code = below_validated_threshold"]
 ```
 
-<img src="assets/decision-gate.png" width="760" alt="Isometric instrument: a probability dial with an amber tau mark at 0.55, a gate arm over the output slot, and three document pages (p 0.92 choice, p 0.58 choice, p 0.32 abstain)">
+## Use it
 
-The same contract as an instrument: the three pages on the carriage are real
-E42 calibration cases with their measured probabilities (0.92 and 0.58 pass
-the gate, 0.32 abstains). The interactive version ships in the demo.
+```bash
+pip install "mksh-v @ git+https://github.com/Gjusev/mk-sh-v"
+```
+
+```python
+import json, torch
+from PIL import Image
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
+from mokka_decisions.contracts import DecisionCase, Option
+from mksh_v.arch_a1v import NeoMMEMarkerScorer, forward_a1v
+
+repo = "Gjusev/MK-SH-V"
+policy = json.load(open(hf_hub_download(repo, "inference-policy.json")))
+T, tau = policy["temperature"]["value"], policy["abstention"]["threshold"]
+
+model = NeoMMEMarkerScorer()                 # NeoMME-260M backbone, marker head
+model.ensure_markers(32)
+model.load_state_dict(load_file(hf_hub_download(repo, "model.safetensors")), strict=True)
+model.eval()
+
+case = DecisionCase(
+    id="q1", group_id="q1", source="me", language="en", domain="screens",
+    state="Goal: print orders_nov.csv for the records",
+    question="Does the screenshot show the goal as completed?",
+    options=(Option(id="false", description="No"), Option(id="true", description="Yes")))
+enc = model.encode_cases([case], max_state_tokens=700, max_option_tokens=96)
+batch = model.build_batch(enc, [Image.open("screenshot.png").convert("RGB")], "cpu", max_side=1024)
+with torch.inference_mode():
+    probs = (forward_a1v(model, batch) / T).softmax(-1)[0].tolist()
+top = max(range(len(probs)), key=probs.__getitem__)
+choice = case.options[top].id if probs[top] >= tau else None   # None = below_validated_threshold
+```
+
+About one second per decision on a laptop CPU. Up to 8 options per question
+in the demo (the head has 32 markers). Evaluated in English, Spanish, German
+and French (French synthetic test 0.874 and 0.884, its gate outside budget);
+the real-image questions are in English, Spanish and German.
 
 ## Measured against the field
 

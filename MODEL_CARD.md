@@ -40,13 +40,21 @@ Clopper-Pearson bounds, under criteria frozen before any measurement.
 
 <sub>27-second film; every number in it is measured (real model outputs, E41 accuracy, E42 risk bounds).</sub>
 
-The published weights are the two E41 checkpoints (seed 42 sha256
-`e4b4f6f5…`, seed 43 sha256 `30f2eb42…`, best step 2,000 each), trained with
-the E39 recipe plus real CC-BY data (CORD train receipts, GUI-Odyssey
-task_split train episodes). Calibration and the abstention policy were added
-afterwards in experiment E42, fitted on dedicated calibration splits without
-touching a single weight. `release/inference-policy.json` carries the full
-policy: the temperature, the gate, and the response semantics.
+The published weights are the E41 seed-42 checkpoint (`model.safetensors`,
+sha256 `4fc57530…`, exported from `best.pt` sha256 `e4b4f6f5…`, best step
+2,000), trained with the E39 recipe plus real CC-BY data (CORD train
+receipts, GUI-Odyssey task_split train episodes). Seed 43 (`30f2eb42…`) was
+trained and evaluated the same way and is reported alongside as the
+replication; it is not part of this upload. Calibration and the abstention
+policy were added afterwards in experiment E42, fitted on dedicated
+calibration splits without touching a single weight. `inference-policy.json`
+carries the full policy for this checkpoint: the temperature, the gate, and
+the response semantics.
+
+Interactive demo: [Gjusev/MK-SH-V-demo](https://huggingface.co/spaces/Gjusev/MK-SH-V-demo)
+(Gradio, CPU). Four real cases decide in one click: a screenshot it answers,
+receipts it refuses. Code, criteria and per-case results:
+[github.com/Gjusev/mk-sh-v](https://github.com/Gjusev/mk-sh-v).
 
 ## What it is for
 
@@ -128,12 +136,17 @@ out-of-sample for both T and τ.
 > 86 % coverage while maintaining a 95 % Clopper-Pearson upper confidence
 > bound on selective risk below 5 %.
 
-<img src="assets/decision-gate.png" width="760"
-     alt="The decision gate as an instrument: probability dial, amber tau mark at 0.55, gate arm, three real calibration cases (p 0.92 choice, p 0.58 choice, p 0.32 abstain)">
+Two real cases through these weights and this policy:
 
-The gate as an instrument: the amber mark is tau on the probability dial,
-and the three pages are real calibration cases with measured probabilities
-(two pass the gate, one abstains). Interactive version in the demo.
+| Input | Question | Calibrated probabilities | Output |
+|---|---|---|---|
+| <img src="https://raw.githubusercontent.com/Gjusev/mk-sh-v/main/demo/examples/gui-notes-fin.png" width="72" alt="phone screenshot from GUI-Odyssey"> | Does the screenshot show the goal as completed? | true **0.999**, false 0.001 | **choice: true** |
+| <img src="https://raw.githubusercontent.com/Gjusev/mk-sh-v/main/demo/examples/cord-receipt-1.png" width="72" alt="receipt with a total of 302.016 IDR, from CORD"> | Is the total on this document at least 45.662 IDR? | false 0.507, true 0.493 | **choice: null**, `below_validated_threshold` |
+
+The receipt's total is 302.016 IDR, so the right answer is true: the model
+leaned to false by a hair and the gate refused instead of answering wrong.
+On real receipts that refusal is the norm today (table below): honest, not
+yet useful there.
 
 | Set | n | Coverage | Selective risk | 95 % interval | Budget |
 |---|---|---|---|---|---|
@@ -158,35 +171,42 @@ one.
 
 ## Usage
 
+```bash
+pip install "mksh-v @ git+https://github.com/Gjusev/mk-sh-v"
+```
+
 ```python
 import json, torch
 from PIL import Image
+from huggingface_hub import hf_hub_download
+from safetensors.torch import load_file
 from mokka_decisions.contracts import DecisionCase, Option
 from mksh_v.arch_a1v import NeoMMEMarkerScorer, forward_a1v
 
-policy = json.load(open("release/inference-policy.json", encoding="utf-8"))
+repo = "Gjusev/MK-SH-V"
+policy = json.load(open(hf_hub_download(repo, "inference-policy.json")))
 T = policy["temperature"]["value"]        # fitted on cal_temperature (E42)
 tau = policy["abstention"]["threshold"]   # fitted on cal_policy (E42), CP-upper rule
 
-model = NeoMMEMarkerScorer()              # Hcompany/NeoMME-260M backbone
+model = NeoMMEMarkerScorer()              # Hcompany/NeoMME-260M backbone, marker head
 model.ensure_markers(32)
-ckpt = torch.load("a1v_real_s42_best.pt", map_location="cpu", weights_only=True)
-model.load_state_dict(ckpt["model"]); model.eval()
+model.load_state_dict(load_file(hf_hub_download(repo, "model.safetensors")), strict=True)
+model.eval()
 
 case = DecisionCase(
-    id="demo", group_id="demo", source="demo", language="en", domain="screens",
+    id="q1", group_id="q1", source="me", language="en", domain="screens",
     state="Goal: print orders_nov.csv for the records",
     question="Does the screenshot show the goal as completed?",
     options=(Option(id="false", description="No"), Option(id="true", description="Yes")))
 enc = model.encode_cases([case], max_state_tokens=700, max_option_tokens=96)
-batch = model.build_batch(enc, [Image.open("screenshot.png").convert("RGB")],
-                          "cpu", max_side=1024)
+batch = model.build_batch(enc, [Image.open("screenshot.png").convert("RGB")], "cpu", max_side=1024)
 with torch.inference_mode():
-    logits = forward_a1v(model, batch)            # one pass over image + text
-    probs = (logits / T).softmax(-1)[0].tolist()  # calibrated probabilities
-top = max(range(len(probs)), key=lambda i: probs[i])
-choice = case.options[top].id if probs[top] >= tau else None  # below tau: abstain
+    probs = (forward_a1v(model, batch) / T).softmax(-1)[0].tolist()   # calibrated
+top = max(range(len(probs)), key=probs.__getitem__)
+choice = case.options[top].id if probs[top] >= tau else None   # None = below_validated_threshold
 ```
+
+About one second per decision on a laptop CPU.
 
 ## Architecture
 
