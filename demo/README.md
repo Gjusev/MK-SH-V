@@ -22,7 +22,9 @@ abstention when the top calibrated probability sits below the gate
 (tau = 0.55, experiment E42).
 
 - Model and policy: [Gjusev/MK-SH-V](https://huggingface.co/Gjusev/MK-SH-V)
-- Four real cases load and decide in one click. The figure below the
+- Twelve verified cases load and decide in one click (train-split images,
+  favourable answers checked against gold, refusals kept for honesty), and any
+  image can be uploaded to test. The figure below the
   workbench explains the decision contract: one tower, marker pins,
   a probability dial, and the gate. Its three cases are real calibration
   cases with their measured probabilities.

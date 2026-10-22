@@ -52,8 +52,9 @@ carries the full policy for this checkpoint: the temperature, the gate, and
 the response semantics.
 
 Interactive demo: [Gjusev/MK-SH-V-demo](https://huggingface.co/spaces/Gjusev/MK-SH-V-demo)
-(Gradio, CPU). Four real cases decide in one click: a screenshot it answers,
-receipts it refuses. Code, criteria and per-case results:
+(Gradio, CPU). Twelve verified cases decide in one click: documents, receipts
+and screenshots across English, Spanish and German, most answered confidently
+and correctly, the receipts refused by the gate. Or upload your own. Code, criteria and per-case results:
 [github.com/Gjusev/mk-sh-v](https://github.com/Gjusev/mk-sh-v).
 
 ## What it is for

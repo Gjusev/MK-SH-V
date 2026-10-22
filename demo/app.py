@@ -42,21 +42,15 @@ _model.eval()
 FIGURE = (HERE / "figure" / "decision-gate.html").read_text(encoding="utf-8")
 
 EXAMPLES_DIR = HERE / "examples"
-EXAMPLES = [
-    [str(EXAMPLES_DIR / "gui-notes-fin.png"),
-     "Goal: Listen to a lecture on Artificial Intelligence and then jot down the name of the course in the notes app.",
-     "Does the screenshot show the goal as completed?", "false: No\ntrue: Yes"],
-    [str(EXAMPLES_DIR / "cord-receipt-1.png"),
-     "Scanned document page.",
-     "Is the total on this document at least 45.662 IDR?", "false: No\ntrue: Yes"],
-    [str(EXAMPLES_DIR / "cord-receipt-2.png"),
-     "Gescannte Dokumentseite.",
-     "Beträgt die Gesamtsumme auf diesem Dokument mindestens 120.000 IDR?", "false: Nein\ntrue: Ja"],
-    [str(EXAMPLES_DIR / "cord-receipt-1.png"),
-     "Scanned document page.",
-     "Which range does the total on this document fall into?",
-     "low: below 100.000 IDR\nmid: 100.000 to 200.000 IDR\nhigh: above 200.000 IDR"],
-]
+# The case set: train-split images picked by assets/src/pick_demo_cases.py and run
+# through these weights and policy (favourable answers verified against gold,
+# refusals kept for honesty). Regenerate with pick_demo_cases.py + materialize_cases.py.
+_CASES_FILE = HERE / "cases.json"
+CASES_DB = json.loads(_CASES_FILE.read_text(encoding="utf-8")) if _CASES_FILE.exists() else []
+EXAMPLES = [[str(HERE / c["image"]), c["state"], c["question"],
+             "\n".join(f"{oid}: {desc}" for oid, desc in c["options"])] for c in CASES_DB]
+ANSWERS = [i for i, c in enumerate(CASES_DB) if c["verdict"] == "answer"]
+REFUSALS = [i for i, c in enumerate(CASES_DB) if c["verdict"] == "abstain"]
 
 
 def parse_options(text: str) -> tuple[Option, ...]:
@@ -150,7 +144,7 @@ footer { display: none !important; }
 #bar .links a { color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px; }
 #bar .links a:hover, #bar .links a:focus-visible { border-color:var(--ink); }
 /* one-click real cases */
-#cases { display:grid !important; grid-template-columns:1fr 1fr; gap:10px !important; }
+#cases { display:grid !important; grid-template-columns:1fr 1fr 1fr; gap:10px !important; }
 #cases > * { min-width:0 !important; }
 #cases button { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; align-items:center; width:100%; justify-content:flex-start; text-align:left; gap:12px; padding:10px 12px; min-height:76px;
                 background:#fff; border:1px solid var(--line); border-radius:12px; font-weight:500; color:var(--ink);
@@ -159,6 +153,17 @@ footer { display: none !important; }
 #cases button:hover { border-color:var(--ink); }
 #cases button:active { transform:translateY(1px); }
 #cases-label { font-size:13.5px; color:var(--muted); margin:4px 0 -4px; }
+.group-label { font-size:13px; font-weight:600; color:var(--ink); margin:10px 0 -2px; }
+#cases2 { display:grid !important; grid-template-columns:1fr 1fr; gap:10px !important; }
+#cases2 > * { min-width:0 !important; }
+#cases2 button { display:flex !important; flex-direction:row !important; align-items:center; width:100%;
+                 justify-content:flex-start; text-align:left; gap:12px; padding:8px 12px; min-height:64px;
+                 background:#fff; border:1px solid var(--line); border-radius:12px; font-weight:500;
+                 color:var(--ink); white-space:normal; line-height:1.3; font-size:14px; }
+#cases2 button img { width:44px !important; height:44px !important; max-height:none !important;
+                     object-fit:cover; border-radius:8px; flex-shrink:0; }
+#cases2 button:hover { border-color:var(--ink); }
+.fig-note { font-size:13.5px; color:var(--muted); margin:8px 0 0; }
 /* the readout: the gate, in the navy of the mark's tile */
 #decision { background:var(--navy); border-radius:16px; padding:24px 24px 18px; color:var(--paper);
             position:sticky; top:14px; align-self:flex-start; }
@@ -225,17 +230,25 @@ def build() -> gr.Blocks:
                 "<a href='#explain'>How the gate decides</a></nav></header>")
         with gr.Row(equal_height=False):
             with gr.Column(scale=6, min_width=340):
-                gr.HTML("<p id='cases-label'>Real cases, one click: the screenshot is answered, "
-                        "the receipts are refused</p>")
+                gr.HTML("<p id='cases-label'>Real cases from the training splits, one click. "
+                        "Or drop your own page or screenshot below and press Decide.</p>")
+                gr.HTML("<p class='group-label'>The model answers &mdash; confident, and correct "
+                        "(checked against each source's gold label)</p>")
                 with gr.Row(elem_id="cases"):
-                    case_btns = [gr.Button(f"{name}: {q}", icon=EXAMPLES[i][0], min_width=150, size="sm")
-                                 for i, (name, q) in enumerate(CASES)]
-                image_in = gr.Image(type="pil", label="Document page or screenshot", height=300)
-                question_in = gr.Textbox(label="Question", value=EXAMPLES[0][2])
+                    case_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
+                                           f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
+                                           min_width=150, size="sm") for i in ANSWERS]
+                gr.HTML("<p class='group-label'>The gate refuses &mdash; top pick below tau 0.55</p>")
+                with gr.Row(elem_id="cases2"):
+                    refuse_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
+                                             f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
+                                             min_width=150, size="sm") for i in REFUSALS]
+                image_in = gr.Image(type="pil", label="Your image: document page or screenshot", height=300)
+                question_in = gr.Textbox(label="Question", value=EXAMPLES[0][2] if EXAMPLES else "")
                 with gr.Row():
-                    state_in = gr.Textbox(label="State", value=EXAMPLES[0][1], lines=3, scale=3, min_width=200)
+                    state_in = gr.Textbox(label="State", value=EXAMPLES[0][1] if EXAMPLES else "", lines=3, scale=3, min_width=200)
                     options_in = gr.Textbox(label="Options, one per line: id: description",
-                                            value=EXAMPLES[0][3], lines=3, scale=2, min_width=160)
+                                            value=EXAMPLES[0][3] if EXAMPLES else "", lines=3, scale=2, min_width=160)
                 go = gr.Button("Decide", variant="primary")
             with gr.Column(scale=5, min_width=340, elem_id="decision"):
                 verdict_out = gr.HTML(EMPTY)
@@ -243,12 +256,15 @@ def build() -> gr.Blocks:
                 probs_out = gr.HTML()
                 meta_out = gr.Markdown(elem_id="meta")
         with gr.Column(elem_id="explain"):
-            gr.HTML("<h2>How the gate decides</h2><p>One tower, a score per option, a temperature, "
-                    "then the gate. The three pages on the carriage are real calibration cases with "
-                    "their measured probabilities: hover the bench or use the arrow keys.</p>")
+            gr.HTML("<h2>How the gate decides</h2>"
+                    "<p>One tower reads image and text in a single pass and scores every option. "
+                    "A temperature rescales confidence; the gate then answers or refuses.</p>")
             gr.HTML('<iframe src="/gradio_api/file=figure/decision-gate.html" title="The decision gate, '
                     'three real calibration cases" style="width:100%;height:560px;border:0;'
                     'border-radius:14px;" loading="lazy"></iframe>')
+            gr.HTML("<p class='fig-note'>The bench above: three real calibration cases ride the "
+                    "carriage with their measured probabilities. Hover it or use the arrow keys "
+                    "to move the needle past the amber tau mark.</p>")
         with gr.Accordion("* The shipped policy and its held-out validation (E42)", open=False):
             gr.Markdown(
                 f"This demo runs the released policy: temperature **T = {T:g}** and gate "
@@ -269,7 +285,7 @@ def build() -> gr.Blocks:
             "Example images: CORD v2 (Park et al. 2019, NAVER Clova) and GUI-Odyssey "
             "(Lu et al. 2024, OpenGVLab), both CC BY 4.0. Model: Apache-2.0.")
         ins, outs = [image_in, state_in, question_in, options_in], [probs_out, verdict_out, abstain_out, meta_out]
-        for i, btn in enumerate(case_btns):
+        for btn, i in [*zip(case_btns, ANSWERS), *zip(refuse_btns, REFUSALS)]:
             btn.click(lambda i=i: tuple(EXAMPLES[i]), None, ins).then(decide, ins, outs)
         go.click(decide, ins, outs)
     return app

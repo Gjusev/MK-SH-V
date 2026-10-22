@@ -1,0 +1,319 @@
+[
+ {
+  "kind": "syn",
+  "family": "doc_type",
+  "language": "en",
+  "state": "Scanned document page.",
+  "question": "Which document type is this?",
+  "options": [
+   [
+    "invoice",
+    "Invoice: an itemized bill with line items, reference number and total."
+   ],
+   [
+    "receipt",
+    "Receipt: a proof of purchase with items and total, without invoice reference."
+   ],
+   [
+    "contract",
+    "Contract: titled clauses with signature lines for parties."
+   ],
+   [
+    "form",
+    "Form: labelled input fields, mostly unfilled."
+   ],
+   [
+    "letter",
+    "Letter: sender and recipient blocks, salutation and paragraphs."
+   ],
+   [
+    "other",
+    "None of the other document types applies to this page."
+   ]
+  ],
+  "gold": "form",
+  "top": "form",
+  "pmax": 1.0,
+  "verdict": "answer",
+  "image": "examples/case-01.png"
+ },
+ {
+  "kind": "syn",
+  "family": "field_threshold",
+  "language": "de",
+  "state": "Gescannte Dokumentseite.",
+  "question": "Beträgt die Gesamtsumme auf diesem Dokument mindestens 167,00 EUR?",
+  "options": [
+   [
+    "false",
+    "Nein"
+   ],
+   [
+    "true",
+    "Ja"
+   ]
+  ],
+  "gold": "true",
+  "top": "true",
+  "pmax": 0.569,
+  "verdict": "answer",
+  "image": "examples/case-02.png"
+ },
+ {
+  "kind": "syn",
+  "family": "form_complete",
+  "language": "es",
+  "state": "Página de documento escaneada.",
+  "question": "¿Está completo este formulario? Los campos obligatorios llevan *.",
+  "options": [
+   [
+    "complete",
+    "Completo: todos los campos obligatorios están rellenos y legibles."
+   ],
+   [
+    "missing_required",
+    "Un campo obligatorio está vacío."
+   ],
+   [
+    "illegible",
+    "Todos los campos obligatorios están rellenos, pero al menos un valor obligatorio no se puede leer."
+   ]
+  ],
+  "gold": "illegible",
+  "top": "illegible",
+  "pmax": 0.961,
+  "verdict": "answer",
+  "image": "examples/case-03.png"
+ },
+ {
+  "kind": "syn",
+  "family": "screen_state",
+  "language": "de",
+  "state": "Screenshot der Anwendung.",
+  "question": "In welchem Zustand ist dieser Anwendungsbildschirm?",
+  "options": [
+   [
+    "success",
+    "Eine Bestätigung mit Häkchen: die Aktion wurde fehlerfrei abgeschlossen."
+   ],
+   [
+    "error",
+    "Eine Fehlermeldung mit Code und Wiederholen-Schaltfläche."
+   ],
+   [
+    "loading",
+    "Ein Ladeindikator: Ladesymbol und Platzhalterzeilen."
+   ],
+   [
+    "needs_input",
+    "Ein Formular zur Eingabe: mindestens ein Pflichtfeld ist leer."
+   ],
+   [
+    "blocked",
+    "Eine Zugriffs- oder Systemsperre: Sperrhinweis ohne Wiederholen-Schaltfläche."
+   ]
+  ],
+  "gold": "success",
+  "top": "success",
+  "pmax": 1.0,
+  "verdict": "answer",
+  "image": "examples/case-04.png"
+ },
+ {
+  "kind": "syn",
+  "family": "urgency",
+  "language": "en",
+  "state": "Ticket #7708. Impact: critical. Linked to change request CR-312.",
+  "question": "How urgent is this ticket on a scale from 1 (lowest) to 5 (highest)?",
+  "options": [
+   [
+    "1",
+    "1 — cosmetic, no user impact."
+   ],
+   [
+    "2",
+    "2 — minor annoyance, workaround exists."
+   ],
+   [
+    "3",
+    "3 — noticeable problem for some users."
+   ],
+   [
+    "4",
+    "4 — major disruption for many users."
+   ],
+   [
+    "5",
+    "5 — critical outage, act immediately."
+   ]
+  ],
+  "gold": "5",
+  "top": "5",
+  "pmax": 0.998,
+  "verdict": "answer",
+  "image": "examples/case-05.png"
+ },
+ {
+  "kind": "cord",
+  "family": "field_threshold",
+  "language": "en",
+  "state": "Scanned document page.",
+  "question": "Is the total on this document at least 45.662 IDR?",
+  "options": [
+   [
+    "false",
+    "No"
+   ],
+   [
+    "true",
+    "Yes"
+   ]
+  ],
+  "verdict": "abstain",
+  "note": "kept: README case table; the model's top pick (false) would have been wrong (total 302.016 IDR)",
+  "image": "examples/case-06.png",
+  "pmax": 0.507,
+  "top": null,
+  "gold": "true"
+ },
+ {
+  "kind": "cord",
+  "family": "field_threshold",
+  "language": "de",
+  "state": "Gescannte Dokumentseite.",
+  "question": "Beträgt die Gesamtsumme auf diesem Dokument mindestens 120.000 IDR?",
+  "options": [
+   [
+    "false",
+    "Nein"
+   ],
+   [
+    "true",
+    "Ja"
+   ]
+  ],
+  "verdict": "abstain",
+  "note": "kept: README case table",
+  "image": "examples/case-07.png",
+  "pmax": 0.522,
+  "top": null,
+  "gold": null
+ },
+ {
+  "kind": "cord",
+  "family": "field_threshold",
+  "language": "en",
+  "state": "Scanned document page.",
+  "question": "Which range does the total on this document fall into?",
+  "options": [
+   [
+    "low",
+    "below 100.000 IDR"
+   ],
+   [
+    "mid",
+    "100.000 to 200.000 IDR"
+   ],
+   [
+    "high",
+    "above 200.000 IDR"
+   ]
+  ],
+  "verdict": "abstain",
+  "note": "kept: 3-option range question",
+  "image": "examples/case-08.png",
+  "pmax": 0.418,
+  "top": null,
+  "gold": "high"
+ },
+ {
+  "kind": "cord",
+  "family": "field_threshold",
+  "language": "es",
+  "state": "Página de documento escaneada.",
+  "question": "¿El total de este documento es de al menos 968.865 IDR?",
+  "options": [
+   [
+    "false",
+    "No"
+   ],
+   [
+    "true",
+    "Sí"
+   ]
+  ],
+  "gold": "true",
+  "top": null,
+  "pmax": 0.507,
+  "verdict": "abstain",
+  "gt_total_text": "1,591,600",
+  "image": "examples/case-09.png"
+ },
+ {
+  "kind": "gui",
+  "family": "task_done",
+  "language": "en",
+  "state": "Goal: Listen to a lecture on Artificial Intelligence and then jot down the name of the course in the notes app.",
+  "question": "Does the screenshot show the goal as completed?",
+  "options": [
+   [
+    "false",
+    "No"
+   ],
+   [
+    "true",
+    "Yes"
+   ]
+  ],
+  "verdict": "answer",
+  "note": "kept: README case table",
+  "image": "examples/case-10.png",
+  "pmax": 0.999,
+  "top": "true",
+  "gold": "true"
+ },
+ {
+  "kind": "gui",
+  "family": "task_done",
+  "language": "es",
+  "state": "Objetivo: Plan a movie night by selecting a crime movie, add some snacks to the cart on a shopping app, send invitations through a messaging app, and set a clock to remind yourself.",
+  "question": "¿La captura muestra el objetivo como completado?",
+  "options": [
+   [
+    "false",
+    "No"
+   ],
+   [
+    "true",
+    "Sí"
+   ]
+  ],
+  "gold": "true",
+  "top": "true",
+  "pmax": 0.998,
+  "verdict": "answer",
+  "image": "examples/case-11.png"
+ },
+ {
+  "kind": "gui",
+  "family": "task_done",
+  "language": "de",
+  "state": "Ziel: Plan a movie night by selecting a crime movie, add some snacks to the cart on a shopping app, send invitations through a messaging app, and set a clock to remind yourself.",
+  "question": "Zeigt der Screenshot das Ziel als erledigt?",
+  "options": [
+   [
+    "false",
+    "Nein"
+   ],
+   [
+    "true",
+    "Ja"
+   ]
+  ],
+  "gold": "false",
+  "top": "false",
+  "pmax": 0.999,
+  "verdict": "answer",
+  "image": "examples/case-12.png"
+ }
+]

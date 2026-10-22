@@ -25,7 +25,7 @@ def push_model(api: HfApi) -> None:
     upload_file(path_or_fileobj=str(ROOT / "release/inference-policy.json"),
                 path_in_repo="inference-policy.json", repo_id=MODEL_ID, repo_type="model")
     for asset in ("assets/mkshv-film.mp4", "assets/mkshv-film.jpg", "assets/logo-mark.png",
-                  "assets/chart-accuracy.png", "assets/chart-gate.png", "assets/decision-gate.png"):  # card embeds
+                  "assets/chart-accuracy.png", "assets/chart-gate.png"):  # card embeds
         upload_file(path_or_fileobj=str(ROOT / asset), path_in_repo=asset,
                     repo_id=MODEL_ID, repo_type="model")
     print("card + policy up; uploading weights (~1 GB)...")
@@ -39,10 +39,12 @@ def push_space(api: HfApi) -> None:
     demo = ROOT / "demo"
     files = ["app.py", "requirements.txt", "README.md", "mksh_v/__init__.py",
              "mksh_v/arch_a1v.py", "mksh_v/sequence.py", "examples/NOTICE.md",
-             "examples/gui-notes-fin.png", "examples/cord-receipt-1.png",
-             "examples/cord-receipt-2.png", "figure/decision-gate.html",
-             "figure/decision-gate-light.html", "demo_cases.json", "static/logo-mark.png"]
+             "figure/decision-gate.html", "figure/decision-gate-light.html",
+             "demo_cases.json", "cases.json", "static/logo-mark.png"]
+    files += [f"examples/{p.name}" for p in sorted((demo / "examples").glob("*.png"))]
     for rel in files:
+        if not (demo / rel).exists():
+            continue
         upload_file(path_or_fileobj=str(demo / rel), path_in_repo=rel,
                     repo_id=SPACE_ID, repo_type="space")
     print(api.space_info(SPACE_ID).sha, SPACE_ID)
