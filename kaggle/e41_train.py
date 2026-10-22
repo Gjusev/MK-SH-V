@@ -28,8 +28,8 @@ REALTRAIN_ROWS_SHA = {  # data/e41/manifest.json (generated after the freeze)
 }
 SEEDS = {42: 0, 43: 1}  # seed -> GPU
 REAL_SLOT = 1  # microbatch slot % 4 == 1 -> real-train pool
-TRAIN_DEADLINE_S = int(4.3 * 3600)  # stop training (keep best) so the eval always runs
-WALL_BUDGET_S = 5 * 3600  # orchestrator kills workers after this
+TRAIN_DEADLINE_S = int(3.5 * 3600)  # stop training (keep best) so the eval always runs
+WALL_BUDGET_S = int(4.2 * 3600)  # orchestrator kills workers after this
 SMOKE_STEPS = 20
 SMOKE_EVAL_ROWS = 24
 
