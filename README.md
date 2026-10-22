@@ -21,7 +21,7 @@ checkpoint, fitted on calibration splits disjoint from every reported set.
 A 20-second walkthrough of the decision gate (`assets/brag.mp4`, no music,
 the machine is the percussion):
 
-<video src="assets/brag.mp4" controls muted></video>
+<video src="https://cdn.jsdelivr.net/gh/Gjusev/mk-sh-v@main/assets/brag.mp4" controls muted></video>
 
 ```
 image:     a receipt photo, or a screenshot of an app

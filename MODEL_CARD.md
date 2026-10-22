@@ -17,7 +17,7 @@ differentiating capability is measured abstention: a decision threshold
 whose selective risk was validated on held-out data with exact
 Clopper-Pearson bounds, under criteria frozen before any measurement.
 
-<video src="assets/brag.mp4" controls muted></video>
+<video src="https://cdn.jsdelivr.net/gh/Gjusev/mk-sh-v@main/assets/brag.mp4" controls muted></video>
 
 The published weights are the two E41 checkpoints (seed 42 sha256
 `e4b4f6f5…`, seed 43 sha256 `30f2eb42…`, best step 2,000 each), trained with
