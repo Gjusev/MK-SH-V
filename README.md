@@ -18,6 +18,11 @@ GUI-Odyssey task_split train episodes). Calibration and the abstention
 policy (E42) were added without retraining: one temperature and one gate per
 checkpoint, fitted on calibration splits disjoint from every reported set.
 
+A 20-second walkthrough of the decision gate (`assets/brag.mp4`, no music,
+the machine is the percussion):
+
+<video src="assets/brag.mp4" controls muted></video>
+
 ```
 image:     a receipt photo, or a screenshot of an app
 state:     "Goal: print orders_nov.csv for the records"
@@ -49,6 +54,14 @@ flowchart LR
     F -- yes --> G["choice + calibrated probabilities"]
     F -- no --> H["choice = null<br/>reason_code = below_validated_threshold"]
 ```
+
+The gate as an instrument. The three pages on the carriage are real E42
+calibration cases with their measured probabilities (0.92 and 0.58 pass the
+gate, 0.32 abstains); the interactive version ships in the demo
+(`demo/figure/decision-gate.html`):
+
+<img src="assets/decision-gate.png" width="760"
+     alt="Isometric instrument: a probability dial with an amber tau mark at 0.55, a gate arm over the output slot, and three document pages (p 0.92 choice, p 0.58 choice, p 0.32 abstain)">
 
 ## Use cases
 

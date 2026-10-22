@@ -17,6 +17,8 @@ differentiating capability is measured abstention: a decision threshold
 whose selective risk was validated on held-out data with exact
 Clopper-Pearson bounds, under criteria frozen before any measurement.
 
+<video src="assets/brag.mp4" controls muted></video>
+
 The published weights are the two E41 checkpoints (seed 42 sha256
 `e4b4f6f5…`, seed 43 sha256 `30f2eb42…`, best step 2,000 each), trained with
 the E39 recipe plus real CC-BY data (CORD train receipts, GUI-Odyssey
@@ -100,6 +102,13 @@ out-of-sample for both T and τ.
 > On our held-out synthetic evaluation, both 260M checkpoints achieved over
 > 86 % coverage while maintaining a 95 % Clopper-Pearson upper confidence
 > bound on selective risk below 5 %.
+
+<img src="assets/decision-gate.png" width="760"
+     alt="The decision gate as an instrument: probability dial, amber tau mark at 0.55, gate arm, three real calibration cases (p 0.92 choice, p 0.58 choice, p 0.32 abstain)">
+
+The gate as an instrument: the amber mark is tau on the probability dial,
+and the three pages are real calibration cases with measured probabilities
+(two pass the gate, one abstains). Interactive version in the demo.
 
 | Set | n | Coverage | Selective risk | 95 % interval | Budget |
 |---|---|---|---|---|---|

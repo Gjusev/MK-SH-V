@@ -15,6 +15,7 @@ from pathlib import Path
 
 import gradio as gr
 import torch
+from html import escape
 from huggingface_hub import snapshot_download
 
 from mksh_v.arch_a1v import NeoMMEMarkerScorer, forward_a1v
@@ -51,6 +52,10 @@ EXAMPLES = [
     [str(EXAMPLES_DIR / "cord-receipt-2.png"),
      "Gescannte Dokumentseite.",
      "Beträgt die Gesamtsumme auf diesem Dokument mindestens 120.000 IDR?", "false: Nein\ntrue: Ja"],
+    [str(EXAMPLES_DIR / "cord-receipt-1.png"),
+     "Scanned document page.",
+     "Which range does the total on this document fall into?",
+     "low: below 100.000 IDR\nmid: 100.000 to 200.000 IDR\nhigh: above 200.000 IDR"],
 ]
 
 
@@ -98,10 +103,11 @@ def decide(image, state_text: str, question: str, options_text: str):
         abstain = (f"max calibrated probability {probs[top]:.0%} is below the gate "
                    f"tau = {TAU:.2f}; reason_code `below_validated_threshold`")
     bar_html = "<div class='prob-list'>" + "".join(
-        f"<div class='prob-row'><span class='prob-id'>{oid}</span>"
+        f"<div class='prob-row'><span class='prob-id'>{escape(oid)}</span>"
         f"<span class='prob-bar'><span class='prob-fill' style='width:{p*100:.1f}%'></span></span>"
-        f"<span class='prob-num'>{p:.1%}</span></div>"
-        for oid, _desc, p in bars) + "</div>"
+        f"<span class='prob-num'>{p:.1%}</span>"
+        f"<span class='prob-desc'>{escape(desc)}</span></div>"
+        for oid, desc, p in bars) + "</div>"
     meta = (f"one encoder pass · {dt:.1f} s on this CPU · T = {T:g}, tau = {TAU:g} "
             "(experiment E42, fitted on calibration splits)")
     return bar_html, verdict, abstain, meta
@@ -116,8 +122,10 @@ footer { display: none !important; }
 #masthead p { color: var(--muted); margin: 0; font-size: 15.5px; }
 #gate-fig iframe, #gate-fig .html { width: 100%; border: 0; }
 .prob-list { display: flex; flex-direction: column; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-.prob-row { display: grid; grid-template-columns: 88px 1fr 64px; align-items: center; gap: 12px; }
+.prob-row { display: grid; grid-template-columns: 88px 1fr 64px; align-items: center; gap: 2px 12px; }
 .prob-id { color: var(--ink); font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
+.prob-desc { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; white-space: nowrap;
+             overflow: hidden; text-overflow: ellipsis; }
 .prob-bar { background: var(--line); height: 14px; position: relative; }
 .prob-fill { position: absolute; inset: 0 auto 0 0; background: var(--acc-ink); }
 .prob-num { color: var(--muted); font-size: 13.5px; text-align: right; }
@@ -154,11 +162,25 @@ def build() -> gr.Blocks:
                     label="Try a real case")
         gr.Markdown(
             "Weights and policy: [Gjusev/MK-SH-V](https://huggingface.co/Gjusev/MK-SH-V). "
-            "The gate was validated on held-out data: over 86 % coverage with a 95 % "
-            "Clopper-Pearson upper bound on selective risk of 3.2 to 3.4 % on the synthetic "
-            "test (experiment E42); on real images abstention is the declared open problem, "
-            "and this demo shows it unfiltered. Example images: CORD (Park et al. 2019, "
-            "NAVER Clova) and GUI-Odyssey (Lu et al. 2024, OpenGVLab), both CC BY 4.0.")
+            "Code and per-case outputs: "
+            "[github.com/Gjusev/mk-sh-v](https://github.com/Gjusev/mk-sh-v). "
+            "Example images: CORD (Park et al. 2019, NAVER Clova) and GUI-Odyssey "
+            "(Lu et al. 2024, OpenGVLab), both CC BY 4.0.")
+        with gr.Accordion("The shipped policy and its validation (E42)", open=False):
+            gr.Markdown(
+                f"This demo runs the released policy: temperature **T = {T:g}** and gate "
+                f"**tau = {TAU:g}**, fitted on calibration splits disjoint from every "
+                "reported set. Held-out validation, exact two-sided Clopper-Pearson 95 %"
+                " (budget: 5 % selective risk):\n\n"
+                "| Set | Coverage | Selective risk | CP95 upper |\n"
+                "|---|---|---|---|\n"
+                "| synthetic test s42 | 0.861 | 2.65 % | 3.2 % (held) |\n"
+                "| synthetic test s43 | 0.864 | 2.84 % | 3.4 % (held) |\n"
+                "| real GUI s42/s43 | 0.983 | 16.7 / 21.3 % | above budget |\n"
+                "| real CORD s42/s43 | 0.023 / 0.123 | 38.5 / 23.9 % | above budget |\n\n"
+                "The budget holds on the synthetic test only. On real images abstention "
+                "is the campaign's declared open problem, and this demo shows it "
+                "unfiltered: try a receipt and watch the gate refuse.")
         go.click(decide, [image_in, state_in, question_in, options_in],
                  [probs_out, verdict_out, abstain_out, meta_out])
     return app

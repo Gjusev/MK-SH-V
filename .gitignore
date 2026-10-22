@@ -57,3 +57,6 @@ demo/figure/shots*
 demo/figure/shot*
 demo/figure/crop-*
 demo/figure/lines.png
+
+# brag working dir (video deliverables live in assets/, frames are intermediate)
+brag-output-*/
