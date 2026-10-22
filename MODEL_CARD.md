@@ -47,15 +47,15 @@ measurement stops.
    3.23 % and 3.43 % (budget 5 %). Suited to decision queues where refusals
    go to human review. Bound: that guarantee is protocol- and
    distribution-specific (our synthetic families). On real screenshots the
-   gate currently keeps 98 % of cases while 17–21 % of kept answers are
+   gate currently keeps 98 % of cases while 17 to 21 % of kept answers are
    wrong; on real receipts it abstains from almost everything (coverage
-   2–12 %). No abstention claim is made beyond the evaluated protocol.
+   2 to 12 %). No abstention claim is made beyond the evaluated protocol.
 3. **Mixed text and visual decision queues.** Text competence is retained
    through replay-mixing: 1.000/1.000 on the MK-SH-1 numeric order set
    (testC, MK-SH-1 itself 0.979) and 0.810/0.830 on the routing task set
    (MK-SH-1 0.800). Bound: descriptive only; the shipped policy was fitted
-   on the visual calibration split, and task-set selective risk is 16–18 %.
-4. **A methodological template.** Six experiments (E37–E42) with criteria
+   on the visual calibration split, and task-set selective risk is 16 to 18 %.
+4. **A methodological template.** Six experiments (E37 to E42) with criteria
    frozen and committed before each measurement, per-case outputs for every
    number, episode-grouped statistics, and published failure modes. Bound:
    one architecture, two real sources, 260M scale; not claimed beyond what
