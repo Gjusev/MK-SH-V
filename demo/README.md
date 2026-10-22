@@ -9,6 +9,9 @@ app_file: app.py
 pinned: true
 license: apache-2.0
 short_description: 260M visual decision model with a validated abstention gate
+models:
+  - Gjusev/MK-SH-V
+  - Hcompany/NeoMME-260M
 ---
 
 # MK-SH-V demo

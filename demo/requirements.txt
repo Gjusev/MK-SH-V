@@ -1,4 +1,5 @@
 torch
+torchvision
 transformers==5.19.0
 safetensors
 pillow>=10.1
