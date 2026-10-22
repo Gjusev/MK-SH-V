@@ -1,0 +1,11 @@
+LinkedIn (image: assets/linkedin-card.png, second image: assets/linkedin-table.png, or the film assets/mkshv-film.mp4)
+
+MK-SH-V is out: a 260M model that reads document pages and screenshots and answers typed questions with calibrated probabilities, a choice, or an explicit refusal.
+
+What we measured, on held-out data:
+- Real screenshots ("is the goal done?"): 0.826, against 0.731 for a ~15x larger model run zero-shot on the same 2,010 pairs.
+- The refusal gate (tau 0.55): 86 % coverage with a 95 % Clopper-Pearson upper bound on selective risk of 3.2 to 3.4 % on our synthetic test, both seeds.
+- Where it stops: on real receipts and real screenshots the gate is not yet validated, and on receipt thresholds the larger model and a rules baseline do as well or better. That is published next to the wins.
+
+Criteria frozen before every measurement, every number regenerable from per-case files.
+Code, results and the film: github.com/Gjusev/mk-sh-v
