@@ -23,7 +23,8 @@ secrets/
 # Data, weights, runs (manifests and hashes are versioned elsewhere, not the files)
 data/
 runs/
-release/
+release/*
+!release/inference-policy.json
 checkpoints/
 artifacts/
 .cache/

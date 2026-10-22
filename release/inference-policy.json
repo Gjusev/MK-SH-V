@@ -1,0 +1,50 @@
+{
+  "model": "MK-SH-V (A1-V)",
+  "checkpoint": "a1v_real_s42",
+  "checkpoint_sha256": "e4b4f6f5a56fedae18886e378cd9fb8f84afb1a77536b168a2fdfb990d9641a5",
+  "experiment": "E42 (docs/E42_CRITERIA_2026-10-22.md)",
+  "temperature": {
+    "value": 1.5455,
+    "fitted_on": "cal_temperature (3,150 synthetic calibration cases), NLL grid",
+    "crosscheck_mokka": 1.545524
+  },
+  "abstention": {
+    "threshold": 0.55,
+    "rule": "smallest grid value whose cal_policy CP95 UPPER bound of selective risk <= 0.05",
+    "risk_budget": 0.05,
+    "fitted_on": "cal_policy (3,150), disjoint from every reported set",
+    "held_out_validation": {
+      "set": "synthetic test non-FR (4,200)",
+      "coverage": 0.8612,
+      "selective_risk": 0.0265,
+      "cp95": [
+        0.0216,
+        0.0323
+      ]
+    }
+  },
+  "tau_grid": [
+    0.3,
+    0.35,
+    0.4,
+    0.45,
+    0.5,
+    0.55,
+    0.6,
+    0.65,
+    0.7,
+    0.75,
+    0.8,
+    0.85,
+    0.9,
+    0.95
+  ],
+  "response_semantics": {
+    "decide": "softmax(logits / T) over the valid options; argmax is the choice",
+    "abstain": "max calibrated probability < tau -> choice null, reason_code below_validated_threshold",
+    "reason_codes": {
+      "below_validated_threshold": "max calibrated probability below tau; the 5 % selective-risk budget was validated on the held-out synthetic test (E42), both seeds"
+    }
+  },
+  "bounds": "guarantee protocol- and distribution-specific (synthetic families); real-image abstention not validated (see model card)"
+}

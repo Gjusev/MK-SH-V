@@ -1,124 +1,208 @@
-# MK-SH-V (A1-V) — small visual decision model with pre-registered abstention
+<!-- Local mirror of the Hugging Face model card. The HF card is canonical once the model is uploaded; update there first and re-sync this file. -->
 
-**Model ID:** MK-SH-V · architecture variant "A1-V" · ~260M parameters
-**Backbone:** NeoMME-260M (Apache-2.0) with a 32-slot marker head, single tower
-**Inputs:** one image (documents or screenshots, longest side 1024 px) + a text
-state, a question and answer options
-**Outputs:** calibrated probabilities over the options (temperature T and
-decision threshold τ fitted on calibration splits), the chosen option, and an
-explicit abstention when the top probability is below τ
-**Trained by:** Mokka Agentur (Gjusev). Code and criteria: Apache-2.0, this
-repository. Checkpoints: seed 42 and seed 43 of E41 (best step 2,000).
+<table><tr>
+<td><h1>MK-SH-V</h1></td>
+</tr></table>
 
-## Intended use
+**a 260M visual decision model: a page or screenshot in, calibrated
+probabilities out, a choice, and a refusal below the gate**
 
-Deciding among options about a document page or a screenshot (UI state,
-task completion, thresholds over printed totals) with a calibrated
-confidence signal, in settings where a 260M single-tower model is wanted
-(edge, cost, auditability). Text decision competence is preserved (E35 text
-sets) so the model can serve mixed text/visual decision workloads.
+A decision model of about 260M parameters that answers typed questions over
+a described state **and an image**: given an image (a document page or a
+mobile or desktop screenshot), a state, a question and a list of options, it returns
+calibrated probabilities, a choice, and an explicit abstention when
+confidence is insufficient. One single tower reads pixels and text in the
+same pass; each option is marked inline and scored by a shared head. Its
+differentiating capability is measured abstention: a decision threshold
+whose selective risk was validated on held-out data with exact
+Clopper-Pearson bounds, under criteria frozen before any measurement.
 
-Out of scope: general OCR, captioning, open-ended VQA, safety-critical use
-(the abstention guarantee below holds on the evaluated distribution only).
+The published weights are the two E41 checkpoints (seed 42 sha256
+`e4b4f6f5…`, seed 43 sha256 `30f2eb42…`, best step 2,000 each), trained with
+the E39 recipe plus real CC-BY data (CORD train receipts, GUI-Odyssey
+task_split train episodes). Calibration and the abstention policy were added
+afterwards in experiment E42, fitted on dedicated calibration splits without
+touching a single weight. `release/inference-policy.json` carries the full
+policy: the temperature, the gate, and the response semantics.
 
-## Measured results (all evaluation criteria were frozen and committed
-before any measurement; scripts reproduce every number from per-case files)
+## What it is for
 
-### Real images — receipts (CORD) and app screenshots (GUI-Odyssey), 2,586
-held-out cases mapped to binary decision questions
+Each case names the measured capability it rests on, and where that
+measurement stops.
 
-| Arm | Params | Real overall | CORD field_threshold | GUI task_done | Regime |
+1. **Decisions over screenshots and document pages.** "Does this screenshot
+   show the goal as completed", document type and form state, urgency of a
+   ticket shown on screen. Rests on real-image accuracy 0.765/0.742 on 2,586
+   held-out cases (CORD receipts + GUI-Odyssey screenshots, E41): on
+   GUI-Odyssey task completion the 260M model reaches 0.826/0.783 against
+   0.731 for a zero-shot ~4B comparator and 0.472 for an OCR pipeline.
+   Bound: two decision families mapped from those sources into binary
+   questions in EN/ES/DE with our templates; on CORD receipt thresholds the
+   model (0.550/0.602) stays below a deterministic rules baseline (0.594)
+   and the large comparator (0.972).
+2. **Calibrated probabilities with a safety valve.** Temperature T and
+   gate τ fitted on calibration splits disjoint from every reported set
+   (E42): on the held-out synthetic test, both checkpoints keep over 86 %
+   coverage with a 95 % Clopper-Pearson upper bound on selective risk of
+   3.23 % and 3.43 % (budget 5 %). Suited to decision queues where refusals
+   go to human review. Bound: that guarantee is protocol- and
+   distribution-specific (our synthetic families). On real screenshots the
+   gate currently keeps 98 % of cases while 17–21 % of kept answers are
+   wrong; on real receipts it abstains from almost everything (coverage
+   2–12 %). No abstention claim is made beyond the evaluated protocol.
+3. **Mixed text and visual decision queues.** Text competence is retained
+   through replay-mixing: 1.000/1.000 on the MK-SH-1 numeric order set
+   (testC, MK-SH-1 itself 0.979) and 0.810/0.830 on the routing task set
+   (MK-SH-1 0.800). Bound: descriptive only; the shipped policy was fitted
+   on the visual calibration split, and task-set selective risk is 16–18 %.
+4. **A methodological template.** Six experiments (E37–E42) with criteria
+   frozen and committed before each measurement, per-case outputs for every
+   number, episode-grouped statistics, and published failure modes. Bound:
+   one architecture, two real sources, 260M scale; not claimed beyond what
+   the campaign measured.
+
+## Measured capability
+
+Real images, held-out 2,586 cases (labels from each source's ground truth;
+details and provenance in the training repo):
+
+| Arm | Params | Real overall | CORD thresholds | GUI task done | Regime |
 |---|---|---|---|---|---|
-| **A1-V s42** | **260M** | **0.765** | 0.550 | **0.826** | task-trained (E41) |
-| **A1-V s43** | **260M** | **0.742** | 0.602 | 0.783 | task-trained (E41) |
+| **MK-SH-V s42** | **260M** | **0.765** | 0.550 | **0.826** | task-trained |
+| **MK-SH-V s43** | **260M** | **0.742** | 0.602 | 0.783 | task-trained |
 | jev-vlm-4b | ~4B | 0.785 | 0.972 | 0.731 | zero-shot |
 | OCR → MK-SH-1 | ~25M | 0.475 | 0.486 | 0.472 | task-trained |
-| A1-V, synthetic-only training (E39) | 260M | 0.471 | 0.394 | 0.493 | task-trained |
-| Deterministic rules | — | — | 0.594 | — | — |
+| Same model, synthetic-only training | 260M | 0.471 | 0.394 | 0.493 | task-trained |
 
-- Adding ~10k CC-BY real training rows (disjoint splits) moved real accuracy
-  from 0.471 to 0.765/0.742 (paired Δ vs E39: +29.4 pp, CI95 [+25.9, +32.9]
-  seed 42; +27.2 pp [+23.3, +31.3] seed 43; episode-grouped bootstrap).
-- **On GUI-Odyssey the 260M model beats the ~15× larger zero-shot jev-vlm-4b**
-  (0.826 vs 0.731, seed 42); overall the two are statistically close
-  (Δ CI95 seed 42 [−5.4, +1.2] pp). On CORD receipts jev and the rules
-  baseline remain ahead — see Limitations. jev may have seen CORD /
-  GUI-Odyssey during pretraining; this cannot be verified from its card.
+Moving from synthetic-only training to +10k real CC-BY rows (disjoint
+splits) changed real accuracy by +29.4 pp (CI95 [+25.9, +32.9], seed 42) and
++27.2 pp ([+23.3, +31.3], seed 43), paired by episode. Overall the two
+seeds are statistically close to the ~15× larger zero-shot comparator
+(Δ CI95 [−5.4, +1.2] pp seed 42), which may have seen the evaluation
+sources in pretraining; unverifiable from its card.
 
-### Synthetic held-out test (own generator, 7 families, 4,200 cases)
+Synthetic held-out test (own generator, 7 families, 4,200 cases):
+0.908/0.909, a declared −2.5 pp versus the synthetic-only model,
+concentrated in field_threshold and form_complete (real-data number formats
+compete with the synthetic EUR convention); the other five families are at
+ceiling. French test 0.874/0.884.
 
-A1-V 0.908/0.909 (−2.5 pp vs the synthetic-only model, concentrated in
-field_threshold and form_complete; the other five families are at ceiling).
-Text-only competence is retained: testC 1.000/1.000 (MK-SH-1: 0.979), task
-0.810/0.830 (MK-SH-1: 0.800).
+## Calibration & abstention (experiment E42)
 
-### Abstention (E42; protocol: temperature T fitted on cal_temperature,
-τ chosen on a separate cal_policy split as the smallest grid value whose
-Clopper-Pearson 95 % upper bound on selective risk is ≤ 5 %; both fitted
-before any held-out evaluation)
+Protocol, frozen before any measurement: T fitted by NLL on
+`cal_temperature` (3,150 synthetic calibration cases); τ chosen on a
+separate `cal_policy` split (3,150) as the smallest grid value whose
+Clopper-Pearson 95 % upper bound on selective risk stays within the 5 %
+budget; held-out sets reported with exact two-sided CP intervals, budget on
+the upper end. Unlike an in-sample policy, every reported number below is
+out-of-sample for both T and τ.
 
 > On our held-out synthetic evaluation, both 260M checkpoints achieved over
 > 86 % coverage while maintaining a 95 % Clopper-Pearson upper confidence
 > bound on selective risk below 5 %.
 
-- Seed 42: coverage 86.1 %, selective risk 2.65 %, CP95 upper 3.23 % (T=1.546, τ=0.55).
-- Seed 43: coverage 86.4 %, selective risk 2.84 %, CP95 upper 3.43 % (T=1.293, τ=0.55).
+| Set | n | Coverage | Selective risk | 95 % interval | Budget |
+|---|---|---|---|---|---|
+| s42 synthetic test (non-FR) | 4,200 | 0.861 | 2.65 % | 2.2 to 3.2 % | **held** |
+| s43 synthetic test (non-FR) | 4,200 | 0.864 | 2.84 % | 2.3 to 3.4 % | **held** |
+| s42 synthetic test FR | 1,400 | 0.834 | 5.66 % | 4.4 to 7.1 % | point only |
+| s43 synthetic test FR | 1,400 | 0.841 | 5.78 % | 4.5 to 7.3 % | point only |
+| s42 real GUI | 2,010 | 0.983 | 16.7 % | 15.1 to 18.4 % | missed |
+| s43 real GUI | 2,010 | 0.983 | 21.3 % | 19.5 to 23.1 % | missed |
+| s42 real CORD | 576 | 0.023 | 38.5 % | 13.9 to 68.4 % | missed |
+| s43 real CORD | 576 | 0.123 | 23.9 % | 14.6 to 35.5 % | missed |
+| s42/s43 text testC | 48 | 1.000 | 0 % | 0 to 7.4 % | n too small |
+| s42/s43 text task | 300 | 0.990 | 16.5 to 18.2 % | 12.5 to 23.1 % | missed |
 
-This guarantee is protocol- and distribution-specific (our synthetic
-families, threshold selected on calibration data disjoint from the test set).
-No claim is made about abstention behaviour on other distributions — see
-Limitations.
+T = 1.5455 (s42) and 1.2929 (s43), τ = 0.55 both; the full risk/coverage
+curves per set and family are in the training repo (`runs/e42-calib/`,
+deterministically regenerable). ECE after T: synthetic test 0.011/0.006,
+real GUI 0.10/0.16, real overall 0.10/0.14. The confidence signal that
+works on the synthetic distribution does not yet separate right from wrong
+on real images: that is the campaign's declared open problem, not a hidden
+one.
 
-## Limitations (measured, not speculated)
+## Usage
 
-1. **Abstention is not yet validated on real images.** On GUI-Odyssey the
-   model answers 98 % of cases but 17–21 % of accepted answers are wrong
-   (confident errors). On CORD it abstains from almost everything (coverage
-   2–12 %) and still errs among accepted cases. The confidence signal that
-   works on the synthetic distribution does not yet separate right from
-   wrong on real data; per-domain thresholds or an OOD signal are open work.
-2. **CORD receipts remain weak** vs baselines (0.55–0.60 vs rules 0.594,
-   jev 0.972); threshold questions over printed totals in IDR formats are
-   the largest open gap.
-3. French held just above the risk budget (5.7 % point risk, CP95 upper
-   7.1–7.3 %). The 48-case testC set cannot certify a ≤5 % CP upper bound
-   even at zero errors (upper 7.4 % at n=48). Text task set risk 16–18 %.
-4. Synthetic accuracy dropped 2.5 pp when real data was added (declared
-   cost; families at ceiling were unaffected).
-5. The E38c real evaluation set informed the error analysis that motivated
-   the E41 training data; it was never trained or tuned on, and all
-   selection used separate dev splits. This is disclosed for completeness.
+```python
+import json, torch
+from PIL import Image
+from mokka_decisions.contracts import DecisionCase, Option
+from mksh_v.arch_a1v import NeoMMEMarkerScorer, forward_a1v
 
-## Training data and provenance
+policy = json.load(open("release/inference-policy.json", encoding="utf-8"))
+T = policy["temperature"]["value"]        # fitted on cal_temperature (E42)
+tau = policy["abstention"]["threshold"]   # fitted on cal_policy (E42), CP-upper rule
 
-| Source | License | Split used | Pinned revision / SHA |
-|---|---|---|---|
-| Own HTML+Playwright synthetic generator (7 families, EN/ES/DE/FR) | ours, Apache-2.0 | all | repo `src/mksh_v/gen_e38*.py`; E38a/E38b manifests |
-| CORD v2 (Park et al. 2019, NAVER Clova) | CC BY 4.0 | eval: validation+test (E38c); train split only for E41 training | rev `7f0115a4`; rows SHAs in `docs/E41_CRITERIA_2026-10-22.md` |
-| GUI-Odyssey (Lu et al. 2024, OpenGVLab) | CC BY 4.0 | eval: task_split test (E38c); task_split train only for E41 training | rev `71e0e7e2`; rows SHAs in `docs/E41_CRITERIA_2026-10-22.md` |
-| NeoMME-260M backbone | Apache-2.0 | init | E37 C3 checkpoint (SHA verified in-kernel) |
-| MK-SH-1 E35 text replay mix | Apache-2.0 (ours) | text replay 1/4 of microbatches | git pin `9e1a226e` |
+model = NeoMMEMarkerScorer()              # Hcompany/NeoMME-260M backbone
+model.ensure_markers(32)
+ckpt = torch.load("a1v_real_s42_best.pt", map_location="cpu", weights_only=True)
+model.load_state_dict(ckpt["model"]); model.eval()
 
-Transformations of CC-BY sources: receipts/screenshots kept as original
-bytes (no re-encoding); labels derived from each source's own ground truth
-(CORD parsed totals; GUI-Odyssey step structure) with the derivation rules
-committed before generation; question/options/templates are ours. Full
-per-file SHA-256 manifests ship with each dataset. See
-`docs/data-licenses.md` for the complete table.
+case = DecisionCase(
+    id="demo", group_id="demo", source="demo", language="en", domain="screens",
+    state="Goal: print orders_nov.csv for the records",
+    question="Does the screenshot show the goal as completed?",
+    options=(Option(id="false", description="No"), Option(id="true", description="Yes")))
+enc = model.encode_cases([case], max_state_tokens=700, max_option_tokens=96)
+batch = model.build_batch(enc, [Image.open("screenshot.png").convert("RGB")],
+                          "cpu", max_side=1024)
+with torch.inference_mode():
+    logits = forward_a1v(model, batch)            # one pass over image + text
+    probs = (logits / T).softmax(-1)[0].tolist()  # calibrated probabilities
+top = max(range(len(probs)), key=lambda i: probs[i])
+choice = case.options[top].id if probs[top] >= tau else None  # below tau: abstain
+```
 
-## Reproducibility
+## Architecture
 
-- Frozen criteria per experiment: `docs/E37..E42_*CRITERIA*.md` (committed
-  before measurement; amendments likewise).
-- Per-case outputs for every number above: `runs/e39-train-v7`,
-  `runs/e39r2`, `runs/e40-calib`, `runs/e41`, `runs/e42-calib` (this
-  repository's release bundle); post-hoc gate reports:
-  `scripts/report_e41.py`, `scripts/report_e39r2.py`.
-- Statistics: episode-grouped paired bootstrap (1,000 resamples, seed 42),
-  exact two-sided Clopper-Pearson 95 % intervals with the risk budget on
-  the upper end.
+`NeoMMEMarkerScorer`: single NeoMME-260M tower (Hcompany, Apache-2.0),
+fine-tuned with a marker head. Sequence layout per case:
+`<doc> image-patch-grid state <eos> question [O0] option_0 [O1] option_1 …`;
+each option is marked by a learned inline marker token, the shared head
+scores every marker in one pass, and the softmax runs over the valid
+options only. It is not a chat model and generates no text.
 
-## Citation
+## Training / calibration provenance
 
-Model and evaluation suite by Gjusev (Mokka Agentur), 2026. Repository
-`mk-sh-v`; companion text model MK-SH-1 (`Gjusev/MK-SH-1`).
+Weights: E41 seeds 42/43, initialised from the E37 C3 checkpoint (sha
+verified), 2,000 steps, effective batch 32, every 4th microbatch E35 text
+replay and one slot of 4 real images (CORD train receipts; GUI-Odyssey
+task_split train episodes), longest side 1,024 px, dev-half + real-dev
+selection. Calibration + policy: experiment **E42** (criteria frozen before
+measurement; τ chosen by the CP-upper rule adopted from E40's evidence
+before any E41 calibration output existed). Full record:
+[github.com/Gjusev/mk-sh-v](https://github.com/Gjusev/mk-sh-v)
+(`docs/E37…E42 criteria`, `docs/status.md`, per-case files under `runs/`).
+
+## Limitations (declared)
+
+- Abstention is validated on the synthetic protocol only; on real images the
+  gate either keeps confident errors (GUI) or refuses nearly everything
+  (CORD). Per-domain thresholds or an OOD signal are open work.
+- CORD receipt thresholds remain below the rules baseline; threshold
+  questions over IDR-formatted totals are the largest accuracy gap.
+- The real evaluation set (E38c) informed the error analysis that motivated
+  the training data; it was never trained or tuned on, and all selection
+  used separate dev splits. Disclosed for completeness.
+- Single global temperature per checkpoint; text-set probabilities inherit
+  a policy fitted on the visual calibration split (reported descriptively).
+- 48-case text set cannot certify a ≤5 % CP upper bound even at zero errors.
+
+## Attribution
+
+- Backbone: [NeoMME-260M](https://huggingface.co/Hcompany/NeoMME-260M)
+  (Hcompany), Apache-2.0, fine-tuned by this project.
+- Training data: CORD v2 train (Park et al. 2019, NAVER Clova, CC BY 4.0);
+  GUI-Odyssey task_split train (Lu et al. 2024, OpenGVLab, CC BY 4.0);
+  evaluation counterparts from the same sources' held-out splits. Original
+  bytes, no re-encoding; labels derived from each source's ground truth
+  with rules committed before generation.
+- Text replay mix and comparators: this project's MK-SH-1 (Apache-2.0);
+  jev-vlm-4b (used zero-shot for evaluation only).
+
+## License
+
+Apache-2.0 (code and trained weights of this export). CC-BY-4.0 sources
+keep their attribution obligations, documented in
+`THIRD_PARTY_NOTICES.md`.
