@@ -1,11 +1,30 @@
-<!-- Local mirror of the Hugging Face model card. The HF card is canonical once the model is uploaded; update there first and re-sync this file. -->
+---
+license: apache-2.0
+language:
+  - en
+  - es
+  - de
+  - fr
+library_name: safetensors
+base_model: Hcompany/NeoMME-260M
+datasets:
+  - naver-clova-ix/cord-v2
+  - OpenGVLab/GUI-Odyssey
+tags:
+  - decision-model
+  - document-understanding
+  - gui
+  - calibration
+  - selective-prediction
+  - abstention
+  - research
+---
+<!-- Local mirror of the Hugging Face model card (pushed as README.md by scripts/push_hf.py). -->
 
 <table><tr>
-<td><h1>MK-SH-V</h1></td>
+<td><img src="assets/logo-mark.png" width="120" alt="MK-SH-V mark: the family's whale shark over a tide band in the amber of the gate"></td>
+<td><h1>MK-SH-V</h1><p><sub>a 260M visual decision model: calibrated probabilities, a choice, and a refusal below the gate</sub></p></td>
 </tr></table>
-
-**a 260M visual decision model: a page or screenshot in, calibrated
-probabilities out, a choice, and a refusal below the gate**
 
 A decision model of about 260M parameters that answers typed questions over
 a described state **and an image**: given an image (a document page or a
@@ -17,7 +36,9 @@ differentiating capability is measured abstention: a decision threshold
 whose selective risk was validated on held-out data with exact
 Clopper-Pearson bounds, under criteria frozen before any measurement.
 
-<video src="https://cdn.jsdelivr.net/gh/Gjusev/mk-sh-v@main/assets/brag.mp4" controls muted></video>
+<video src="https://huggingface.co/Gjusev/MK-SH-V/resolve/main/assets/mkshv-film.mp4" poster="https://huggingface.co/Gjusev/MK-SH-V/resolve/main/assets/mkshv-film.jpg" controls muted playsinline width="100%"></video>
+
+<sub>27-second film; every number in it is measured (real model outputs, E41 accuracy, E42 risk bounds).</sub>
 
 The published weights are the two E41 checkpoints (seed 42 sha256
 `e4b4f6f5…`, seed 43 sha256 `30f2eb42…`, best step 2,000 each), trained with
@@ -65,6 +86,8 @@ measurement stops.
 
 ## Measured capability
 
+![Accuracy on real held-out images against a ~15x larger zero-shot model, an OCR pipeline and the same model trained on synthetic data only](assets/chart-accuracy.png)
+
 Real images, held-out 2,586 cases (labels from each source's ground truth;
 details and provenance in the training repo):
 
@@ -90,6 +113,8 @@ compete with the synthetic EUR convention); the other five families are at
 ceiling. French test 0.874/0.884.
 
 ## Calibration & abstention (experiment E42)
+
+![Selective risk at tau 0.55 with exact 95 % Clopper-Pearson intervals per held-out set: inside the 5 % budget on the synthetic test, outside it on French, real screenshots, real receipts and the text task](assets/chart-gate.png)
 
 Protocol, frozen before any measurement: T fitted by NLL on
 `cal_temperature` (3,150 synthetic calibration cases); τ chosen on a

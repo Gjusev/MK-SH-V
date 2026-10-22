@@ -121,7 +121,8 @@ function tower() {
   out.push(L(k.ring(tx, ty, 2.4, TOWER_TOP + 2, P, 16), { tone: "lo" }));
   out.push(D([at([tx, ty, TOWER_TOP + 2])], { size: 0.5 }));
   // hold lamp on the cap front edge: lit (accent) while the gate is closed
-  out.push(`<circle data-part="lamp" cx="${at([tx + 3, ty + 6, TOWER_TOP]).join(",")}" r="1.6" class="iso-dot" data-tone="lo"/>`);
+  const [lx, ly] = at([tx + 3, ty + 6, TOWER_TOP]);
+  out.push(`<circle data-part="lamp" cx="${lx}" cy="${ly}" r="1.6" class="iso-dot" data-tone="lo"/>`);
   // arm forward over the page path, then the reading head hangs from it
   const arm = { x: tx - 6, y: ty + 10, w: 12, d: 42, r: 2 };
   out.push(S(k.slabOf(arm, TOWER_TOP - 6, 4, P, 3, 0.5), { tone: "mid" }));
@@ -263,7 +264,7 @@ function draw() {
   const open = p >= TAU;
   if (open !== gateOpen) {
     gateOpen = open;
-    const [hx, hy] = [${JSON.stringify(at([HINGE[0], HINGE[1], 10]))}];
+    const [hx, hy] = ${JSON.stringify(at([HINGE[0], HINGE[1], 10]))};
     gate.setAttribute("transform", open ? \`rotate(-64, \${hx}, \${hy})\` : "");
     lamp.setAttribute("data-tone", open ? "lo" : "acc");
     cardTarget = open ? 1 : 0;

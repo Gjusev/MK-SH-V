@@ -1,0 +1,358 @@
+<!doctype html><html><head><meta charset="utf-8"><style>@font-face{font-family:Geist;src:url(fonts/geist-400.woff2);font-weight:400}
+@font-face{font-family:Geist;src:url(fonts/geist-500.woff2);font-weight:500}
+@font-face{font-family:Geist;src:url(fonts/geist-700.woff2);font-weight:700}
+@font-face{font-family:"Geist Mono";src:url(fonts/geistmono-400.woff2);font-weight:400}
+*{margin:0;padding:0}body{background:#999;padding:20px;display:flex;flex-direction:column;gap:20px;align-items:flex-start}
+div>svg{display:block}
+.h{font:700 30px Geist;letter-spacing:-.02em}.s{font:400 18px Geist}.p{font:500 20px Geist;letter-spacing:-.01em}
+.l{font:500 17px Geist}.m{font:400 14.5px 'Geist Mono'}.v{font:500 16px 'Geist Mono'}</style></head><body><div id="acc-light"><svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560">
+<rect width="1400" height="560" fill="#F7F6F3"/>
+<text x="40" y="58" class="h" fill="#14181F">Accuracy on real images, held out</text>
+<text x="40" y="92" class="s" fill="#4D5562">MK-SH-V in amber, every comparator neutral. All arms measured by us on the same rows; labels from each source&#8217;s ground truth.</text>
+<text x="40" y="150" class="p" fill="#14181F">Screenshots: is the goal completed?</text>
+<text x="40" y="174" class="m" fill="#7A808A">GUI-Odyssey, n = 2,010</text>
+<text x="40" y="223" class="l" fill="#14181F">MK-SH-V s42</text>
+<text x="40" y="242" class="m" fill="#7A808A">260M, trained</text>
+<line x1="190" y1="202" x2="190" y2="248" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="190" y="212" width="178.5" height="22" rx="4" fill="#A86D17"/>
+<text x="378.5" y="229" class="v" fill="#14181F">0.826</text>
+<text x="40" y="287" class="l" fill="#14181F">MK-SH-V s43</text>
+<text x="40" y="306" class="m" fill="#7A808A">260M, trained</text>
+<line x1="190" y1="266" x2="190" y2="312" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="190" y="276" width="169.0" height="22" rx="4" fill="#A86D17"/>
+<text x="369.0" y="293" class="v" fill="#14181F">0.783</text>
+<text x="40" y="351" class="l" fill="#14181F">jev-vlm-4b</text>
+<text x="40" y="370" class="m" fill="#7A808A">~4B, zero-shot</text>
+<line x1="190" y1="330" x2="190" y2="376" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="190" y="340" width="157.9" height="22" rx="4" fill="#8593A6"/>
+<text x="357.9" y="357" class="v" fill="#14181F">0.731</text>
+<text x="40" y="415" class="l" fill="#14181F">OCR + MK-SH-1</text>
+<text x="40" y="434" class="m" fill="#7A808A">~25M, trained</text>
+<line x1="190" y1="394" x2="190" y2="440" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="190" y="404" width="102.0" height="22" rx="4" fill="#8593A6"/>
+<text x="302.0" y="421" class="v" fill="#14181F">0.472</text>
+<text x="40" y="479" class="l" fill="#14181F">Synthetic only</text>
+<text x="40" y="498" class="m" fill="#7A808A">260M, E39</text>
+<line x1="190" y1="458" x2="190" y2="504" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="190" y="468" width="106.4" height="22" rx="4" fill="#8593A6"/>
+<text x="306.4" y="485" class="v" fill="#14181F">0.493</text>
+<text x="495" y="150" class="p" fill="#14181F">Receipts: is the total above a threshold?</text>
+<text x="495" y="174" class="m" fill="#7A808A">CORD, n = 576</text>
+<text x="495" y="223" class="l" fill="#14181F">MK-SH-V s42</text>
+<text x="495" y="242" class="m" fill="#7A808A">260M, trained</text>
+<line x1="645" y1="202" x2="645" y2="248" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="645" y="212" width="118.9" height="22" rx="4" fill="#A86D17"/>
+<text x="773.9" y="229" class="v" fill="#14181F">0.550</text>
+<text x="495" y="287" class="l" fill="#14181F">MK-SH-V s43</text>
+<text x="495" y="306" class="m" fill="#7A808A">260M, trained</text>
+<line x1="645" y1="266" x2="645" y2="312" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="645" y="276" width="130.1" height="22" rx="4" fill="#A86D17"/>
+<text x="785.1" y="293" class="v" fill="#14181F">0.602</text>
+<text x="495" y="351" class="l" fill="#14181F">jev-vlm-4b</text>
+<text x="495" y="370" class="m" fill="#7A808A">~4B, zero-shot</text>
+<line x1="645" y1="330" x2="645" y2="376" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="645" y="340" width="210.0" height="22" rx="4" fill="#8593A6"/>
+<text x="865.0" y="357" class="v" fill="#14181F">0.972</text>
+<text x="495" y="415" class="l" fill="#14181F">OCR + MK-SH-1</text>
+<text x="495" y="434" class="m" fill="#7A808A">~25M, trained</text>
+<line x1="645" y1="394" x2="645" y2="440" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="645" y="404" width="105.0" height="22" rx="4" fill="#8593A6"/>
+<text x="760.0" y="421" class="v" fill="#14181F">0.486</text>
+<text x="495" y="479" class="l" fill="#14181F">Synthetic only</text>
+<text x="495" y="498" class="m" fill="#7A808A">260M, E39</text>
+<line x1="645" y1="458" x2="645" y2="504" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="645" y="468" width="85.1" height="22" rx="4" fill="#8593A6"/>
+<text x="740.1" y="485" class="v" fill="#14181F">0.394</text>
+<text x="950" y="150" class="p" fill="#14181F">All real images</text>
+<text x="950" y="174" class="m" fill="#7A808A">n = 2,586</text>
+<text x="950" y="223" class="l" fill="#14181F">MK-SH-V s42</text>
+<text x="950" y="242" class="m" fill="#7A808A">260M, trained</text>
+<line x1="1100" y1="202" x2="1100" y2="248" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="1100" y="212" width="165.2" height="22" rx="4" fill="#A86D17"/>
+<text x="1275.2" y="229" class="v" fill="#14181F">0.765</text>
+<text x="950" y="287" class="l" fill="#14181F">MK-SH-V s43</text>
+<text x="950" y="306" class="m" fill="#7A808A">260M, trained</text>
+<line x1="1100" y1="266" x2="1100" y2="312" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="1100" y="276" width="160.4" height="22" rx="4" fill="#A86D17"/>
+<text x="1270.4" y="293" class="v" fill="#14181F">0.742</text>
+<text x="950" y="351" class="l" fill="#14181F">jev-vlm-4b</text>
+<text x="950" y="370" class="m" fill="#7A808A">~4B, zero-shot</text>
+<line x1="1100" y1="330" x2="1100" y2="376" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="1100" y="340" width="169.6" height="22" rx="4" fill="#8593A6"/>
+<text x="1279.6" y="357" class="v" fill="#14181F">0.785</text>
+<text x="950" y="415" class="l" fill="#14181F">OCR + MK-SH-1</text>
+<text x="950" y="434" class="m" fill="#7A808A">~25M, trained</text>
+<line x1="1100" y1="394" x2="1100" y2="440" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="1100" y="404" width="102.6" height="22" rx="4" fill="#8593A6"/>
+<text x="1212.6" y="421" class="v" fill="#14181F">0.475</text>
+<text x="950" y="479" class="l" fill="#14181F">Synthetic only</text>
+<text x="950" y="498" class="m" fill="#7A808A">260M, E39</text>
+<line x1="1100" y1="458" x2="1100" y2="504" stroke="#E3E1DC" stroke-width="2"/>
+<rect x="1100" y="468" width="101.7" height="22" rx="4" fill="#8593A6"/>
+<text x="1211.7" y="485" class="v" fill="#14181F">0.471</text>
+</svg></div><div id="gate-light"><svg xmlns="http://www.w3.org/2000/svg" width="1400" height="610" viewBox="0 0 1400 610">
+<rect width="1400" height="610" fill="#F7F6F3"/>
+<text x="40" y="58" class="h" fill="#14181F">The refusal gate on held-out sets</text>
+<text x="40" y="92" class="s" fill="#4D5562">Selective risk at tau = 0.55 with its exact 95 % Clopper-Pearson interval; the budget holds when the whole interval stays left of 5 %.</text>
+<line x1="400.0" y1="128" x2="400.0" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="400.0" y="580" class="m" text-anchor="middle" fill="#7A808A">0 %</text>
+<line x1="506.6666666666667" y1="128" x2="506.6666666666667" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="506.6666666666667" y="580" class="m" text-anchor="middle" fill="#7A808A">5 %</text>
+<line x1="613.3333333333334" y1="128" x2="613.3333333333334" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="613.3333333333334" y="580" class="m" text-anchor="middle" fill="#7A808A">10 %</text>
+<line x1="720.0" y1="128" x2="720.0" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="720.0" y="580" class="m" text-anchor="middle" fill="#7A808A">15 %</text>
+<line x1="826.6666666666667" y1="128" x2="826.6666666666667" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="826.6666666666667" y="580" class="m" text-anchor="middle" fill="#7A808A">20 %</text>
+<line x1="933.3333333333334" y1="128" x2="933.3333333333334" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="933.3333333333334" y="580" class="m" text-anchor="middle" fill="#7A808A">25 %</text>
+<line x1="1040.0" y1="128" x2="1040.0" y2="554" stroke="#E3E1DC" stroke-width="1.5"/>
+<text x="1040.0" y="580" class="m" text-anchor="middle" fill="#7A808A">30 %</text>
+<line x1="506.6666666666667" y1="118" x2="506.6666666666667" y2="554" stroke="#14181F" stroke-width="2.5" stroke-dasharray="6 5"/>
+<text x="514.6666666666667" y="124" class="m" fill="#14181F">5 % budget</text>
+<text x="1105" y="124" class="m" text-anchor="end" fill="#7A808A">risk</text>
+<text x="1240" y="124" class="m" text-anchor="end" fill="#7A808A">CP95 upper</text>
+<text x="1340" y="124" class="m" text-anchor="end" fill="#7A808A">coverage</text>
+<text x="40" y="176" class="l" fill="#14181F">Synthetic test</text>
+<text x="330" y="176" class="m" fill="#7A808A">seed 42</text>
+<line x1="446.1" y1="170" x2="468.9" y2="170" stroke="#A86D17" stroke-width="6" stroke-linecap="round"/>
+<circle cx="456.5" cy="170" r="8" fill="#A86D17" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="175" class="m" text-anchor="end" fill="#4D5562">2.6 %</text>
+<text x="1240" y="175" class="m" text-anchor="end" font-weight="700" fill="#14181F">3.2 %</text>
+<text x="1340" y="175" class="m" text-anchor="end" fill="#4D5562">0.861</text>
+<text x="330" y="216" class="m" fill="#7A808A">seed 43</text>
+<line x1="449.5" y1="210" x2="473.2" y2="210" stroke="#A86D17" stroke-width="6" stroke-linecap="round"/>
+<circle cx="460.6" cy="210" r="8" fill="#A86D17" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="215" class="m" text-anchor="end" fill="#4D5562">2.8 %</text>
+<text x="1240" y="215" class="m" text-anchor="end" font-weight="700" fill="#14181F">3.4 %</text>
+<text x="1340" y="215" class="m" text-anchor="end" fill="#4D5562">0.864</text>
+<text x="40" y="256" class="l" fill="#14181F">Synthetic test, French</text>
+<text x="330" y="256" class="m" fill="#7A808A">seed 42</text>
+<line x1="493.9" y1="250" x2="552.3" y2="250" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="520.7" cy="250" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="255" class="m" text-anchor="end" fill="#4D5562">5.7 %</text>
+<text x="1240" y="255" class="m" text-anchor="end" fill="#4D5562">7.1 %</text>
+<text x="1340" y="255" class="m" text-anchor="end" fill="#4D5562">0.834</text>
+<text x="330" y="296" class="m" fill="#7A808A">seed 43</text>
+<line x1="496.2" y1="290" x2="555.1" y2="290" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="523.3" cy="290" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="295" class="m" text-anchor="end" fill="#4D5562">5.8 %</text>
+<text x="1240" y="295" class="m" text-anchor="end" fill="#4D5562">7.3 %</text>
+<text x="1340" y="295" class="m" text-anchor="end" fill="#4D5562">0.841</text>
+<text x="40" y="336" class="l" fill="#14181F">Real screenshots</text>
+<text x="330" y="336" class="m" fill="#7A808A">seed 42</text>
+<line x1="721.7" y1="330" x2="793.0" y2="330" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="756.3" cy="330" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="335" class="m" text-anchor="end" fill="#4D5562">16.7 %</text>
+<text x="1240" y="335" class="m" text-anchor="end" fill="#4D5562">18.4 %</text>
+<text x="1340" y="335" class="m" text-anchor="end" fill="#4D5562">0.983</text>
+<text x="330" y="376" class="m" fill="#7A808A">seed 43</text>
+<line x1="815.6" y1="370" x2="893.7" y2="370" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="853.8" cy="370" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="375" class="m" text-anchor="end" fill="#4D5562">21.3 %</text>
+<text x="1240" y="375" class="m" text-anchor="end" fill="#4D5562">23.1 %</text>
+<text x="1340" y="375" class="m" text-anchor="end" fill="#4D5562">0.983</text>
+<text x="40" y="416" class="l" fill="#14181F">Real receipts</text>
+<text x="330" y="416" class="m" fill="#7A808A">seed 42</text>
+<line x1="695.7" y1="410" x2="1040.0" y2="410" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="1040.0" cy="410" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<path d="M1044,402 l12,8 l-12,8 Z" fill="#8593A6"/>
+<text x="1105" y="415" class="m" text-anchor="end" fill="#4D5562">38.5 %</text>
+<text x="1240" y="415" class="m" text-anchor="end" fill="#4D5562">68.4 %</text>
+<text x="1340" y="415" class="m" text-anchor="end" fill="#4D5562">0.023</text>
+<text x="330" y="456" class="m" fill="#7A808A">seed 43</text>
+<line x1="711.7" y1="450" x2="1040.0" y2="450" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="910.7" cy="450" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<path d="M1044,442 l12,8 l-12,8 Z" fill="#8593A6"/>
+<text x="1105" y="455" class="m" text-anchor="end" fill="#4D5562">23.9 %</text>
+<text x="1240" y="455" class="m" text-anchor="end" fill="#4D5562">35.5 %</text>
+<text x="1340" y="455" class="m" text-anchor="end" fill="#4D5562">0.123</text>
+<text x="40" y="496" class="l" fill="#14181F">Text routing task</text>
+<text x="330" y="496" class="m" fill="#7A808A">seed 42</text>
+<line x1="697.8" y1="490" x2="891.7" y2="490" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="787.8" cy="490" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="495" class="m" text-anchor="end" fill="#4D5562">18.2 %</text>
+<text x="1240" y="495" class="m" text-anchor="end" fill="#4D5562">23.1 %</text>
+<text x="1340" y="495" class="m" text-anchor="end" fill="#4D5562">0.990</text>
+<text x="330" y="536" class="m" fill="#7A808A">seed 43</text>
+<line x1="665.8" y1="530" x2="852.7" y2="530" stroke="#8593A6" stroke-width="6" stroke-linecap="round"/>
+<circle cx="752.0" cy="530" r="8" fill="#8593A6" stroke="#F7F6F3" stroke-width="2"/>
+<text x="1105" y="535" class="m" text-anchor="end" fill="#4D5562">16.5 %</text>
+<text x="1240" y="535" class="m" text-anchor="end" fill="#4D5562">21.2 %</text>
+<text x="1340" y="535" class="m" text-anchor="end" fill="#4D5562">0.990</text>
+</svg></div><div id="acc-dark"><svg xmlns="http://www.w3.org/2000/svg" width="1400" height="560" viewBox="0 0 1400 560">
+<rect width="1400" height="560" fill="#0E1724"/>
+<text x="40" y="58" class="h" fill="#EEF1F5">Accuracy on real images, held out</text>
+<text x="40" y="92" class="s" fill="#B7C2D0">MK-SH-V in amber, every comparator neutral. All arms measured by us on the same rows; labels from each source&#8217;s ground truth.</text>
+<text x="40" y="150" class="p" fill="#EEF1F5">Screenshots: is the goal completed?</text>
+<text x="40" y="174" class="m" fill="#8E9BAD">GUI-Odyssey, n = 2,010</text>
+<text x="40" y="223" class="l" fill="#EEF1F5">MK-SH-V s42</text>
+<text x="40" y="242" class="m" fill="#8E9BAD">260M, trained</text>
+<line x1="190" y1="202" x2="190" y2="248" stroke="#25344A" stroke-width="2"/>
+<rect x="190" y="212" width="178.5" height="22" rx="4" fill="#D6983F"/>
+<text x="378.5" y="229" class="v" fill="#EEF1F5">0.826</text>
+<text x="40" y="287" class="l" fill="#EEF1F5">MK-SH-V s43</text>
+<text x="40" y="306" class="m" fill="#8E9BAD">260M, trained</text>
+<line x1="190" y1="266" x2="190" y2="312" stroke="#25344A" stroke-width="2"/>
+<rect x="190" y="276" width="169.0" height="22" rx="4" fill="#D6983F"/>
+<text x="369.0" y="293" class="v" fill="#EEF1F5">0.783</text>
+<text x="40" y="351" class="l" fill="#EEF1F5">jev-vlm-4b</text>
+<text x="40" y="370" class="m" fill="#8E9BAD">~4B, zero-shot</text>
+<line x1="190" y1="330" x2="190" y2="376" stroke="#25344A" stroke-width="2"/>
+<rect x="190" y="340" width="157.9" height="22" rx="4" fill="#66778E"/>
+<text x="357.9" y="357" class="v" fill="#EEF1F5">0.731</text>
+<text x="40" y="415" class="l" fill="#EEF1F5">OCR + MK-SH-1</text>
+<text x="40" y="434" class="m" fill="#8E9BAD">~25M, trained</text>
+<line x1="190" y1="394" x2="190" y2="440" stroke="#25344A" stroke-width="2"/>
+<rect x="190" y="404" width="102.0" height="22" rx="4" fill="#66778E"/>
+<text x="302.0" y="421" class="v" fill="#EEF1F5">0.472</text>
+<text x="40" y="479" class="l" fill="#EEF1F5">Synthetic only</text>
+<text x="40" y="498" class="m" fill="#8E9BAD">260M, E39</text>
+<line x1="190" y1="458" x2="190" y2="504" stroke="#25344A" stroke-width="2"/>
+<rect x="190" y="468" width="106.4" height="22" rx="4" fill="#66778E"/>
+<text x="306.4" y="485" class="v" fill="#EEF1F5">0.493</text>
+<text x="495" y="150" class="p" fill="#EEF1F5">Receipts: is the total above a threshold?</text>
+<text x="495" y="174" class="m" fill="#8E9BAD">CORD, n = 576</text>
+<text x="495" y="223" class="l" fill="#EEF1F5">MK-SH-V s42</text>
+<text x="495" y="242" class="m" fill="#8E9BAD">260M, trained</text>
+<line x1="645" y1="202" x2="645" y2="248" stroke="#25344A" stroke-width="2"/>
+<rect x="645" y="212" width="118.9" height="22" rx="4" fill="#D6983F"/>
+<text x="773.9" y="229" class="v" fill="#EEF1F5">0.550</text>
+<text x="495" y="287" class="l" fill="#EEF1F5">MK-SH-V s43</text>
+<text x="495" y="306" class="m" fill="#8E9BAD">260M, trained</text>
+<line x1="645" y1="266" x2="645" y2="312" stroke="#25344A" stroke-width="2"/>
+<rect x="645" y="276" width="130.1" height="22" rx="4" fill="#D6983F"/>
+<text x="785.1" y="293" class="v" fill="#EEF1F5">0.602</text>
+<text x="495" y="351" class="l" fill="#EEF1F5">jev-vlm-4b</text>
+<text x="495" y="370" class="m" fill="#8E9BAD">~4B, zero-shot</text>
+<line x1="645" y1="330" x2="645" y2="376" stroke="#25344A" stroke-width="2"/>
+<rect x="645" y="340" width="210.0" height="22" rx="4" fill="#66778E"/>
+<text x="865.0" y="357" class="v" fill="#EEF1F5">0.972</text>
+<text x="495" y="415" class="l" fill="#EEF1F5">OCR + MK-SH-1</text>
+<text x="495" y="434" class="m" fill="#8E9BAD">~25M, trained</text>
+<line x1="645" y1="394" x2="645" y2="440" stroke="#25344A" stroke-width="2"/>
+<rect x="645" y="404" width="105.0" height="22" rx="4" fill="#66778E"/>
+<text x="760.0" y="421" class="v" fill="#EEF1F5">0.486</text>
+<text x="495" y="479" class="l" fill="#EEF1F5">Synthetic only</text>
+<text x="495" y="498" class="m" fill="#8E9BAD">260M, E39</text>
+<line x1="645" y1="458" x2="645" y2="504" stroke="#25344A" stroke-width="2"/>
+<rect x="645" y="468" width="85.1" height="22" rx="4" fill="#66778E"/>
+<text x="740.1" y="485" class="v" fill="#EEF1F5">0.394</text>
+<text x="950" y="150" class="p" fill="#EEF1F5">All real images</text>
+<text x="950" y="174" class="m" fill="#8E9BAD">n = 2,586</text>
+<text x="950" y="223" class="l" fill="#EEF1F5">MK-SH-V s42</text>
+<text x="950" y="242" class="m" fill="#8E9BAD">260M, trained</text>
+<line x1="1100" y1="202" x2="1100" y2="248" stroke="#25344A" stroke-width="2"/>
+<rect x="1100" y="212" width="165.2" height="22" rx="4" fill="#D6983F"/>
+<text x="1275.2" y="229" class="v" fill="#EEF1F5">0.765</text>
+<text x="950" y="287" class="l" fill="#EEF1F5">MK-SH-V s43</text>
+<text x="950" y="306" class="m" fill="#8E9BAD">260M, trained</text>
+<line x1="1100" y1="266" x2="1100" y2="312" stroke="#25344A" stroke-width="2"/>
+<rect x="1100" y="276" width="160.4" height="22" rx="4" fill="#D6983F"/>
+<text x="1270.4" y="293" class="v" fill="#EEF1F5">0.742</text>
+<text x="950" y="351" class="l" fill="#EEF1F5">jev-vlm-4b</text>
+<text x="950" y="370" class="m" fill="#8E9BAD">~4B, zero-shot</text>
+<line x1="1100" y1="330" x2="1100" y2="376" stroke="#25344A" stroke-width="2"/>
+<rect x="1100" y="340" width="169.6" height="22" rx="4" fill="#66778E"/>
+<text x="1279.6" y="357" class="v" fill="#EEF1F5">0.785</text>
+<text x="950" y="415" class="l" fill="#EEF1F5">OCR + MK-SH-1</text>
+<text x="950" y="434" class="m" fill="#8E9BAD">~25M, trained</text>
+<line x1="1100" y1="394" x2="1100" y2="440" stroke="#25344A" stroke-width="2"/>
+<rect x="1100" y="404" width="102.6" height="22" rx="4" fill="#66778E"/>
+<text x="1212.6" y="421" class="v" fill="#EEF1F5">0.475</text>
+<text x="950" y="479" class="l" fill="#EEF1F5">Synthetic only</text>
+<text x="950" y="498" class="m" fill="#8E9BAD">260M, E39</text>
+<line x1="1100" y1="458" x2="1100" y2="504" stroke="#25344A" stroke-width="2"/>
+<rect x="1100" y="468" width="101.7" height="22" rx="4" fill="#66778E"/>
+<text x="1211.7" y="485" class="v" fill="#EEF1F5">0.471</text>
+</svg></div><div id="gate-dark"><svg xmlns="http://www.w3.org/2000/svg" width="1400" height="610" viewBox="0 0 1400 610">
+<rect width="1400" height="610" fill="#0E1724"/>
+<text x="40" y="58" class="h" fill="#EEF1F5">The refusal gate on held-out sets</text>
+<text x="40" y="92" class="s" fill="#B7C2D0">Selective risk at tau = 0.55 with its exact 95 % Clopper-Pearson interval; the budget holds when the whole interval stays left of 5 %.</text>
+<line x1="400.0" y1="128" x2="400.0" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="400.0" y="580" class="m" text-anchor="middle" fill="#8E9BAD">0 %</text>
+<line x1="506.6666666666667" y1="128" x2="506.6666666666667" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="506.6666666666667" y="580" class="m" text-anchor="middle" fill="#8E9BAD">5 %</text>
+<line x1="613.3333333333334" y1="128" x2="613.3333333333334" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="613.3333333333334" y="580" class="m" text-anchor="middle" fill="#8E9BAD">10 %</text>
+<line x1="720.0" y1="128" x2="720.0" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="720.0" y="580" class="m" text-anchor="middle" fill="#8E9BAD">15 %</text>
+<line x1="826.6666666666667" y1="128" x2="826.6666666666667" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="826.6666666666667" y="580" class="m" text-anchor="middle" fill="#8E9BAD">20 %</text>
+<line x1="933.3333333333334" y1="128" x2="933.3333333333334" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="933.3333333333334" y="580" class="m" text-anchor="middle" fill="#8E9BAD">25 %</text>
+<line x1="1040.0" y1="128" x2="1040.0" y2="554" stroke="#25344A" stroke-width="1.5"/>
+<text x="1040.0" y="580" class="m" text-anchor="middle" fill="#8E9BAD">30 %</text>
+<line x1="506.6666666666667" y1="118" x2="506.6666666666667" y2="554" stroke="#EEF1F5" stroke-width="2.5" stroke-dasharray="6 5"/>
+<text x="514.6666666666667" y="124" class="m" fill="#EEF1F5">5 % budget</text>
+<text x="1105" y="124" class="m" text-anchor="end" fill="#8E9BAD">risk</text>
+<text x="1240" y="124" class="m" text-anchor="end" fill="#8E9BAD">CP95 upper</text>
+<text x="1340" y="124" class="m" text-anchor="end" fill="#8E9BAD">coverage</text>
+<text x="40" y="176" class="l" fill="#EEF1F5">Synthetic test</text>
+<text x="330" y="176" class="m" fill="#8E9BAD">seed 42</text>
+<line x1="446.1" y1="170" x2="468.9" y2="170" stroke="#D6983F" stroke-width="6" stroke-linecap="round"/>
+<circle cx="456.5" cy="170" r="8" fill="#D6983F" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="175" class="m" text-anchor="end" fill="#B7C2D0">2.6 %</text>
+<text x="1240" y="175" class="m" text-anchor="end" font-weight="700" fill="#EEF1F5">3.2 %</text>
+<text x="1340" y="175" class="m" text-anchor="end" fill="#B7C2D0">0.861</text>
+<text x="330" y="216" class="m" fill="#8E9BAD">seed 43</text>
+<line x1="449.5" y1="210" x2="473.2" y2="210" stroke="#D6983F" stroke-width="6" stroke-linecap="round"/>
+<circle cx="460.6" cy="210" r="8" fill="#D6983F" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="215" class="m" text-anchor="end" fill="#B7C2D0">2.8 %</text>
+<text x="1240" y="215" class="m" text-anchor="end" font-weight="700" fill="#EEF1F5">3.4 %</text>
+<text x="1340" y="215" class="m" text-anchor="end" fill="#B7C2D0">0.864</text>
+<text x="40" y="256" class="l" fill="#EEF1F5">Synthetic test, French</text>
+<text x="330" y="256" class="m" fill="#8E9BAD">seed 42</text>
+<line x1="493.9" y1="250" x2="552.3" y2="250" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="520.7" cy="250" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="255" class="m" text-anchor="end" fill="#B7C2D0">5.7 %</text>
+<text x="1240" y="255" class="m" text-anchor="end" fill="#B7C2D0">7.1 %</text>
+<text x="1340" y="255" class="m" text-anchor="end" fill="#B7C2D0">0.834</text>
+<text x="330" y="296" class="m" fill="#8E9BAD">seed 43</text>
+<line x1="496.2" y1="290" x2="555.1" y2="290" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="523.3" cy="290" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="295" class="m" text-anchor="end" fill="#B7C2D0">5.8 %</text>
+<text x="1240" y="295" class="m" text-anchor="end" fill="#B7C2D0">7.3 %</text>
+<text x="1340" y="295" class="m" text-anchor="end" fill="#B7C2D0">0.841</text>
+<text x="40" y="336" class="l" fill="#EEF1F5">Real screenshots</text>
+<text x="330" y="336" class="m" fill="#8E9BAD">seed 42</text>
+<line x1="721.7" y1="330" x2="793.0" y2="330" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="756.3" cy="330" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="335" class="m" text-anchor="end" fill="#B7C2D0">16.7 %</text>
+<text x="1240" y="335" class="m" text-anchor="end" fill="#B7C2D0">18.4 %</text>
+<text x="1340" y="335" class="m" text-anchor="end" fill="#B7C2D0">0.983</text>
+<text x="330" y="376" class="m" fill="#8E9BAD">seed 43</text>
+<line x1="815.6" y1="370" x2="893.7" y2="370" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="853.8" cy="370" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="375" class="m" text-anchor="end" fill="#B7C2D0">21.3 %</text>
+<text x="1240" y="375" class="m" text-anchor="end" fill="#B7C2D0">23.1 %</text>
+<text x="1340" y="375" class="m" text-anchor="end" fill="#B7C2D0">0.983</text>
+<text x="40" y="416" class="l" fill="#EEF1F5">Real receipts</text>
+<text x="330" y="416" class="m" fill="#8E9BAD">seed 42</text>
+<line x1="695.7" y1="410" x2="1040.0" y2="410" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="1040.0" cy="410" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<path d="M1044,402 l12,8 l-12,8 Z" fill="#66778E"/>
+<text x="1105" y="415" class="m" text-anchor="end" fill="#B7C2D0">38.5 %</text>
+<text x="1240" y="415" class="m" text-anchor="end" fill="#B7C2D0">68.4 %</text>
+<text x="1340" y="415" class="m" text-anchor="end" fill="#B7C2D0">0.023</text>
+<text x="330" y="456" class="m" fill="#8E9BAD">seed 43</text>
+<line x1="711.7" y1="450" x2="1040.0" y2="450" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="910.7" cy="450" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<path d="M1044,442 l12,8 l-12,8 Z" fill="#66778E"/>
+<text x="1105" y="455" class="m" text-anchor="end" fill="#B7C2D0">23.9 %</text>
+<text x="1240" y="455" class="m" text-anchor="end" fill="#B7C2D0">35.5 %</text>
+<text x="1340" y="455" class="m" text-anchor="end" fill="#B7C2D0">0.123</text>
+<text x="40" y="496" class="l" fill="#EEF1F5">Text routing task</text>
+<text x="330" y="496" class="m" fill="#8E9BAD">seed 42</text>
+<line x1="697.8" y1="490" x2="891.7" y2="490" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="787.8" cy="490" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="495" class="m" text-anchor="end" fill="#B7C2D0">18.2 %</text>
+<text x="1240" y="495" class="m" text-anchor="end" fill="#B7C2D0">23.1 %</text>
+<text x="1340" y="495" class="m" text-anchor="end" fill="#B7C2D0">0.990</text>
+<text x="330" y="536" class="m" fill="#8E9BAD">seed 43</text>
+<line x1="665.8" y1="530" x2="852.7" y2="530" stroke="#66778E" stroke-width="6" stroke-linecap="round"/>
+<circle cx="752.0" cy="530" r="8" fill="#66778E" stroke="#0E1724" stroke-width="2"/>
+<text x="1105" y="535" class="m" text-anchor="end" fill="#B7C2D0">16.5 %</text>
+<text x="1240" y="535" class="m" text-anchor="end" fill="#B7C2D0">21.2 %</text>
+<text x="1340" y="535" class="m" text-anchor="end" fill="#B7C2D0">0.990</text>
+</svg></div></body></html>

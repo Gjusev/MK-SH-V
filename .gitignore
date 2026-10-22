@@ -60,3 +60,7 @@ demo/figure/lines.png
 
 # brag working dir (video deliverables live in assets/, frames are intermediate)
 brag-output-*/
+
+# brand and film build intermediates (frames, stills, sheets)
+assets/src/work/
+assets/src/film/work/

@@ -14,5 +14,13 @@
   "gold": 2,
   "n_opts": 3,
   "correct": 1
+ },
+ "abstain": {
+  "id": "e38b-urgency-cal_policy-es-00021-base",
+  "pmax": 0.324,
+  "choice": "opt5",
+  "gold": 2,
+  "n_opts": 5,
+  "correct": 0
  }
 }

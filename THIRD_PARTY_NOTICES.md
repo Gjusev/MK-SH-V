@@ -40,3 +40,13 @@ Python packages used at build/train/eval time (pinned versions in the run
 logs): torch, transformers, datasets, safetensors, pillow, pytesseract
 (Tesseract OCR, Apache-2.0, with tessdata/tessdata_best Apache-2.0
 language data), scipy, pytest, huggingface_hub, kaggle CLI.
+
+## Brand and film assets
+
+| Asset | Source | Licence | Use |
+|---|---|---|---|
+| Mark (`assets/logo-mark.png`) | MK-SH-1's whale shark mark (same author), band recoloured by `assets/src/build_mark.py` | Apache-2.0 | logo, cards, film end card, demo |
+| Geist, Geist Mono (`assets/src/fonts/`) | Vercel | SIL Open Font License 1.1 | type in the mark, cards, charts and film |
+| Sound effects in `assets/mkshv-film.mp4` | Kenney (kenney.nl) | CC0 1.0 | keyboard, impact and interface sounds |
+| Soundtrack of the film | generated in code (`assets/src/film/score.py`) | Apache-2.0 | music bed |
+| Images in the film | CORD v2 train, GUI-Odyssey task_split train (see above) | CC BY 4.0 | the demo's example images |

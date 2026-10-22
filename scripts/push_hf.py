@@ -24,7 +24,8 @@ def push_model(api: HfApi) -> None:
                 repo_id=MODEL_ID, repo_type="model")
     upload_file(path_or_fileobj=str(ROOT / "release/inference-policy.json"),
                 path_in_repo="inference-policy.json", repo_id=MODEL_ID, repo_type="model")
-    for asset in ("assets/brag.mp4", "assets/decision-gate.png"):  # card embeds
+    for asset in ("assets/mkshv-film.mp4", "assets/mkshv-film.jpg", "assets/logo-mark.png",
+                  "assets/chart-accuracy.png", "assets/chart-gate.png", "assets/decision-gate.png"):  # card embeds
         upload_file(path_or_fileobj=str(ROOT / asset), path_in_repo=asset,
                     repo_id=MODEL_ID, repo_type="model")
     print("card + policy up; uploading weights (~1 GB)...")
@@ -40,7 +41,7 @@ def push_space(api: HfApi) -> None:
              "mksh_v/arch_a1v.py", "mksh_v/sequence.py", "examples/NOTICE.md",
              "examples/gui-notes-fin.png", "examples/cord-receipt-1.png",
              "examples/cord-receipt-2.png", "figure/decision-gate.html",
-             "figure/decision-gate-light.html", "demo_cases.json"]
+             "figure/decision-gate-light.html", "demo_cases.json", "static/logo-mark.png"]
     for rel in files:
         upload_file(path_or_fileobj=str(demo / rel), path_in_repo=rel,
                     repo_id=SPACE_ID, repo_type="space")

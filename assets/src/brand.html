@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>MK-SH-V brand cards</title>
+<!-- Family construction of MK-SH-1's cards (same layout, ink and type); the
+     sibling's blue accent becomes MK-SH-V's amber, the colour of tau.
+     Render: python render.py brand.html#<id>=../<file>.png@WxH -->
+<style>
+@font-face{font-family:Geist;src:url(fonts/geist-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:Geist;src:url(fonts/geist-500.woff2) format("woff2");font-weight:500}
+@font-face{font-family:Geist;src:url(fonts/geist-700.woff2) format("woff2");font-weight:700}
+@font-face{font-family:"Geist Mono";src:url(fonts/geistmono-400.woff2) format("woff2");font-weight:400}
+@font-face{font-family:"Geist Mono";src:url(fonts/geistmono-500.woff2) format("woff2");font-weight:500}
+:root{--ground:#1B2A41;--paper:#F7F6F3;--ink:#12233A;--light:#F4F5F7;--line:#DCE1E8;
+      --acc:#E8A13C;--acc-ink:#9A6416;--muted:#66768A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#9AA3AE;font-family:Geist,Arial,sans-serif;padding:40px;display:flex;flex-direction:column;gap:40px;align-items:flex-start}
+.mono{font-family:"Geist Mono",monospace}
+.tile{border-radius:24px;overflow:hidden;box-shadow:0 18px 50px rgba(18,35,58,.22)}
+.tile img{width:100%;height:100%;display:block}
+
+/* ---- wordmark 1680x512 (transparent) ---- */
+#wordmark{width:1680px;height:512px;display:flex;align-items:center;gap:72px;padding:0 64px;background:#fff}
+#wordmark .tile{width:420px;height:420px;flex-shrink:0;border-radius:36px;box-shadow:none}
+#wordmark h1{font-weight:700;font-size:150px;letter-spacing:-.045em;color:var(--ground);line-height:.95}
+#wordmark .tag{font-size:30px;color:var(--acc-ink);margin-top:22px;letter-spacing:.01em}
+#wordmark .rule{width:96px;height:5px;background:var(--acc);margin-top:30px}
+
+/* ---- social cards ---- */
+.card{position:relative;overflow:hidden;background:var(--light);color:var(--ink)}
+.wave{position:absolute;left:-40px;right:-40px}
+.wave svg{display:block;width:100%}
+.word{font-weight:700;letter-spacing:-.05em}
+.tag2{color:var(--acc-ink)}
+.nums{display:flex;gap:16px}
+.num{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px 22px}
+.num b{display:block;font-size:32px;font-weight:700;letter-spacing:-.03em;color:var(--ink);white-space:nowrap}
+.num b em{font-style:normal;color:var(--acc-ink)}
+.num span{font-family:"Geist Mono",monospace;font-size:14.5px;color:var(--muted);white-space:nowrap}
+.url{font-family:"Geist Mono",monospace;color:var(--acc-ink)}
+.sub{font-family:"Geist Mono",monospace;color:var(--muted)}
+
+.wide{width:1200px;height:627px}
+.wide.github{width:1280px;height:640px}
+.wide .w1{top:-60px}.wide .w2{bottom:-70px}
+.wide .tile{position:absolute;left:84px;top:150px;width:283px;height:283px}
+.wide .word{position:absolute;left:415px;top:178px;font-size:104px}
+.wide .tag2{position:absolute;left:420px;top:306px;font-size:26px}
+.wide .nums{position:absolute;left:420px;bottom:118px}
+.wide .url{position:absolute;left:84px;bottom:50px;font-size:21px}
+.wide .sub{position:absolute;right:84px;bottom:52px;font-size:17px}
+
+.square{width:1080px;height:1080px}
+.square .w1{top:40px}.square .w2{bottom:60px}
+.square .tile{position:absolute;left:390px;top:170px;width:300px;height:300px}
+.square .word{position:absolute;left:0;right:0;top:520px;text-align:center;font-size:124px}
+.square .tag2{position:absolute;left:0;right:0;top:684px;text-align:center;font-size:29px}
+.square .nums{position:absolute;left:0;right:0;top:770px;justify-content:center}
+.square .url{position:absolute;left:0;right:0;top:950px;text-align:center;font-size:24px}
+
+/* ---- comparison table 1200x630 ---- */
+#table{width:1200px;height:630px;background:var(--paper);color:#111;display:flex;flex-direction:column;padding:52px 64px 44px}
+#table .head{display:flex;align-items:baseline;justify-content:space-between}
+#table h2{font-weight:700;font-size:40px;letter-spacing:-.03em}
+#table .hacc{background:#E9E8E4;color:#5B5A57;font-family:"Geist Mono",monospace;font-size:14px;padding:4px 12px}
+#table table{width:100%;border-collapse:collapse;margin-top:18px}
+#table th{font-family:"Geist Mono",monospace;font-weight:500;font-size:14.5px;color:#787774;text-align:right;padding:10px 14px 12px;line-height:1.35}
+#table th:first-child{text-align:left;padding-left:0}
+#table th.own{color:var(--acc-ink);background:#F6F0E6}
+#table td{border-top:1px solid #EAEAEA;padding:15px 14px;font-size:19px;letter-spacing:-.01em}
+#table td:first-child{padding-left:0}
+#table td:not(:first-child){text-align:right;font-family:"Geist Mono",monospace;font-size:17.5px;color:#5B5A57}
+#table td.own{background:#F6F0E6}
+#table td.win{background:#F1E4CC;color:#7A4E10 !important;font-weight:500}
+#table td.lead{color:#111 !important;font-weight:500}
+#table tr.hero td{padding-top:19px;padding-bottom:19px}
+#table tr.hero td:first-child{font-weight:700}
+#table .foot{margin-top:auto;display:flex;justify-content:space-between;font-family:"Geist Mono",monospace;font-size:13.5px;color:#787774;border-top:1px solid #EAEAEA;padding-top:16px}
+#table .legend{display:flex;gap:18px}
+#table .sw{display:inline-block;width:12px;height:12px;background:#F1E4CC;border:1px solid #7A4E10;vertical-align:-1px;margin-right:6px}
+#table .swg{display:inline-block;width:12px;height:12px;background:#fff;border:1px solid #111;vertical-align:-1px;margin-right:6px}
+
+/* ---- HF cover 1568x392 ---- */
+#hfcover{width:1568px;height:392px;background:#0E1724;color:#EEF1F5;display:flex;align-items:center;padding:0 72px;gap:56px;overflow:hidden}
+#hfcover .tile{width:248px;height:248px;flex-shrink:0;border-radius:22px;box-shadow:none}
+#hfcover .left{flex:1}
+#hfcover h1{font-weight:700;font-size:88px;letter-spacing:-.035em;line-height:.95}
+#hfcover .tag{margin-top:18px;font-size:22px;color:#B7C2D0;letter-spacing:-.01em}
+#hfcover .right{border-left:1px solid #2A3A50;padding-left:56px}
+#hfcover .acc{display:inline-block;background:#2A2113;color:var(--acc);font-family:"Geist Mono",monospace;font-size:13px;padding:3px 10px;margin-bottom:14px}
+#hfcover .m{font-family:"Geist Mono",monospace;font-size:15.5px;line-height:2.15}
+#hfcover .m span{color:#8E9BAD;display:inline-block;width:132px}
+</style></head><body>
+
+<div id="wordmark">
+  <div class="tile"><img src="../logo-mark.png" alt=""></div>
+  <div><h1>MK-SH-V</h1><div class="tag mono">visual decision model</div><div class="rule"></div></div>
+</div>
+
+<div class="card wide github" id="github">
+  <div class="wave w1"><svg viewBox="0 0 1280 180" preserveAspectRatio="none"><path d="M0 120 C 300 30 620 30 940 105 C 1160 156 1240 140 1280 120 L1280 0 L0 0 Z" fill="#E8A13C" opacity=".10"/></svg></div>
+  <div class="wave w2"><svg viewBox="0 0 1280 170" preserveAspectRatio="none"><path d="M0 60 C 300 150 640 150 960 70 C 1130 28 1230 60 1280 90 L1280 170 L0 170 Z" fill="#E8A13C" opacity=".09"/></svg></div>
+  <div class="tile"><img src="../logo-mark.png" alt=""></div>
+  <div class="word">MK-SH-V</div>
+  <div class="tag2 mono">visual decisions · explicit abstention</div>
+  <div class="nums">
+    <div class="num"><b>&tau; = <em>0.55</em></b><span>validated gate</span></div>
+    <div class="num"><b><em>0.83</em> vs 0.73</b><span>real screenshots, 15x model</span></div>
+    <div class="num"><b><em>86</em> %</b><span>coverage, risk &le; 3.4 %</span></div>
+  </div>
+  <div class="url">github.com/Gjusev/mk-sh-v</div>
+  <div class="sub">260M · pixels and text, one pass</div>
+</div>
+
+<div class="card wide" id="linkedin">
+  <div class="wave w1"><svg viewBox="0 0 1280 180" preserveAspectRatio="none"><path d="M0 120 C 300 30 620 30 940 105 C 1160 156 1240 140 1280 120 L1280 0 L0 0 Z" fill="#E8A13C" opacity=".10"/></svg></div>
+  <div class="wave w2"><svg viewBox="0 0 1280 170" preserveAspectRatio="none"><path d="M0 60 C 300 150 640 150 960 70 C 1130 28 1230 60 1280 90 L1280 170 L0 170 Z" fill="#E8A13C" opacity=".09"/></svg></div>
+  <div class="tile"><img src="../logo-mark.png" alt=""></div>
+  <div class="word">MK-SH-V</div>
+  <div class="tag2 mono">visual decisions · explicit abstention</div>
+  <div class="nums">
+    <div class="num"><b>&tau; = <em>0.55</em></b><span>validated gate</span></div>
+    <div class="num"><b><em>0.83</em> vs 0.73</b><span>real screenshots, 15x model</span></div>
+    <div class="num"><b><em>86</em> %</b><span>coverage, risk &le; 3.4 %</span></div>
+  </div>
+  <div class="url">github.com/Gjusev/mk-sh-v</div>
+  <div class="sub">260M · pixels and text, one pass</div>
+</div>
+
+<div class="card square" id="square">
+  <div class="wave w1"><svg viewBox="0 0 1080 180" preserveAspectRatio="none"><path d="M0 120 C 260 30 540 30 820 105 C 980 148 1040 140 1080 120 L1080 0 L0 0 Z" fill="#E8A13C" opacity=".10"/></svg></div>
+  <div class="wave w2"><svg viewBox="0 0 1080 170" preserveAspectRatio="none"><path d="M0 60 C 260 150 560 150 840 70 C 980 30 1040 60 1080 90 L1080 170 L0 170 Z" fill="#E8A13C" opacity=".09"/></svg></div>
+  <div class="tile"><img src="../logo-mark.png" alt=""></div>
+  <div class="word">MK-SH-V</div>
+  <div class="tag2 mono">visual decisions · explicit abstention</div>
+  <div class="nums">
+    <div class="num"><b>&tau; = <em>0.55</em></b><span>gate</span></div>
+    <div class="num"><b><em>0.83</em> vs 0.73</b><span>real screenshots</span></div>
+    <div class="num"><b><em>86</em> %</b><span>coverage</span></div>
+  </div>
+  <div class="url">github.com/Gjusev/mk-sh-v</div>
+</div>
+
+<div id="table">
+  <div class="head"><h2>The honest comparison</h2><span class="hacc">2,586 real held-out cases</span></div>
+  <table>
+    <tr><th>measured on real images</th><th class="own">MK-SH-V<br>260M, trained</th><th>jev-vlm-4b<br>~4B, zero-shot</th><th>OCR + MK-SH-1<br>~25M, trained</th></tr>
+    <tr><td>Screenshots: goal completed?</td><td class="own win">0.826</td><td>0.731</td><td>0.472</td></tr>
+    <tr><td>All real images</td><td class="own">0.765</td><td class="lead">0.785</td><td>0.475</td></tr>
+    <tr><td>Receipts: total above a threshold?</td><td class="own">0.550</td><td class="lead">0.972</td><td>0.486</td></tr>
+    <tr class="hero"><td>Refusal gate, risk bound (CP95)</td><td class="own win">3.2 % held-out</td><td>not measured</td><td>not measured</td></tr>
+  </table>
+  <div class="foot">
+    <div class="legend"><span><span class="sw"></span>MK-SH-V leads</span><span><span class="swg"></span>comparator leads</span></div>
+    <span>seed 42 · comparators run by us · gate bound on synthetic held-out</span>
+  </div>
+</div>
+
+<div id="hfcover">
+  <div class="tile"><img src="../logo-mark.png" alt=""></div>
+  <div class="left">
+    <h1>MK-SH-V</h1>
+    <p class="tag">A 260M decision model that reads pages and screenshots</p>
+  </div>
+  <div class="right">
+    <span class="acc">held-out</span>
+    <div class="m">
+      <span>screenshots</span>0.826 vs 0.731 (15x model)<br>
+      <span>real overall</span>0.765<br>
+      <span>coverage</span>86 % at tau 0.55<br>
+      <span>risk bound</span>CP95 3.2 to 3.4 %
+    </div>
+  </div>
+</div>
+
+</body></html>

@@ -94,79 +94,162 @@ def decide(image, state_text: str, question: str, options_text: str):
         probs = (logits / T).softmax(-1)[0].tolist()
     dt = time.perf_counter() - t0
     top = max(range(len(probs)), key=lambda i: probs[i])
-    bars = [(options[i].id, options[i].description, probs[i]) for i in range(len(probs))]
+    tick = f"<span class='tau' style='left:{TAU * 100:.1f}%'></span>"
+    rows = "".join(
+        f"<div class='prob-row{' top' if i == top else ''}'><span class='prob-id'>{escape(o.id)}</span>"
+        f"<span class='prob-bar'><span class='prob-fill' style='width:{p * 100:.1f}%'></span>{tick}</span>"
+        f"<span class='prob-num'>{p:.1%}</span><span class='prob-desc'>{escape(o.description)}</span></div>"
+        for i, (o, p) in enumerate(zip(options, probs)))
+    bar_html = (f"<div class='prob-list'><div class='prob-head'><span>calibrated probability</span>"
+                f"<span class='tau-key'>&tau; {TAU:g}</span></div>{rows}</div>")
     if probs[top] >= TAU:
-        verdict = f"**choice: {options[top].id}** ({probs[top]:.0%} calibrated)"
+        verdict = (f"<div class='verdict'><span class='v-label'>choice:</span>"
+                   f"<span class='v-word'>{escape(options[top].id)}</span>"
+                   f"<span class='v-note'>{probs[top]:.1%} &ge; &tau; {TAU:g}</span></div>")
         abstain = ""
     else:
-        verdict = "**abstain**"
-        abstain = (f"max calibrated probability {probs[top]:.0%} is below the gate "
-                   f"tau = {TAU:.2f}; reason_code `below_validated_threshold`")
-    bar_html = "<div class='prob-list'>" + "".join(
-        f"<div class='prob-row'><span class='prob-id'>{escape(oid)}</span>"
-        f"<span class='prob-bar'><span class='prob-fill' style='width:{p*100:.1f}%'></span></span>"
-        f"<span class='prob-num'>{p:.1%}</span>"
-        f"<span class='prob-desc'>{escape(desc)}</span></div>"
-        for oid, desc, p in bars) + "</div>"
-    meta = (f"one encoder pass · {dt:.1f} s on this CPU · T = {T:g}, tau = {TAU:g} "
-            "(experiment E42, fitted on calibration splits)")
+        verdict = ("<div class='verdict abstain'><span class='v-word'>abstain</span>"
+                   f"<span class='v-note'>top {probs[top]:.1%} &lt; &tau; {TAU:g}</span></div>")
+        abstain = ("<div class='reason'>choice = null &middot; reason_code "
+                   "<code>below_validated_threshold</code></div>")
+    meta = (f"one encoder pass &middot; {dt:.1f} s on this CPU &middot; T = {T:g}, tau = {TAU:g} "
+            "(E42, fitted on calibration splits)")
     return bar_html, verdict, abstain, meta
 
 
+CASES = [  # (thumbnail label, what the model does with it) for the one-click cards
+    ("Screenshot", "is the goal done?"),
+    ("Receipt", "total at least 45.662 IDR?"),
+    ("Beleg, German", "Summe mindestens 120.000 IDR?"),
+    ("Receipt, 3 options", "which range is the total in?"),
+]
+
+EMPTY = ("<div class='verdict idle'><span class='v-word'>waiting</span>"
+         "<span class='v-note'>pick a real case on the left, or upload your own page</span></div>"
+         "<div class='prob-list ghost'><div class='prob-head'><span>calibrated probability</span>"
+         "<span class='tau-key'>&tau; 0.55</span></div>"
+         + "".join("<div class='prob-row'><span class='prob-id'>&nbsp;</span><span class='prob-bar'>"
+                   "<span class='tau' style='left:55%'></span></span><span class='prob-num'>&nbsp;</span>"
+                   "<span class='prob-desc'>&nbsp;</span></div>" for _ in range(2)) + "</div>")
+
 CSS = """
-:root { --ground:#f4f4f2; --surface:#ffffff; --ink:#23272e; --muted:#5c636e;
-        --line:#e3e1dc; --acc:#9a6b1f; --acc-ink:#7c5617; }
-.gradio-container { max-width: 1060px !important; margin: 0 auto; }
+:root { --ink:#14181F; --muted:#5C6470; --line:#E3E5E9; --tint:#F4F5F7; --navy:#1B2A41; --navy2:#24354F;
+        --paper:#F7F6F3; --pale:#B7C2D0; --acc:#E8A13C; --acc-ink:#9A6416; }
+.gradio-container { max-width: 1240px !important; margin: 0 auto; }
 footer { display: none !important; }
-#masthead h1 { font-size: 30px; letter-spacing: -0.02em; margin: 0 0 6px; color: var(--ink); }
-#masthead p { color: var(--muted); margin: 0; font-size: 15.5px; }
-#gate-fig iframe, #gate-fig .html { width: 100%; border: 0; }
-.prob-list { display: flex; flex-direction: column; gap: 10px; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
-.prob-row { display: grid; grid-template-columns: 88px 1fr 64px; align-items: center; gap: 2px 12px; }
-.prob-id { color: var(--ink); font-size: 14px; overflow: hidden; text-overflow: ellipsis; }
-.prob-desc { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; white-space: nowrap;
-             overflow: hidden; text-overflow: ellipsis; }
-.prob-bar { background: var(--line); height: 14px; position: relative; }
-.prob-fill { position: absolute; inset: 0 auto 0 0; background: var(--acc-ink); }
-.prob-num { color: var(--muted); font-size: 13.5px; text-align: right; }
-#verdict { font-size: 22px; letter-spacing: -0.01em; color: var(--ink); }
-#verdict .abstain { color: var(--acc-ink); }
-#meta { color: var(--muted); font-size: 13px; }
+/* the bar: the product's face and its three measured numbers, set as type */
+#bar { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:18px 22px; padding:10px 0 6px; }
+#bar img { width:60px; height:60px; border-radius:14px; display:block; }
+#bar h1 { font-size:26px; letter-spacing:-.025em; margin:0; color:var(--ink); line-height:1.1; }
+#bar p { margin:3px 0 0; color:var(--muted); font-size:15px; }
+#bar .nums { display:flex; gap:30px; }
+#bar .num b { display:block; font-size:22px; letter-spacing:-.02em; color:var(--ink); font-variant-numeric:tabular-nums; }
+#bar .num span { font-size:12.5px; color:var(--muted); }
+#bar .num.gate b { color:var(--acc-ink); }
+#bar .links { grid-column:2 / 4; display:flex; gap:20px; font-size:14px; }
+#bar .links a { color:var(--ink); text-decoration:none; border-bottom:1px solid var(--line); padding-bottom:1px; }
+#bar .links a:hover, #bar .links a:focus-visible { border-color:var(--ink); }
+/* one-click real cases */
+#cases { display:grid !important; grid-template-columns:1fr 1fr; gap:10px !important; }
+#cases > * { min-width:0 !important; }
+#cases button { display:flex !important; flex-direction:row !important; flex-wrap:nowrap !important; align-items:center; width:100%; justify-content:flex-start; text-align:left; gap:12px; padding:10px 12px; min-height:76px;
+                background:#fff; border:1px solid var(--line); border-radius:12px; font-weight:500; color:var(--ink);
+                white-space:normal; line-height:1.3; font-size:14px; transition:border-color .15s, transform .15s; }
+#cases button img { width:52px !important; height:52px !important; max-height:none !important; object-fit:cover; border-radius:8px; flex-shrink:0; }
+#cases button:hover { border-color:var(--ink); }
+#cases button:active { transform:translateY(1px); }
+#cases-label { font-size:13.5px; color:var(--muted); margin:4px 0 -4px; }
+/* the readout: the gate, in the navy of the mark's tile */
+#decision { background:var(--navy); border-radius:16px; padding:24px 24px 18px; color:var(--paper);
+            position:sticky; top:14px; align-self:flex-start; }
+#decision .prose, #decision p { color:var(--paper); }
+.verdict { display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; min-height:52px; }
+.v-label { color:var(--pale); font-size:16px; }
+.v-word { font-size:48px; font-weight:700; letter-spacing:-.035em; line-height:1; color:var(--paper); }
+.verdict.abstain .v-word { color:var(--acc); }
+.verdict.idle .v-word { color:#5E6B80; }
+.v-note { color:var(--pale); font-size:15px; font-variant-numeric:tabular-nums; }
+.reason { margin-top:10px; color:var(--pale); font-size:14px; }
+.reason code { background:#2A2113; color:var(--acc); padding:3px 8px; border-radius:6px; }
+.prob-list { display:flex; flex-direction:column; gap:14px; margin-top:12px; }
+.prob-head { display:flex; justify-content:space-between; color:var(--pale) !important; font-size:13px; }
+.tau-key { color:var(--acc); }
+.prob-row { display:grid; grid-template-columns:100px 1fr 72px; align-items:center; gap:3px 12px; }
+.prob-id { color:var(--paper); font-size:15px; overflow:hidden; text-overflow:ellipsis; font-family:var(--font-mono); }
+.prob-desc { grid-column:2 / 4; color:var(--pale); font-size:13px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prob-bar { background:var(--navy2); height:16px; border-radius:8px; position:relative; }
+.prob-fill { position:absolute; inset:0 auto 0 0; background:#8E9BAD; border-radius:8px; transform-origin:left;
+             animation:grow .7s cubic-bezier(.16,1,.3,1) both; }
+.prob-row:nth-child(3) .prob-fill { animation-delay:.06s } .prob-row:nth-child(4) .prob-fill { animation-delay:.12s }
+.prob-row.top .prob-fill { background:var(--paper); }
+@keyframes grow { from { transform:scaleX(0) } to { transform:scaleX(1) } }
+.verdict:not(.idle) { animation:rise .45s cubic-bezier(.16,1,.3,1) both .25s; }
+@keyframes rise { from { opacity:0; transform:translateY(8px) } to { opacity:1; transform:none } }
+@media (prefers-reduced-motion: reduce) { .prob-fill, .verdict { animation:none !important; } }
+.tau { position:absolute; top:-6px; bottom:-6px; width:3px; margin-left:-1.5px; background:var(--acc); border-radius:2px; }
+.prob-num { color:var(--paper); font-size:15px; text-align:right; font-variant-numeric:tabular-nums; font-family:var(--font-mono); }
+.ghost .prob-bar { background:#22324A; }
+#decision .prob-head, #decision .prob-head span:first-child { color:var(--pale) !important; }
+#decision .tau-key { color:var(--acc) !important; }
+#meta, #meta p { color:var(--pale) !important; font-size:12.5px; margin-top:6px; }
+#explain h2 { font-size:22px; letter-spacing:-.02em; margin:28px 0 2px; color:var(--ink); }
+#explain p { color:var(--muted); margin:0 0 10px; font-size:15px; }
+@media (max-width: 760px) {
+  #bar { grid-template-columns:auto 1fr; }
+  #bar .nums { grid-column:1 / 3; gap:22px; flex-wrap:wrap; }
+  #bar .links { grid-column:1 / 3; }
+  #decision { position:static; }
+  .v-word { font-size:40px; }
+}
 """
+
+THEME = gr.themes.Base(
+    primary_hue=gr.themes.colors.slate, neutral_hue=gr.themes.colors.slate,
+    font=[gr.themes.GoogleFont("Geist"), "ui-sans-serif", "sans-serif"],
+    font_mono=[gr.themes.GoogleFont("Geist Mono"), "ui-monospace", "monospace"],
+).set(button_primary_background_fill="#1B2A41", button_primary_background_fill_hover="#24354F",
+      button_primary_text_color="#F7F6F3", block_radius="12px", block_shadow="none",
+      body_text_color="#14181F", block_label_text_color="#5C6470")
 
 
 def build() -> gr.Blocks:
-    with gr.Blocks(css=CSS, title="MK-SH-V · visual decisions with a gate") as app:
-        with gr.Column(elem_id="masthead"):
-            gr.HTML("<h1>MK-SH-V</h1>"
-                    "<p>A 260M visual decision model: a page or screenshot in, calibrated "
-                    "probabilities out, a choice, and a refusal below the gate. "
-                    "Every number on this page comes from the shipped policy.</p>")
-        gr.HTML(f'<iframe src="/file=figure/decision-gate.html" title="The decision gate" '
-                f'style="width:100%;height:560px;border:0;border-radius:8px;" loading="lazy"></iframe>')
-        with gr.Row():
-            with gr.Column(scale=5):
-                image_in = gr.Image(type="pil", label="Image (document page or screenshot)",
-                                    height=340)
-                state_in = gr.Textbox(label="State", value=EXAMPLES[0][1], lines=3)
+    with gr.Blocks(css=CSS, theme=THEME, title="MK-SH-V · visual decisions with a gate") as app:
+        gr.HTML("<header id='bar'><img src='/gradio_api/file=static/logo-mark.png' alt='MK-SH-V mark: a whale shark over an amber band'>"
+                "<div><h1>MK-SH-V</h1><p>A 260M visual decision model: calibrated probabilities, "
+                "a choice, and a refusal below the gate.</p></div>"
+                "<div class='nums'><div class='num'><b>0.826</b><span>real screenshots, held out</span></div>"
+                "<div class='num gate'><b>&tau; 0.55</b><span>validated gate</span></div>"
+                "<div class='num'><b>86 %</b><span>coverage, CP95 risk &le; 3.4 %*</span></div></div>"
+                "<nav class='links'><a href='https://huggingface.co/Gjusev/MK-SH-V'>Model card</a>"
+                "<a href='https://github.com/Gjusev/mk-sh-v'>Code and results</a>"
+                "<a href='#explain'>How the gate decides</a></nav></header>")
+        with gr.Row(equal_height=False):
+            with gr.Column(scale=6, min_width=340):
+                gr.HTML("<p id='cases-label'>Real cases, one click: the screenshot is answered, "
+                        "the receipts are refused</p>")
+                with gr.Row(elem_id="cases"):
+                    case_btns = [gr.Button(f"{name}: {q}", icon=EXAMPLES[i][0], min_width=150, size="sm")
+                                 for i, (name, q) in enumerate(CASES)]
+                image_in = gr.Image(type="pil", label="Document page or screenshot", height=300)
                 question_in = gr.Textbox(label="Question", value=EXAMPLES[0][2])
-                options_in = gr.Textbox(label="Options (one per line: id: description)",
-                                        value=EXAMPLES[0][3], lines=3)
+                with gr.Row():
+                    state_in = gr.Textbox(label="State", value=EXAMPLES[0][1], lines=3, scale=3, min_width=200)
+                    options_in = gr.Textbox(label="Options, one per line: id: description",
+                                            value=EXAMPLES[0][3], lines=3, scale=2, min_width=160)
                 go = gr.Button("Decide", variant="primary")
-            with gr.Column(scale=4):
-                probs_out = gr.HTML(label="Calibrated probabilities")
-                verdict_out = gr.Markdown(elem_id="verdict")
-                abstain_out = gr.Markdown()
+            with gr.Column(scale=5, min_width=340, elem_id="decision"):
+                verdict_out = gr.HTML(EMPTY)
+                abstain_out = gr.HTML()
+                probs_out = gr.HTML()
                 meta_out = gr.Markdown(elem_id="meta")
-        gr.Examples(examples=EXAMPLES, inputs=[image_in, state_in, question_in, options_in],
-                    label="Try a real case")
-        gr.Markdown(
-            "Weights and policy: [Gjusev/MK-SH-V](https://huggingface.co/Gjusev/MK-SH-V). "
-            "Code and per-case outputs: "
-            "[github.com/Gjusev/mk-sh-v](https://github.com/Gjusev/mk-sh-v). "
-            "Example images: CORD (Park et al. 2019, NAVER Clova) and GUI-Odyssey "
-            "(Lu et al. 2024, OpenGVLab), both CC BY 4.0.")
-        with gr.Accordion("The shipped policy and its validation (E42)", open=False):
+        with gr.Column(elem_id="explain"):
+            gr.HTML("<h2>How the gate decides</h2><p>One tower, a score per option, a temperature, "
+                    "then the gate. The three pages on the carriage are real calibration cases with "
+                    "their measured probabilities: hover the bench or use the arrow keys.</p>")
+            gr.HTML('<iframe src="/gradio_api/file=figure/decision-gate.html" title="The decision gate, '
+                    'three real calibration cases" style="width:100%;height:560px;border:0;'
+                    'border-radius:14px;" loading="lazy"></iframe>')
+        with gr.Accordion("* The shipped policy and its held-out validation (E42)", open=False):
             gr.Markdown(
                 f"This demo runs the released policy: temperature **T = {T:g}** and gate "
                 f"**tau = {TAU:g}**, fitted on calibration splits disjoint from every "
@@ -180,12 +263,18 @@ def build() -> gr.Blocks:
                 "| real CORD s42/s43 | 0.023 / 0.123 | 38.5 / 23.9 % | above budget |\n\n"
                 "The budget holds on the synthetic test only. On real images abstention "
                 "is the campaign's declared open problem, and this demo shows it "
-                "unfiltered: try a receipt and watch the gate refuse.")
-        go.click(decide, [image_in, state_in, question_in, options_in],
-                 [probs_out, verdict_out, abstain_out, meta_out])
+                "unfiltered: the receipts are refused, and on the first one the "
+                "model's top pick would have been wrong.")
+        gr.Markdown(
+            "Example images: CORD v2 (Park et al. 2019, NAVER Clova) and GUI-Odyssey "
+            "(Lu et al. 2024, OpenGVLab), both CC BY 4.0. Model: Apache-2.0.")
+        ins, outs = [image_in, state_in, question_in, options_in], [probs_out, verdict_out, abstain_out, meta_out]
+        for i, btn in enumerate(case_btns):
+            btn.click(lambda i=i: tuple(EXAMPLES[i]), None, ins).then(decide, ins, outs)
+        go.click(decide, ins, outs)
     return app
 
 
 if __name__ == "__main__":
-    gr.set_static_paths([str(HERE / "figure")])
+    gr.set_static_paths([str(HERE / "figure"), str(HERE / "static")])
     build().launch()
