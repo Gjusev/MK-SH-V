@@ -163,7 +163,6 @@ footer { display: none !important; }
 #cases2 button img { width:44px !important; height:44px !important; max-height:none !important;
                      object-fit:cover; border-radius:8px; flex-shrink:0; }
 #cases2 button:hover { border-color:var(--ink); }
-.fig-note { font-size:13.5px; color:var(--muted); margin:8px 0 0; }
 /* the readout: the gate, in the navy of the mark's tile */
 #decision { background:var(--navy); border-radius:16px; padding:24px 24px 18px; color:var(--paper);
             position:sticky; top:14px; align-self:flex-start; }
@@ -197,8 +196,6 @@ footer { display: none !important; }
 #decision .prob-head, #decision .prob-head span:first-child { color:var(--pale) !important; }
 #decision .tau-key { color:var(--acc) !important; }
 #meta, #meta p { color:var(--pale) !important; font-size:12.5px; margin-top:6px; }
-#explain h2 { font-size:22px; letter-spacing:-.02em; margin:28px 0 2px; color:var(--ink); }
-#explain p { color:var(--muted); margin:0 0 10px; font-size:15px; }
 @media (max-width: 760px) {
   #bar { grid-template-columns:auto 1fr; }
   #bar .nums { grid-column:1 / 3; gap:22px; flex-wrap:wrap; }
@@ -227,7 +224,7 @@ def build() -> gr.Blocks:
                 "<div class='num'><b>86 %</b><span>coverage, CP95 risk &le; 3.4 %*</span></div></div>"
                 "<nav class='links'><a href='https://huggingface.co/Gjusev/MK-SH-V'>Model card</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v'>Code and results</a>"
-                "<a href='#explain'>How the gate decides</a></nav></header>")
+                "<a href='https://github.com/Gjusev/mk-sh-v#the-decision-contract'>How it decides</a></nav></header>")
         with gr.Row(equal_height=False):
             with gr.Column(scale=6, min_width=340):
                 gr.HTML("<p id='cases-label'>Real cases from the training splits, one click. "
@@ -255,16 +252,6 @@ def build() -> gr.Blocks:
                 abstain_out = gr.HTML()
                 probs_out = gr.HTML()
                 meta_out = gr.Markdown(elem_id="meta")
-        with gr.Column(elem_id="explain"):
-            gr.HTML("<h2>How the gate decides</h2>"
-                    "<p>One tower reads image and text in a single pass and scores every option. "
-                    "A temperature rescales confidence; the gate then answers or refuses.</p>")
-            gr.HTML('<iframe src="/gradio_api/file=figure/decision-gate.html" title="The decision gate, '
-                    'three real calibration cases" style="width:100%;height:560px;border:0;'
-                    'border-radius:14px;" loading="lazy"></iframe>')
-            gr.HTML("<p class='fig-note'>The bench above: three real calibration cases ride the "
-                    "carriage with their measured probabilities. Hover it or use the arrow keys "
-                    "to move the needle past the amber tau mark.</p>")
         with gr.Accordion("* The shipped policy and its held-out validation (E42)", open=False):
             gr.Markdown(
                 f"This demo runs the released policy: temperature **T = {T:g}** and gate "

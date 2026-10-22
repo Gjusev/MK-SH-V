@@ -24,10 +24,8 @@ abstention when the top calibrated probability sits below the gate
 - Model and policy: [Gjusev/MK-SH-V](https://huggingface.co/Gjusev/MK-SH-V)
 - Twelve verified cases load and decide in one click (train-split images,
   favourable answers checked against gold, refusals kept for honesty), and any
-  image can be uploaded to test. The figure below the
-  workbench explains the decision contract: one tower, marker pins,
-  a probability dial, and the gate. Its three cases are real calibration
-  cases with their measured probabilities.
+  image can be uploaded to test. The decision contract (one tower, one score
+  per option, a temperature, then the gate) is documented in the repo README.
 - Held-out validation of the gate: over 86 % coverage with a 95 %
   Clopper-Pearson upper bound on selective risk of 3.2 to 3.4 % on the
   synthetic test (both seeds). On real images the gate either keeps confident
