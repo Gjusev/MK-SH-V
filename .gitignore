@@ -53,3 +53,7 @@ PROMPT_GLM53.md
 # generated kaggle artifacts (regenerate with kaggle/build_kernels.py)
 kaggle/gen/
 kaggle/push/
+demo/figure/shots*
+demo/figure/shot*
+demo/figure/crop-*
+demo/figure/lines.png

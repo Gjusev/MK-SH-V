@@ -1,0 +1,18 @@
+{
+ "high": {
+  "id": "e38a-form_complete-cal_policy-de-00083-base",
+  "pmax": 0.92,
+  "choice": "opt1",
+  "gold": 0,
+  "n_opts": 3,
+  "correct": 1
+ },
+ "edge": {
+  "id": "e38a-form_complete-cal_policy-es-00041-base",
+  "pmax": 0.583,
+  "choice": "opt3",
+  "gold": 2,
+  "n_opts": 3,
+  "correct": 1
+ }
+}

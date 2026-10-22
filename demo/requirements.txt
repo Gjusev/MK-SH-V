@@ -1,0 +1,7 @@
+torch
+transformers==5.19.0
+safetensors
+pillow>=10.1
+huggingface_hub>=0.34
+gradio==5.49.0
+git+https://github.com/Gjusev/MK-SH-1@9e1a226e
