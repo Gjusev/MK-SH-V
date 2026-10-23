@@ -3,6 +3,7 @@ favourable across en/es/de and neg/fin; CORD train is refused ~100 %; our
 synthetic train rows are at ceiling in most families).
 
 Selection: 9 favourable (3 GUI in en/es/de with mixed polarity, 6 synthetic,
+(field_threshold excluded: at chance on the synthetic test, E42 per-family),
 one per family with spread languages) + 4 refusals (the three existing CORD
 cases + a fresh es one). Every case is run through the released weights and
 policy and verified against gold. Train splits only; the eval sets are never
@@ -27,24 +28,26 @@ EXISTING = [
     dict(kind="gui", src=str(EX / "gui-notes-fin.png"), family="task_done", language="en",
          state="Goal: Create a online meeting and share the link to your friend.",
          question="Does the screenshot show the goal as completed?",
-         options=[("false", "No"), ("true", "Yes")], verdict="answer", note="kept: README case table"),
+         options=[("false", "No"), ("true", "Yes")], verdict="answer", gold="true", top="true", pmax=0.999,
+         note="kept: README case table; GUI-Odyssey train episode 4884755305395394, final step"),
     dict(kind="cord", src=str(EX / "cord-receipt-1.png"), family="field_threshold", language="en",
          state="Scanned document page.",
          question="Is the total on this document at least 45.662 IDR?",
-         options=[("false", "No"), ("true", "Yes")], verdict="abstain",
+         options=[("false", "No"), ("true", "Yes")], verdict="abstain", gold="true", top=None, pmax=0.507,
          note="kept: README case table; the model's top pick (false) would have been wrong (total 302.016 IDR)"),
     dict(kind="cord", src=str(EX / "cord-receipt-2.png"), family="field_threshold", language="de",
          state="Gescannte Dokumentseite.",
          question="Beträgt die Gesamtsumme auf diesem Dokument mindestens 120.000 IDR?",
-         options=[("false", "Nein"), ("true", "Ja")], verdict="abstain", note="kept: README case table"),
+         options=[("false", "Nein"), ("true", "Ja")], verdict="abstain", gold="true", top=None, pmax=0.522,
+         note="kept: README case table; CORD train-0, total 1,591,600 IDR"),
     dict(kind="cord", src=str(EX / "cord-receipt-1.png"), family="field_threshold", language="en",
          state="Scanned document page.",
          question="Which range does the total on this document fall into?",
          options=[("low", "below 100.000 IDR"), ("mid", "100.000 to 200.000 IDR"), ("high", "above 200.000 IDR")],
-         verdict="abstain", note="kept: 3-option range question"),
+         verdict="abstain", gold="high", top=None, pmax=0.418, note="kept: 3-option range question; total 302,016 IDR"),
 ]
 
-WANT_SYN = [("doc_type", "en"), ("form_complete", "es"), ("field_threshold", "de"),
+WANT_SYN = [("doc_type", "en"), ("form_complete", "es"), ("source_conflict", "de"),
             ("task_done", "en"), ("urgency", "en"), ("screen_state", "de")]
 WANT_GUI = [("es", "fin"), ("de", "neg"), ("en", "neg")]
 WANT_CORD_REFUSAL = ["es"]

@@ -171,11 +171,15 @@ measurement stops.
    verification. Also binary questions in EN, ES and DE from that corpus; not
    a general GUI understanding model, and the gate is not validated on real
    screens (E43 below).
-2. **Document state decisions.** Document type, form completeness, printed
-   thresholds. Rests on the E38 synthetic families (five of seven at ceiling)
-   and CORD real receipts, 0.550 and 0.602. Bound: on receipt thresholds the
-   rules baseline is level and the large comparator is ahead; IDR-formatted
-   totals are the declared gap.
+2. **Document state decisions.** Document type, form completeness, a ticket's
+   urgency, conflicting sources. Rests on the E38 synthetic families
+   (doc_type, screen_state, source_conflict, task_done and urgency at 0.99
+   to 1.00 held out; form_complete 0.86). Bound: **printed numeric thresholds
+   ("is the total at least X") are not a capability.** That family sits at
+   chance on the synthetic test (0.507 and 0.510; the synthetic-only E39 model
+   reached 0.597) and near chance on real receipts (0.550 and 0.602, level
+   with a rules baseline at 0.594); the gate refuses most of these cases, which
+   is the correct behaviour. Numeric comparison is the next experiment (E44).
 3. **Calibrated scoring with a safety valve.** Decision queues where refusals
    route to a human. Rests on the E42 held-out result above. Bound: the
    guarantee holds on the evaluated synthetic distribution only.

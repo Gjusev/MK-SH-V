@@ -122,9 +122,12 @@ sources in pretraining; unverifiable from its card.
 
 Synthetic held-out test (own generator, 7 families, 4,200 cases):
 0.908/0.909, a declared −2.5 pp versus the synthetic-only model,
-concentrated in field_threshold and form_complete (real-data number formats
-compete with the synthetic EUR convention); the other five families are at
-ceiling. French test 0.874/0.884.
+concentrated in field_threshold and form_complete. Per family: doc_type,
+screen_state, source_conflict, task_done and urgency 0.99 to 1.00;
+form_complete 0.86; **field_threshold ("is the total at least X") 0.507/0.510,
+which is chance** (the synthetic-only E39 model reached 0.597). The gate keeps
+only 5.8 % of field_threshold cases, so it refuses where the model cannot
+decide. French test 0.874/0.884.
 
 ## Calibration & abstention (experiment E42)
 
@@ -254,8 +257,10 @@ before any E41 calibration output existed). Full record:
   goal-swap diagnostic (final screenshot paired with an unrelated goal)
   reads 0.12/0.135 accuracy, below chance on both seeds. The measured
   capability is end-of-task screen detection.
-- CORD receipt thresholds remain below the rules baseline; threshold
-  questions over IDR-formatted totals are the largest accuracy gap.
+- Printed numeric thresholds are not a capability: at chance on the
+  synthetic test (0.507/0.510) and near chance on real receipts
+  (0.550/0.602, level with a rules baseline at 0.594). Under investigation
+  in E44.
 - The real evaluation set (E38c) informed the error analysis that motivated
   the training data; it was never trained or tuned on, and all selection
   used separate dev splits. Disclosed for completeness.

@@ -39,28 +39,6 @@
  },
  {
   "kind": "syn",
-  "family": "field_threshold",
-  "language": "de",
-  "state": "Gescannte Dokumentseite.",
-  "question": "Beträgt die Gesamtsumme auf diesem Dokument mindestens 167,00 EUR?",
-  "options": [
-   [
-    "false",
-    "Nein"
-   ],
-   [
-    "true",
-    "Ja"
-   ]
-  ],
-  "gold": "true",
-  "top": "true",
-  "pmax": 0.569,
-  "verdict": "answer",
-  "image": "examples/case-02.png"
- },
- {
-  "kind": "syn",
   "family": "form_complete",
   "language": "es",
   "state": "Página de documento escaneada.",
@@ -83,7 +61,7 @@
   "top": "illegible",
   "pmax": 0.961,
   "verdict": "answer",
-  "image": "examples/case-03.png"
+  "image": "examples/case-02.png"
  },
  {
   "kind": "syn",
@@ -116,6 +94,28 @@
   "gold": "success",
   "top": "success",
   "pmax": 1.0,
+  "verdict": "answer",
+  "image": "examples/case-03.png"
+ },
+ {
+  "kind": "syn",
+  "family": "source_conflict",
+  "language": "de",
+  "state": "Ticket #5810. Kategorie: Versand. Priorität: Niedrig.",
+  "question": "Stimmen Tickettext und Screenshot überein? Der Screenshot ist die verbindliche Quelle bei Abweichung.",
+  "options": [
+   [
+    "agree",
+    "Stimmen überein: jedes genannte Detail im Text stimmt mit dem Bildschirm überein."
+   ],
+   [
+    "conflict",
+    "Konflikt: mindestens ein genanntes Detail weicht auf dem Bildschirm ab."
+   ]
+  ],
+  "gold": "conflict",
+  "top": "conflict",
+  "pmax": 0.999,
   "verdict": "answer",
   "image": "examples/case-04.png"
  },
@@ -170,11 +170,11 @@
    ]
   ],
   "verdict": "abstain",
-  "note": "kept: README case table; the model's top pick (false) would have been wrong (total 302.016 IDR)",
-  "image": "examples/case-06.png",
-  "pmax": 0.507,
+  "gold": "true",
   "top": null,
-  "gold": "true"
+  "pmax": 0.507,
+  "note": "kept: README case table; the model's top pick (false) would have been wrong (total 302.016 IDR)",
+  "image": "examples/case-06.png"
  },
  {
   "kind": "cord",
@@ -193,11 +193,11 @@
    ]
   ],
   "verdict": "abstain",
-  "note": "kept: README case table",
-  "image": "examples/case-07.png",
-  "pmax": 0.522,
+  "gold": "true",
   "top": null,
-  "gold": null
+  "pmax": 0.522,
+  "note": "kept: README case table; CORD train-0, total 1,591,600 IDR",
+  "image": "examples/case-07.png"
  },
  {
   "kind": "cord",
@@ -220,11 +220,11 @@
    ]
   ],
   "verdict": "abstain",
-  "note": "kept: 3-option range question",
-  "image": "examples/case-08.png",
-  "pmax": 0.418,
+  "gold": "high",
   "top": null,
-  "gold": "high"
+  "pmax": 0.418,
+  "note": "kept: 3-option range question; total 302,016 IDR",
+  "image": "examples/case-08.png"
  },
  {
   "kind": "cord",
@@ -266,11 +266,11 @@
    ]
   ],
   "verdict": "answer",
-  "note": "kept: README case table; GUI-Odyssey train episode 4884755305395394, final step (goal corrected 2026-10-23: an earlier version paired this screenshot with another episode's goal)",
-  "image": "examples/case-10.png",
-  "pmax": 0.999,
+  "gold": "true",
   "top": "true",
-  "gold": "true"
+  "pmax": 0.999,
+  "note": "kept: README case table; GUI-Odyssey train episode 4884755305395394, final step",
+  "image": "examples/case-10.png"
  },
  {
   "kind": "gui",
