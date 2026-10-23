@@ -25,7 +25,7 @@ EX = ROOT / "demo/examples"
 # the curated cases already shipped (kept: the README's case table links to them)
 EXISTING = [
     dict(kind="gui", src=str(EX / "gui-notes-fin.png"), family="task_done", language="en",
-         state="Goal: Listen to a lecture on Artificial Intelligence and then jot down the name of the course in the notes app.",
+         state="Goal: Create a online meeting and share the link to your friend.",
          question="Does the screenshot show the goal as completed?",
          options=[("false", "No"), ("true", "Yes")], verdict="answer", note="kept: README case table"),
     dict(kind="cord", src=str(EX / "cord-receipt-1.png"), family="field_threshold", language="en",

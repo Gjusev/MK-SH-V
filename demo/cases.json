@@ -253,7 +253,7 @@
   "kind": "gui",
   "family": "task_done",
   "language": "en",
-  "state": "Goal: Listen to a lecture on Artificial Intelligence and then jot down the name of the course in the notes app.",
+  "state": "Goal: Create a online meeting and share the link to your friend.",
   "question": "Does the screenshot show the goal as completed?",
   "options": [
    [
@@ -266,7 +266,7 @@
    ]
   ],
   "verdict": "answer",
-  "note": "kept: README case table",
+  "note": "kept: README case table; GUI-Odyssey train episode 4884755305395394, final step (goal corrected 2026-10-23: an earlier version paired this screenshot with another episode's goal)",
   "image": "examples/case-10.png",
   "pmax": 0.999,
   "top": "true",
