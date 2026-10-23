@@ -25,14 +25,15 @@ SHA = {  # E41 selected checkpoints (docs/E42_CRITERIA_2026-10-22.md)
 IMAGE_SIZE, MAX_STATE_TOKENS, MAX_OPTION_TOKENS, BATCH = 1024, 700, 96, 16
 
 
-def load_model(seed: int):
+def load_model(seed: int, ckpt: Path | None = None, sha: str | None = None):
     import torch
     from mksh_v.arch_a1v import NeoMMEMarkerScorer
 
-    ckpt = ROOT / f"runs/e41/runs/a1v_real_s{seed}/best.pt"
+    ckpt = ckpt or ROOT / f"runs/e41/runs/a1v_real_s{seed}/best.pt"
+    want = sha or SHA[seed]
     got = hashlib.sha256(ckpt.read_bytes()).hexdigest()
-    if got != SHA[seed]:
-        raise SystemExit(f"E43 ABORT: checkpoint sha {got} != {SHA[seed]}")
+    if got != want:
+        raise SystemExit(f"E43 ABORT: checkpoint sha {got} != {want}")
     model = NeoMMEMarkerScorer()
     model.ensure_markers(32)
     model.load_state_dict(torch.load(ckpt, map_location="cpu", weights_only=True)["model"])
@@ -52,6 +53,8 @@ def main() -> int:
     ap.add_argument("--root", type=Path, required=True, help="image root for row['image']")
     ap.add_argument("--out", type=Path, required=True)
     ap.add_argument("--limit", type=int, default=0)
+    ap.add_argument("--ckpt", type=Path, help="other checkpoint (default: E41 of --seed); needs --sha")
+    ap.add_argument("--sha", help="pinned sha256 of --ckpt (e.g. from the kernel summary)")
     a = ap.parse_args()
 
     torch.set_num_threads(max(1, torch.get_num_threads()))
@@ -65,7 +68,9 @@ def main() -> int:
     print(f"seed {a.seed}: {len(rows)} rows, {len(done)} done, {len(todo)} to run", flush=True)
     if not todo:
         return 0
-    model, sha = load_model(a.seed)
+    if a.ckpt and not a.sha:
+        raise SystemExit("--ckpt needs --sha")
+    model, sha = load_model(a.seed, a.ckpt, a.sha)
     a.out.parent.mkdir(parents=True, exist_ok=True)
     t0 = time.time()
     with a.out.open("a", encoding="utf-8") as fh:
