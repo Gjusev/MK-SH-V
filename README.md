@@ -148,16 +148,29 @@ The confidence signal that separates right from wrong on the synthetic
 distribution does not yet do so on real images. That is the campaign's open
 problem, published with its per-set tables (`runs/e42-calib/`), not hidden.
 
+E43 tried the obvious fix: a screens-domain temperature and gate, fitted on
+400 fresh real GUI calibration episodes (criteria frozen before the data was
+generated). One seed holds the budget with room to spare (s42: 24.6 %
+coverage, CP95 upper 1.5 %), the other does not (s43: 42.3 % coverage, CP95
+upper 6.2 %), so the claim rule for both seeds fails and real-GUI abstention
+stays open. Confidence does rank errors there (AUROC 0.79 and 0.84 on the
+calibration split), just not reliably enough to certify 5 %.
+
 ## Use cases
 
 Each case names the measured capability it rests on, and where the
 measurement stops.
 
-1. **Task completion over screenshots.** "Does this screenshot show the goal
-   as completed": agent supervision, UI QA, step verification. Rests on
-   GUI-Odyssey held-out pairs, 0.826 and 0.783. Bound: binary completion
-   questions in EN, ES and DE built from that corpus; not a general GUI
-   understanding model, and the gate is not validated on real screens.
+1. **End-of-task screen detection over screenshots.** "Does this screenshot
+   show the goal as completed": agent supervision, UI QA, step verification.
+   Rests on GUI-Odyssey held-out pairs, 0.826 and 0.783. Bound, sharpened by
+   E43's goal-swap diagnostic (each final screenshot paired with an unrelated
+   goal; accuracy 0.12 and 0.135, below chance on both seeds): the model
+   detects whether the screen shows a finished task, not whether it shows
+   *this* goal finished, so use it as end-of-task screen detection, not goal
+   verification. Also binary questions in EN, ES and DE from that corpus; not
+   a general GUI understanding model, and the gate is not validated on real
+   screens (E43 below).
 2. **Document state decisions.** Document type, form completeness, printed
    thresholds. Rests on the E38 synthetic families (five of seven at ceiling)
    and CORD real receipts, 0.550 and 0.602. Bound: on receipt thresholds the

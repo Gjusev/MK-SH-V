@@ -62,16 +62,21 @@ and correctly, the receipts refused by the gate. Or upload your own. Code, crite
 Each case names the measured capability it rests on, and where that
 measurement stops.
 
-1. **Decisions over screenshots and document pages.** "Does this screenshot
-   show the goal as completed", document type and form state, urgency of a
-   ticket shown on screen. Rests on real-image accuracy 0.765/0.742 on 2,586
-   held-out cases (CORD receipts + GUI-Odyssey screenshots, E41): on
-   GUI-Odyssey task completion the 260M model reaches 0.826/0.783 against
-   0.731 for a zero-shot ~4B comparator and 0.472 for an OCR pipeline.
-   Bound: two decision families mapped from those sources into binary
-   questions in EN/ES/DE with our templates; on CORD receipt thresholds the
-   model (0.550/0.602) stays below a deterministic rules baseline (0.594)
-   and the large comparator (0.972).
+1. **End-of-task screen detection and document decisions.** "Does this
+   screenshot show the goal as completed", document type and form state,
+   urgency of a ticket shown on screen. Rests on real-image accuracy
+   0.765/0.742 on 2,586 held-out cases (CORD receipts + GUI-Odyssey
+   screenshots, E41): on GUI-Odyssey task completion the 260M model reaches
+   0.826/0.783 against 0.731 for a zero-shot ~4B comparator and 0.472 for an
+   OCR pipeline. Bound, sharpened by E43's goal-swap diagnostic (each final
+   screenshot paired with an unrelated goal; accuracy 0.12 and 0.135, below
+   chance on both seeds): the model detects whether the screen shows a
+   finished task, not whether it shows *this* goal finished, so use it as
+   end-of-task screen detection, not goal verification. Also two decision
+   families mapped from those sources into binary questions in EN/ES/DE with
+   our templates; on CORD receipt thresholds the model (0.550/0.602) stays
+   below a deterministic rules baseline (0.594) and the large comparator
+   (0.972).
 2. **Calibrated probabilities with a safety valve.** Temperature T and
    gate τ fitted on calibration splits disjoint from every reported set
    (E42): on the held-out synthetic test, both checkpoints keep over 86 %
@@ -170,6 +175,14 @@ works on the synthetic distribution does not yet separate right from wrong
 on real images: that is the campaign's declared open problem, not a hidden
 one.
 
+E43 tested the obvious fix, criteria frozen before its data was generated: a
+screens-domain temperature and gate fitted on 400 fresh real GUI calibration
+episodes. Held out on these 2,010 cases, seed 42 holds the 5 % budget
+(coverage 24.6 %, CP95 upper 1.5 %) and seed 43 does not (coverage 42.3 %,
+CP95 upper 6.2 %), so the both-seeds claim rule fails and no real-GUI
+abstention claim is made. Confidence does rank errors there (AUROC 0.79 and
+0.84 on the calibration split), not reliably enough to certify 5 %.
+
 ## Usage
 
 ```bash
@@ -234,7 +247,13 @@ before any E41 calibration output existed). Full record:
 
 - Abstention is validated on the synthetic protocol only; on real images the
   gate either keeps confident errors (GUI) or refuses nearly everything
-  (CORD). Per-domain thresholds or an OOD signal are open work.
+  (CORD). A screens-domain gate (E43) held the budget on one seed and missed
+  on the other, so the claim rule fails; per-domain thresholds or an OOD
+  signal remain open work.
+- The model does not ground the goal text for screenshot questions: E43's
+  goal-swap diagnostic (final screenshot paired with an unrelated goal)
+  reads 0.12/0.135 accuracy, below chance on both seeds. The measured
+  capability is end-of-task screen detection.
 - CORD receipt thresholds remain below the rules baseline; threshold
   questions over IDR-formatted totals are the largest accuracy gap.
 - The real evaluation set (E38c) informed the error analysis that motivated
