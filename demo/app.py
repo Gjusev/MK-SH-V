@@ -154,6 +154,7 @@ footer { display: none !important; }
 #cases button:active { transform:translateY(1px); }
 #cases-label { font-size:13.5px; color:var(--muted); margin:4px 0 -4px; }
 .group-label { font-size:13px; font-weight:600; color:var(--ink); margin:10px 0 -2px; }
+.caveat { font-size:12.5px; color:var(--muted); margin:2px 0 0; line-height:1.45; }
 #cases2 { display:grid !important; grid-template-columns:1fr 1fr; gap:10px !important; }
 #cases2 > * { min-width:0 !important; }
 #cases2 button { display:flex !important; flex-direction:row !important; align-items:center; width:100%;
@@ -235,6 +236,10 @@ def build() -> gr.Blocks:
                     case_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
                                            f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
                                            min_width=150, size="sm") for i in ANSWERS]
+                gr.HTML("<p class='caveat'>On screenshots the model detects a finished-task screen; it does "
+                        "not check that the goal in the State is the one finished (measured in E43: paired with "
+                        "an unrelated goal it still says yes 86 to 88 % of the time). Changing the goal will not change "
+                        "the answer.</p>")
                 gr.HTML("<p class='group-label'>The gate refuses &mdash; top pick below tau 0.55</p>")
                 with gr.Row(elem_id="cases2"):
                     refuse_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
@@ -264,6 +269,9 @@ def build() -> gr.Blocks:
                 "| synthetic test s43 | 0.864 | 2.84 % | 3.4 % (held) |\n"
                 "| real GUI s42/s43 | 0.983 | 16.7 / 21.3 % | above budget |\n"
                 "| real CORD s42/s43 | 0.023 / 0.123 | 38.5 / 23.9 % | above budget |\n\n"
+                "A screens-specific gate fitted on 400 fresh real GUI episodes (E43) held the budget "
+                "on one seed (coverage 24.6 %, CP95 upper 1.5 %) and missed on the other (6.2 %), "
+                "so it is not shipped.\n\n"
                 "The budget holds on the synthetic test only. On real images abstention "
                 "is the campaign's declared open problem, and this demo shows it "
                 "unfiltered: the receipts are refused, and on the first one the "
