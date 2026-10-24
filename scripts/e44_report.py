@@ -1,4 +1,5 @@
-"""E44 report (criteria: docs/E44_CRITERIA_2026-10-23.md).
+"""E44 / E45 report (criteria: docs/E44_CRITERIA_2026-10-23.md, docs/E45_CRITERIA_2026-10-24.md;
+same gates). `--exp e45` reads runs/e45 and reuses runs/e44/m3_rows.jsonl.
 
     python scripts/e44_report.py --prep   # -> runs/e44/m3_rows.jsonl (E43 swap + own goal, 800 rows)
     # M1/M3 per seed, CPU:
@@ -22,6 +23,8 @@ from e44_probe_report import load, p_true  # noqa: E402
 
 SEEDS = (42, 43)
 OUT = ROOT / "runs/e44"
+EXP = "e44"
+CRITERIA = {"e44": "docs/E44_CRITERIA_2026-10-23.md", "e45": "docs/E45_CRITERIA_2026-10-24.md"}
 E41 = {42: {"test_nonfr": 0.9083, "task_done": 0.826, "testC": 1.0, "task": 0.81},
        43: {"test_nonfr": 0.9088, "task_done": 0.783, "testC": 1.0, "task": 0.83}}
 
@@ -43,7 +46,7 @@ def acc(rows: list[dict]) -> float:
 
 
 def seed_report(seed: int) -> dict:
-    run = OUT / f"runs/a1v_e44_s{seed}"
+    run = OUT / f"runs/a1v_{EXP}_s{seed}"
     ev = {name: load(run / f"eval_{name}.jsonl") for name in ("test_nonfr", "real", "testC", "task")}
     fam = defaultdict(list)
     for r in ev["test_nonfr"]:
@@ -62,12 +65,16 @@ def seed_report(seed: int) -> dict:
         ph = {r["probe_doc"]: p_true(c, r) for c, r in mine if r["probe_cond"] == "H"}
         probe[kind] = {"acc": a, "S": round(sum(pl[d] - ph[d] for d in pl) / len(pl), 4)}
     # M3: goal swap / own goal
-    mrow = {r["id"]: r for r in load(OUT / "m3_rows.jsonl")}
+    mrow = {r["id"]: r for r in load(ROOT / "runs/e44/m3_rows.jsonl")}
     m3 = defaultdict(list)
     for c in load(OUT / f"m3_s{seed}.jsonl"):
         m3[mrow[c["id"]]["m3"]].append(c["pred"] == c["gold"])
     m3 = {k: round(sum(v) / len(v), 4) for k, v in m3.items()}
-    return {"M1": probe, "M2_field_threshold_test": acc(fam["field_threshold"]),
+    brow = {r["id"]: r for r in load(ROOT / f"data/{EXP}/bind/rows.jsonl")}
+    bdev = defaultdict(list)
+    for r in load(run / "eval_bind_dev.jsonl"):
+        bdev[brow[r["id"]]["bind"]].append(r)
+    return {"M1": probe, "bind_dev": {k: acc(v) for k, v in sorted(bdev.items())}, "M2_field_threshold_test": acc(fam["field_threshold"]),
             "M3": m3, "M4_cord_real": acc(real_fam["field_threshold"]),
             "N1_test_nonfr": acc(ev["test_nonfr"]), "N2_real_gui": acc(real_fam["task_done"]),
             "N3": {"testC": acc(ev["testC"]), "task": acc(ev["task"])},
@@ -77,7 +84,11 @@ def seed_report(seed: int) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--prep", action="store_true")
-    if ap.parse_args().prep:
+    ap.add_argument("--exp", default="e44", choices=("e44", "e45"))
+    a = ap.parse_args()
+    global OUT, EXP
+    EXP, OUT = a.exp, ROOT / f"runs/{a.exp}"
+    if a.prep:
         prep()
         return 0
     seeds = {s: seed_report(s) for s in SEEDS}
@@ -89,10 +100,10 @@ def main() -> int:
               "N3": all(E41[s][k] - x["N3"][k] <= 0.030 for k in ("testC", "task"))}
           for s, x in seeds.items()}
     g3_ok = all(all(v.values()) for v in g3.values())
-    out = {"criteria": "docs/E44_CRITERIA_2026-10-23.md", "seeds": seeds,
+    out = {"criteria": CRITERIA[EXP], "seeds": seeds,
            "gates": {"G1_numbers": g1, "G2_goals": g2, "G3_no_regression": g3, "G3_ok": g3_ok,
                      "numbers_bound": g1 and g3_ok, "goals_bound": g2 and g3_ok}}
-    (OUT / "e44_report.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
+    (OUT / f"{EXP}_report.json").write_text(json.dumps(out, indent=1), encoding="utf-8")
     print(json.dumps(out, indent=1))
     return 0
 

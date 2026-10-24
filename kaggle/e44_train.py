@@ -18,11 +18,25 @@ import time
 from pathlib import Path
 
 WORK = Path("/kaggle/working")
-BIND_SLUG = "mkshv-e44-bind"
-BIND_ROWS_SHA = "733b051288df5ff1ecc311b8270e6ed0c70fa9427460b8dc3007d9f4a0e9941f"
-BIND_WEIGHTS = {"num_syn": 0.35, "num_cord": 0.20, "num_text": 0.10, "range": 0.05, "goal": 0.30}
-E41_CKPTS = {42: ("a1v_real_s42", "e4b4f6f5a56fedae18886e378cd9fb8f84afb1a77536b168a2fdfb990d9641a5"),
-             43: ("a1v_real_s43", "30f2eb429c5b25dca00e1ef53fd509232997c34799a5a22fa1c77200619c3819")}
+# per experiment: bind dataset, pinned rows, pool weights, init checkpoints (slug, tag, sha)
+CONFIGS = {
+    "e44": {"criteria": "docs/E44_CRITERIA_2026-10-23.md", "bind_slug": "mkshv-e44-bind",
+            "bind_sha": "733b051288df5ff1ecc311b8270e6ed0c70fa9427460b8dc3007d9f4a0e9941f",
+            "weights": {"num_syn": 0.35, "num_cord": 0.20, "num_text": 0.10, "range": 0.05, "goal": 0.30},
+            "init": {42: ("mkshv-e41-runs", "a1v_real_s42",
+                          "e4b4f6f5a56fedae18886e378cd9fb8f84afb1a77536b168a2fdfb990d9641a5"),
+                     43: ("mkshv-e41-runs", "a1v_real_s43",
+                          "30f2eb429c5b25dca00e1ef53fd509232997c34799a5a22fa1c77200619c3819")}},
+    "e45": {"criteria": "docs/E45_CRITERIA_2026-10-24.md", "bind_slug": "mkshv-e45-bind",
+            "bind_sha": "78c82e21d97f868dd38ff5a81f39453a9c521e715099dea46bbfdb6e01783aab",
+            "weights": {"num_syn": 0.20, "num_cord": 0.10, "cmp_text": 0.15, "digits": 0.20,
+                        "range": 0.05, "goal": 0.15, "goal_match": 0.15},
+            "init": {42: ("mkshv-e44-train", "a1v_e44_s42",
+                          "bb4f659f3773e59e60d2d724f6ac6ab19442e795a767b76754c5331b4deb49bf"),
+                     43: ("mkshv-e44-train", "a1v_e44_s43",
+                          "59b1cd820c96804a898fdbb22bf37c7c9b0ad6d945c175d2be82fc385ad67b78")}},
+}
+EXP = "e44"  # kernel default; the E45 kernel sets it before main()
 SEEDS = {42: 0, 43: 1}
 STEPS = 800
 DEV_EVERY = 200
@@ -55,11 +69,12 @@ def selection_key(synth_macro: float, real_macro: float, bind_acc: float, synth_
     return ((synth_macro + real_macro + bind_acc) / 3, synth_acc)
 
 
-def load_bind() -> tuple[dict[str, list[list[dict]]], list[dict]]:
+def load_bind(exp: str = "e44") -> tuple[dict[str, list[list[dict]]], list[dict]]:
     """({kind: [pair rows]}, dev rows); rows sha-pinned."""
-    p = find_file_dir(BIND_SLUG, "rows.jsonl") / "rows.jsonl"
+    cfg = CONFIGS[exp]
+    p = find_file_dir(cfg["bind_slug"], "rows.jsonl") / "rows.jsonl"
     got = hashlib.sha256(p.read_bytes()).hexdigest()
-    if got != BIND_ROWS_SHA:
+    if got != cfg["bind_sha"]:
         raise SystemExit(f"E44 ABORT: bind rows sha {got}")
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
     pairs: dict[str, dict[str, list[dict]]] = {}
@@ -67,11 +82,11 @@ def load_bind() -> tuple[dict[str, list[list[dict]]], list[dict]]:
         if r["split"] == "train":
             pairs.setdefault(r["bind"], {}).setdefault(r["pair_id"], []).append(r)
     out = {k: sorted(v.values(), key=lambda x: x[0]["pair_id"]) for k, v in pairs.items()}
-    assert set(out) == set(BIND_WEIGHTS) and all(len(p) == 2 for v in out.values() for p in v)
+    assert set(out) == set(cfg["weights"]) and all(len(p) == 2 for v in out.values() for p in v)
     return out, [r for r in rows if r["split"] == "dev"]
 
 
-def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
+def run_worker(seed: int, steps: int, smoke: bool, t0: float, exp: str = "e44") -> None:
     import torch
     from mksh_v.arch_a1v import NeoMMEMarkerScorer, forward_a1v
     from mksh_v.train_compare import case_of_row, fixed_dev_half, macro_family_accuracy
@@ -81,7 +96,8 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
     import e41_train as E41
 
     device = "cuda"
-    tag = f"a1v_e44_s{seed}" + ("_smoke" if smoke else "")
+    cfg = CONFIGS[exp]
+    tag = f"a1v_{exp}_s{seed}" + ("_smoke" if smoke else "")
     out_dir = WORK / "runs" / tag
     out_dir.mkdir(parents=True, exist_ok=True)
     torch.manual_seed(seed)
@@ -96,7 +112,7 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
     dev_sel = [r for r in splits["dev"] if r["id"] in dev_half]
     rt_root = E41.realtrain_root()
     real, real_dev = E41.load_realtrain(rt_root)
-    bind, bind_dev = load_bind()
+    bind, bind_dev = load_bind(exp)
     replay = [case_of_row(r) for r in T.load_replay_mix(T.find_bundle())]
     if smoke:
         dev_sel, real_dev, bind_dev = dev_sel[:SMOKE_EVAL_ROWS], real_dev[:SMOKE_EVAL_ROWS], bind_dev[:SMOKE_EVAL_ROWS]
@@ -110,11 +126,13 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
         return Image.open(rt_root / r["image"]).convert("RGB")
 
     def open_bind(r):
+        if r["img_src"] is None:  # text-only row (e45 cmp_text)
+            return None
         base = roots["E38a"] if r["img_src"] == "e38a" else rt_root
         return Image.open(base / r["image"]).convert("RGB")
 
-    ck_tag, ck_sha = E41_CKPTS[seed]
-    run = find_file_dir("mkshv-e41-runs", "best.pt", ck_tag)
+    ck_slug, ck_tag, ck_sha = cfg["init"][seed]
+    run = find_file_dir(ck_slug, "best.pt", ck_tag)
     got = hashlib.sha256((run / "best.pt").read_bytes()).hexdigest()
     if got != ck_sha:
         raise SystemExit(f"E44 ABORT: {ck_tag} sha {got}")
@@ -135,7 +153,7 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
     for o in orders.values():
         rng.shuffle(o)
     cursors = {k: 0 for k in pools}
-    kinds, weights = list(BIND_WEIGHTS), list(BIND_WEIGHTS.values())
+    kinds, weights = list(cfg["weights"]), list(cfg["weights"].values())
 
     def take(pool: str, m: int) -> list[int]:
         if cursors[pool] + m > len(orders[pool]):
@@ -147,8 +165,10 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
 
     def take_bind(m: int) -> tuple[list, list[dict]]:
         enc, rows = [], []
+        k0 = rng.choices(kinds, weights)[0]
         for _ in range(m // 2):
-            k = rng.choices(kinds, weights)[0]
+            # e44 drew the kind per pair (as run); e45 keeps one kind per microbatch
+            k = rng.choices(kinds, weights)[0] if exp == "e44" else k0
             j = rng.randrange(len(bind[k]))
             enc += bind_enc[k][j]
             rows += bind[k][j]
@@ -240,11 +260,11 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
 
 
 def spawn(seed: int, gpu: int, steps: int, smoke: bool, t0: float):
-    tag = f"a1v_e44_s{seed}" + ("_smoke" if smoke else "")
+    tag = f"a1v_{EXP}_s{seed}" + ("_smoke" if smoke else "")
     (WORK / "runs" / tag).mkdir(parents=True, exist_ok=True)
     log_path = WORK / "runs" / tag / f"worker_gpu{gpu}.log"
     cmd = [sys.executable, os.path.abspath(__file__), "--worker", "--seed", str(seed),
-           "--steps", str(steps), "--t0", str(t0)] + (["--smoke"] if smoke else [])
+           "--steps", str(steps), "--t0", str(t0), "--exp", EXP] + (["--smoke"] if smoke else [])
     fh = open(log_path, "a", encoding="utf-8")
     proc = subprocess.Popen(cmd, env=dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu)),
                             stdout=fh, stderr=subprocess.STDOUT, text=True)
@@ -258,9 +278,10 @@ def main() -> None:
     ap.add_argument("--steps", type=int, default=STEPS)
     ap.add_argument("--t0", type=float, default=0.0)
     ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--exp", default=EXP, choices=sorted(CONFIGS))
     args = ap.parse_args()
     if args.worker:
-        run_worker(args.seed, args.steps, args.smoke, args.t0)
+        run_worker(args.seed, args.steps, args.smoke, args.t0, args.exp)
         return
 
     t0 = time.time()
@@ -273,10 +294,10 @@ def main() -> None:
 
     if torch.cuda.device_count() < 2:
         raise SystemExit("E44 ABORT: needs the T4x2 session (2 GPUs)")
-    summary = {"status": "running", "criteria": "docs/E44_CRITERIA_2026-10-23.md", "seeds": {}}
+    summary = {"status": "running", "criteria": CONFIGS[EXP]["criteria"], "seeds": {}}
 
     def save():
-        (WORK / "e44_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        (WORK / f"{EXP}_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     smoke = E41.finish(spawn(42, 0, SMOKE_STEPS, True, t0), "smoke", 3600)
     summary["smoke"] = smoke
@@ -288,7 +309,7 @@ def main() -> None:
     procs = {seed: spawn(seed, gpu, STEPS, False, t0) for seed, gpu in SEEDS.items()}
     for seed, sp in procs.items():
         status = E41.finish(sp, f"s{seed}", WALL_BUDGET_S - (time.time() - t0))
-        sfile = WORK / "runs" / f"a1v_e44_s{seed}" / "summary.json"
+        sfile = WORK / "runs" / f"a1v_{EXP}_s{seed}" / "summary.json"
         summary["seeds"][seed] = {"status": status, **(json.loads(sfile.read_text(encoding="utf-8"))
                                                         if sfile.exists() else {})}
         save()
