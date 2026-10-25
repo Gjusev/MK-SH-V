@@ -1,5 +1,5 @@
 """E44 / E45 report (criteria: docs/E44_CRITERIA_2026-10-23.md, docs/E45_CRITERIA_2026-10-24.md;
-same gates). `--exp e45` reads runs/e45 and reuses runs/e44/m3_rows.jsonl.
+same gates). `--exp e45` reads runs/e45 and reuses runs/e44/m3_rows.jsonl; `--exp e46a|e46b` reads runs/e46a|e46b (E46 criteria) with the E45 bind rows.
 
     python scripts/e44_report.py --prep   # -> runs/e44/m3_rows.jsonl (E43 swap + own goal, 800 rows)
     # M1/M3 per seed, CPU:
@@ -24,7 +24,10 @@ from e44_probe_report import load, p_true  # noqa: E402
 SEEDS = (42, 43)
 OUT = ROOT / "runs/e44"
 EXP = "e44"
-CRITERIA = {"e44": "docs/E44_CRITERIA_2026-10-23.md", "e45": "docs/E45_CRITERIA_2026-10-24.md"}
+CRITERIA = {"e44": "docs/E44_CRITERIA_2026-10-23.md", "e45": "docs/E45_CRITERIA_2026-10-24.md",
+            "e46a": "docs/E46_CRITERIA_2026-10-25.md", "e46b": "docs/E46_CRITERIA_2026-10-25.md"}
+# bind rows each experiment trained and selected on (E46 reuses the E45 pool)
+BIND = {"e44": "e44", "e45": "e45", "e46a": "e45", "e46b": "e45"}
 E41 = {42: {"test_nonfr": 0.9083, "task_done": 0.826, "testC": 1.0, "task": 0.81},
        43: {"test_nonfr": 0.9088, "task_done": 0.783, "testC": 1.0, "task": 0.83}}
 
@@ -70,11 +73,23 @@ def seed_report(seed: int) -> dict:
     for c in load(OUT / f"m3_s{seed}.jsonl"):
         m3[mrow[c["id"]]["m3"]].append(c["pred"] == c["gold"])
     m3 = {k: round(sum(v) / len(v), 4) for k, v in m3.items()}
-    brow = {r["id"]: r for r in load(ROOT / f"data/{EXP}/bind/rows.jsonl")}
+    brow = {r["id"]: r for r in load(ROOT / f"data/{BIND[EXP]}/bind/rows.jsonl")}
     bdev = defaultdict(list)
+    gaps, digits = defaultdict(list), defaultdict(list)
     for r in load(run / "eval_bind_dev.jsonl"):
-        bdev[brow[r["id"]]["bind"]].append(r)
-    return {"M1": probe, "bind_dev": {k: acc(v) for k, v in sorted(bdev.items())}, "M2_field_threshold_test": acc(fam["field_threshold"]),
+        b = brow[r["id"]]
+        bdev[b["bind"]].append(r)
+        if b.get("gap") is not None and b["bind"] in ("num_syn", "num_cord", "cmp_text"):
+            rel = float(b["gap"]) - 1.0
+            bucket = "tie" if str(b.get("tie")) == "True" else (
+                "<10%" if rel < 0.10 else ("10-50%" if rel < 0.50 else ">=50%"))
+            gaps[f"{b['bind']} {bucket}"].append(r)
+        if b["bind"] == "digits":
+            digits[b["digit_q"]].append(r)
+    return {"M1": probe, "bind_dev": {k: acc(v) for k, v in sorted(bdev.items())},
+            "bind_dev_by_gap": {k: {"acc": acc(v), "n": len(v)} for k, v in sorted(gaps.items())},
+            "digits_dev": {k: {"acc": acc(v), "n": len(v)} for k, v in sorted(digits.items())},
+            "M2_field_threshold_test": acc(fam["field_threshold"]),
             "M3": m3, "M4_cord_real": acc(real_fam["field_threshold"]),
             "N1_test_nonfr": acc(ev["test_nonfr"]), "N2_real_gui": acc(real_fam["task_done"]),
             "N3": {"testC": acc(ev["testC"]), "task": acc(ev["task"])},
@@ -84,7 +99,7 @@ def seed_report(seed: int) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--prep", action="store_true")
-    ap.add_argument("--exp", default="e44", choices=("e44", "e45"))
+    ap.add_argument("--exp", default="e44", choices=tuple(CRITERIA))
     a = ap.parse_args()
     global OUT, EXP
     EXP, OUT = a.exp, ROOT / f"runs/{a.exp}"

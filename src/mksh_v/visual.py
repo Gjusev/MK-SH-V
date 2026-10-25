@@ -14,6 +14,27 @@ from typing import Any
 from mokka_decisions.contracts import DecisionCase
 
 
+def upscale_to_side(image: Any, side: int | None) -> Any:
+    """E46 input rule: enlarge so the longest side equals ``side`` (Lanczos).
+
+    The NeoMME processor only ever downscales, so a 794 px document keeps a
+    15 x 25 patch grid at any ``max_side``. Images already at or above
+    ``side`` are returned unchanged (the processor's ``max_side`` still caps
+    them). ``side=None`` disables the rule.
+    """
+    if image is None or not side:
+        return image
+    w, h = image.size
+    longest = max(w, h)
+    if longest >= side:
+        return image
+    from PIL import Image as PILImage
+
+    scale = side / longest
+    new = (min(side, max(1, round(w * scale))), min(side, max(1, round(h * scale))))
+    return image.resize(new, PILImage.Resampling.LANCZOS)
+
+
 @dataclass(frozen=True)
 class VisualCase:
     """One decision problem with optional image evidence."""

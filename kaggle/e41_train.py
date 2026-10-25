@@ -100,7 +100,8 @@ def selection_key(synth_macro: float, real_macro: float, synth_acc: float) -> tu
     return ((synth_macro + real_macro) / 2, synth_acc)
 
 
-def evaluate_rows(model, rows, opener, device) -> list[dict]:
+def evaluate_rows(model, rows, opener, device, side: int | None = None) -> list[dict]:
+    """``side`` (E46): upscale to and cap at this longest side; None = E41 pipeline."""
     from mksh_v.arch_a1v import evaluate_a1v
     from mksh_v.train_compare import case_of_row
 
@@ -111,7 +112,7 @@ def evaluate_rows(model, rows, opener, device) -> list[dict]:
         part = rows[s:s + 400]
         imgs = [opener(r) for r in part] if opener else None
         ev = evaluate_a1v(model, [case_of_row(r) for r in part], imgs, device=device,
-                          max_side=T.IMAGE_SIZE, batch_decisions=16,
+                          max_side=side or T.IMAGE_SIZE, upscale_to=side, batch_decisions=16,
                           max_state_tokens=T.MAX_STATE_TOKENS,
                           max_option_tokens=T.MAX_OPTION_TOKENS, collect_rows=True)
         for r, er in zip(part, ev["rows"]):

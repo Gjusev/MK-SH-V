@@ -36,6 +36,7 @@ from torch import nn
 from mokka_decisions.contracts import DecisionCase
 
 from .sequence import MAX_MARKERS, build_tail, rows_to_probabilities  # noqa: F401 (re-exported)
+from .visual import upscale_to_side
 
 
 # --------------------------------------------------------------------------
@@ -109,10 +110,17 @@ class NeoMMEMarkerScorer(nn.Module):
         device,
         *,
         max_side: int | None = None,
+        upscale_to: int | None = None,
     ) -> dict:
-        """Assemble the padded batch: prefix (doc or doc+grid) + tail per row."""
+        """Assemble the padded batch: prefix (doc or doc+grid) + tail per row.
+
+        ``upscale_to`` (E46) enlarges images whose longest side is below it
+        before the processor; ``None`` keeps every earlier experiment intact.
+        """
         if len(encoded) != len(images):
             raise ValueError("encoded cases and images must align")
+        if upscale_to:
+            images = [upscale_to_side(im, upscale_to) for im in images]
         pad = self.tokenizer.pad_token_id
         if pad is None:
             pad = 0
@@ -209,6 +217,7 @@ def evaluate_a1v(
     device,
     batch_decisions: int = 16,
     max_side: int | None = None,
+    upscale_to: int | None = None,
     max_state_tokens=None,
     max_option_tokens=None,
     collect_rows: bool = False,
@@ -227,7 +236,8 @@ def evaluate_a1v(
         chunk_cases = cases[s : s + batch_decisions]
         chunk_enc = encoded_all[s : s + batch_decisions]
         chunk_imgs = images[s : s + batch_decisions]
-        batch = model.build_batch(chunk_enc, chunk_imgs, device, max_side=max_side)
+        batch = model.build_batch(chunk_enc, chunk_imgs, device, max_side=max_side,
+                                  upscale_to=upscale_to)
         logits = forward_a1v(model, batch).float()
         probs = logits.softmax(-1)
         for r, case in enumerate(chunk_cases):
@@ -266,6 +276,7 @@ def decide_rows(
     *,
     device,
     max_side: int | None = None,
+    upscale_to: int | None = None,
     latency: bool = False,
 ) -> list[dict]:
     """Contract probabilities per case (dict option_id -> p); optional latency ms."""
@@ -282,7 +293,8 @@ def decide_rows(
         chunk_imgs = images[s : s + 16]
         if latency:
             start = time.perf_counter()
-        batch = model.build_batch(chunk_enc, chunk_imgs, device, max_side=max_side)
+        batch = model.build_batch(chunk_enc, chunk_imgs, device, max_side=max_side,
+                                  upscale_to=upscale_to)
         logits = forward_a1v(model, batch).float()
         if latency:
             torch.cuda.synchronize(device) if str(device).startswith("cuda") else None

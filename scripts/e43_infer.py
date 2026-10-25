@@ -55,6 +55,8 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0)
     ap.add_argument("--ckpt", type=Path, help="other checkpoint (default: E41 of --seed); needs --sha")
     ap.add_argument("--sha", help="pinned sha256 of --ckpt (e.g. from the kernel summary)")
+    ap.add_argument("--upscale", type=int, default=0,
+                    help="E46 input rule: upscale to and cap at this longest side (0 = off, 1,024 cap)")
     a = ap.parse_args()
 
     torch.set_num_threads(max(1, torch.get_num_threads()))
@@ -79,8 +81,8 @@ def main() -> int:
             cases = [case_of_row(r) for r in part]
             imgs = [Image.open(a.root / r["image"]).convert("RGB") for r in part]
             with torch.inference_mode():
-                ev = evaluate_a1v(model, cases, imgs, device="cpu", max_side=IMAGE_SIZE,
-                                  batch_decisions=BATCH, max_state_tokens=MAX_STATE_TOKENS,
+                ev = evaluate_a1v(model, cases, imgs, device="cpu", max_side=a.upscale or IMAGE_SIZE,
+                                  upscale_to=a.upscale or None, batch_decisions=BATCH, max_state_tokens=MAX_STATE_TOKENS,
                                   max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
             for r, er in zip(part, ev["rows"]):
                 if er["id"] != r["id"]:
