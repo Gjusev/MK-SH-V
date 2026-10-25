@@ -25,9 +25,20 @@ SEEDS = (42, 43)
 OUT = ROOT / "runs/e44"
 EXP = "e44"
 CRITERIA = {"e44": "docs/E44_CRITERIA_2026-10-23.md", "e45": "docs/E45_CRITERIA_2026-10-24.md",
-            "e46a": "docs/E46_CRITERIA_2026-10-25.md", "e46b": "docs/E46_CRITERIA_2026-10-25.md"}
+            "e46a": "docs/E46_CRITERIA_2026-10-25.md", "e46b": "docs/E46_CRITERIA_2026-10-25.md",
+            "e47": "docs/E47_CRITERIA_2026-10-25.md"}
 # bind rows each experiment trained and selected on (E46 reuses the E45 pool)
-BIND = {"e44": "e44", "e45": "e45", "e46a": "e45", "e46b": "e45"}
+BIND = {"e44": "e44", "e45": "e45", "e46a": "e45", "e46b": "e45", "e47": "e47"}
+
+
+def e41_exact(seed: int) -> dict:
+    """E47 G3 reference: the released E41 checkpoint from its per-case eval files (exact counts)."""
+    run = ROOT / f"runs/e41/runs/a1v_real_s{seed}"
+    tn = load(run / "eval_test_nonfr.jsonl")
+    gui = [r for r in load(run / "eval_real.jsonl") if r["family"] == "task_done"]
+    mean = lambda rows: sum(r["correct"] for r in rows) / len(rows)  # noqa: E731
+    return {"test_nonfr": mean(tn), "task_done": mean(gui),
+            "testC": mean(load(run / "eval_testC.jsonl")), "task": mean(load(run / "eval_task.jsonl"))}
 E41 = {42: {"test_nonfr": 0.9083, "task_done": 0.826, "testC": 1.0, "task": 0.81},
        43: {"test_nonfr": 0.9088, "task_done": 0.783, "testC": 1.0, "task": 0.83}}
 
@@ -93,6 +104,9 @@ def seed_report(seed: int) -> dict:
             "M3": m3, "M4_cord_real": acc(real_fam["field_threshold"]),
             "N1_test_nonfr": acc(ev["test_nonfr"]), "N2_real_gui": acc(real_fam["task_done"]),
             "N3": {"testC": acc(ev["testC"]), "task": acc(ev["task"])},
+            "N_exact": {k: sum(r["correct"] for r in v) / len(v) for k, v in (
+                ("test_nonfr", ev["test_nonfr"]), ("task_done", real_fam["task_done"]),
+                ("testC", ev["testC"]), ("task", ev["task"]))},
             "per_family_test": {k: acc(v) for k, v in sorted(fam.items())}}
 
 
@@ -107,13 +121,20 @@ def main() -> int:
         prep()
         return 0
     seeds = {s: seed_report(s) for s in SEEDS}
+    ref = {s: e41_exact(s) for s in SEEDS} if EXP == "e47" else E41
     g1 = all(x["M1"]["syn"]["S"] >= 0.50 and min(x["M1"]["syn"]["acc"]["L"], x["M1"]["syn"]["acc"]["H"]) >= 0.90
              and x["M2_field_threshold_test"] >= 0.70 for x in seeds.values())
     g2 = all(x["M3"]["swap"] >= 0.80 and x["M3"]["own"] >= 0.80 for x in seeds.values())
-    g3 = {s: {"N1": E41[s]["test_nonfr"] - x["N1_test_nonfr"] <= 0.020,
-              "N2": E41[s]["task_done"] - x["N2_real_gui"] <= 0.030,
-              "N3": all(E41[s][k] - x["N3"][k] <= 0.030 for k in ("testC", "task"))}
-          for s, x in seeds.items()}
+    if EXP == "e47":  # exact on both sides (criteria: no boundary decided by rounding)
+        g3 = {s: {"N1": ref[s]["test_nonfr"] - x["N_exact"]["test_nonfr"] <= 0.020,
+                  "N2": ref[s]["task_done"] - x["N_exact"]["task_done"] <= 0.030,
+                  "N3": all(ref[s][k] - x["N_exact"][k] <= 0.030 for k in ("testC", "task"))}
+              for s, x in seeds.items()}
+    else:
+        g3 = {s: {"N1": ref[s]["test_nonfr"] - x["N1_test_nonfr"] <= 0.020,
+                  "N2": ref[s]["task_done"] - x["N2_real_gui"] <= 0.030,
+                  "N3": all(ref[s][k] - x["N3"][k] <= 0.030 for k in ("testC", "task"))}
+              for s, x in seeds.items()}
     g3_ok = all(all(v.values()) for v in g3.values())
     out = {"criteria": CRITERIA[EXP], "seeds": seeds,
            "gates": {"G1_numbers": g1, "G2_goals": g2, "G3_no_regression": g3, "G3_ok": g3_ok,

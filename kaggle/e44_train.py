@@ -48,6 +48,15 @@ _E46 = {"criteria": "docs/E46_CRITERIA_2026-10-25.md", "bind_slug": "mkshv-e45-b
                       "c729a142350d2b8cb0bff5856bc9906631b18e528c8b5165fd9b397205ac1999")}}
 CONFIGS["e46a"] = dict(_E46, side=1024, train_deadline_h=2.5, wall_h=3.2)
 CONFIGS["e46b"] = dict(_E46, side=1536, train_deadline_h=4.0, wall_h=4.8)
+# E47 (docs/E47_CRITERIA_2026-10-25.md): bind pool v3 (digits at every position), init from E46 U1024
+CONFIGS["e47"] = dict(CONFIGS["e46a"], criteria="docs/E47_CRITERIA_2026-10-25.md",
+                      bind_slug="mkshv-e47-bind",
+                      bind_sha="d3236aed192a4990b208729e95f49c4c4de0615b95c86e61b7f914dae09deac6",
+                      init={42: ("mkshv-e46a-train", "a1v_e46a_s42",
+                                 "724b81b80b3805211e07c3e5131898ffe42f39a52db5f574ef1909841deb9e13"),
+                            43: ("mkshv-e46a-train", "a1v_e46a_s43",
+                                 "169004453125d703a2e2c946158bb6f74f0be3a53b185ad6a6a5e903d24133b7")},
+                      alloc_conf="expandable_segments:True")
 EXP = "e44"  # kernel default; the E45 kernel sets it before main()
 SMOKE_ONLY: tuple[str, ...] = ()  # E46 smoke kernel: these arms, one GPU each, 20 steps, then stop
 SEEDS = {42: 0, 43: 1}
@@ -295,7 +304,10 @@ def spawn(seed: int, gpu: int, steps: int, smoke: bool, t0: float, exp: str | No
     cmd = [sys.executable, os.path.abspath(__file__), "--worker", "--seed", str(seed),
            "--steps", str(steps), "--t0", str(t0), "--exp", exp] + (["--smoke"] if smoke else [])
     fh = open(log_path, "a", encoding="utf-8")
-    proc = subprocess.Popen(cmd, env=dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu)),
+    env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu))
+    if CONFIGS[exp].get("alloc_conf"):  # allocation only (E47); computation unchanged
+        env["PYTORCH_CUDA_ALLOC_CONF"] = CONFIGS[exp]["alloc_conf"]
+    proc = subprocess.Popen(cmd, env=env,
                             stdout=fh, stderr=subprocess.STDOUT, text=True)
     return proc, fh, log_path
 

@@ -48,7 +48,7 @@ ROOT_MODULES = {"e39r2_comparators": ("e39_train.py",), "e41_train": ("e39_train
                 "e44_train": ("e39_train.py", "e41_train.py"),
                 "e45_train": ("e39_train.py", "e41_train.py", "e44_train.py"),
                 **{k: ("e39_train.py", "e41_train.py", "e44_train.py")
-                   for k in ("e46_smoke", "e46a_train", "e46b_train")}}
+                   for k in ("e46_smoke", "e46a_train", "e46b_train", "e47_train")}}
 
 
 def build(name: str) -> pathlib.Path:
