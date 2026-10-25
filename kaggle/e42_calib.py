@@ -25,6 +25,10 @@ from types import SimpleNamespace
 
 WORK = Path("/kaggle/working")
 IMAGE_SIZE = 1024
+UPSCALE_TO: int | None = None  # E48: the E46 U1024 input rule; None = E42 pipeline
+CRITERIA = "docs/E42_CRITERIA_2026-10-22.md"
+SUMMARY_NAME = "e42_summary.json"
+EXTRA_ROOTS: dict = {}  # E48: id prefix -> image root of an extra held-out set
 MAX_STATE_TOKENS = 700
 MAX_OPTION_TOKENS = 96
 RISK_BUDGET = 0.05
@@ -120,7 +124,15 @@ def load_rows() -> tuple[dict[str, list[dict]], dict[str, Path]]:
     return splits, roots
 
 
+def extra_sets() -> dict:
+    """Extra held-out sets {name: rows} (E48 overrides; E42 has none)."""
+    return {}
+
+
 def image_root(row: dict, roots: dict[str, Path]) -> Path:
+    for prefix, root in EXTRA_ROOTS.items():
+        if row["id"].startswith(prefix):
+            return root
     if row["id"].startswith("e38a"):
         return roots["E38a"]
     if row["id"].startswith("e38b"):
@@ -255,7 +267,7 @@ def evaluate_set(model, rows: list[dict], roots: dict[str, Path] | None, device)
         if roots is not None:
             imgs = [Image.open(image_root(r, roots) / r["image"]).convert("RGB")
                     if r.get("image") else None for r in part]
-        ev = evaluate_a1v(model, cases, imgs, device=device, max_side=IMAGE_SIZE,
+        ev = evaluate_a1v(model, cases, imgs, device=device, max_side=IMAGE_SIZE, upscale_to=UPSCALE_TO,
                           batch_decisions=16, max_state_tokens=MAX_STATE_TOKENS,
                           max_option_tokens=MAX_OPTION_TOKENS, collect_rows=True)
         for r, er in zip(part, ev["rows"]):
@@ -288,10 +300,11 @@ def main() -> None:
             "test_fr": ([r for r in splits["test"] if r["language"] == "fr"], roots),
             "cord": ([r for r in splits["real"] if r["id"].startswith("e38c-cord")], roots),
             "gui": ([r for r in splits["real"] if not r["id"].startswith("e38c-cord")], roots),
-            "testC": (text["testC"], None), "task": (text["task"], None)}
+            "testC": (text["testC"], None), "task": (text["task"], None),
+            **{k: (v, roots) for k, v in extra_sets().items()}}
     log("sets: " + ", ".join(f"{k} {len(v[0])}" for k, v in sets.items()))
 
-    summary = {"status": "running", "criteria": "docs/E42_CRITERIA_2026-10-22.md",
+    summary = {"status": "running", "criteria": CRITERIA, "upscale_to": UPSCALE_TO,
                "tau_grid": TAU_GRID, "risk_budget": RISK_BUDGET,
                "interval": "Clopper-Pearson exact, 95 % two-sided (MK-SH-1 E36); budget on upper end",
                "set_sizes": {k: len(v[0]) for k, v in sets.items()}, "seeds": {}}
@@ -362,14 +375,14 @@ def main() -> None:
             "budget_flags": {n: tables[n]["overall"]["meets_budget"] for n in tables},
         }
         log(f"s{seed}: T*={t_star} tau={tau} flags={summary['seeds'][seed]['budget_flags']}")
-        (WORK / "e42_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+        (WORK / SUMMARY_NAME).write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     names = next(iter(summary["seeds"].values()))["budget_flags"]
     summary["claimable_sets_all_seeds"] = sorted(
         n for n in names if all(s["budget_flags"][n] for s in summary["seeds"].values()))
     summary["status"] = "completed"
     summary["wall_s"] = round(time.time() - t_start, 1)
-    (WORK / "e42_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    (WORK / SUMMARY_NAME).write_text(json.dumps(summary, indent=2), encoding="utf-8")
     log(f"E42 done in {summary['wall_s']}s; claimable: {summary['claimable_sets_all_seeds']}")
 
 
