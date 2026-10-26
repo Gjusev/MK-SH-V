@@ -28,7 +28,10 @@ def fresh_sets() -> dict:
     rows = [json.loads(line) for line in (root / "rows.jsonl").read_text(encoding="utf-8").splitlines()
             if line.strip()]
     assert len(rows) == 3000 and all(r["id"].startswith("e48s") for r in rows)
-    K.log(f"fresh set: {len(rows)} rows (sha {got[:16]})")
+    missing = [r["image"] for r in rows if not (root / r["image"]).is_file()]
+    if missing:  # fail before any GPU work (v1 ran without its images)
+        raise SystemExit(f"E48 ABORT: {len(missing)} fresh images missing, first {missing[0]}")
+    K.log(f"fresh set: {len(rows)} rows (sha {got[:16]}), all images present")
     return {"fresh_ft": rows}
 
 
