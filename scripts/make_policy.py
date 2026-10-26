@@ -1,6 +1,7 @@
-"""Write release/inference-policy.json from the E42 summary (deterministic).
+"""Write release/inference-policy.json from an E42-protocol summary (deterministic).
 
-    python scripts/make_policy.py runs/e42-calib/e42_summary.json
+    python scripts/make_policy.py runs/e42-calib/e42_summary.json        # E41 release
+    python scripts/make_policy.py runs/e48/e48_summary.json 43           # E47 release
 """
 
 from __future__ import annotations
@@ -11,24 +12,26 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-RESPONSE_SEMANTICS = {
-    "decide": "softmax(logits / T) over the valid options; argmax is the choice",
-    "abstain": "max calibrated probability < tau -> choice null, reason_code below_validated_threshold",
-    "reason_codes": {"below_validated_threshold":
-                     "max calibrated probability below tau; the 5 % selective-risk budget "
-                     "was validated on the held-out synthetic test (E42), both seeds"},
+EXPERIMENTS = {  # summary file -> (experiment, checkpoint prefix)
+    "e42_summary.json": ("E42 (docs/E42_CRITERIA_2026-10-22.md)", "a1v_real_s"),
+    "e48_summary.json": ("E48 (docs/E48_CRITERIA_2026-10-25.md)", "a1v_e47_s"),
 }
+INPUT_RULE = ("upscale the image (Lanczos) so its longest side is 1,024 px when smaller, "
+              "then process with max_side 1,024 (E46); build_batch(..., max_side=1024, upscale_to=1024)")
 
 
 def main() -> int:
-    summary = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+    path = Path(sys.argv[1])
+    summary = json.loads(path.read_text(encoding="utf-8"))
     seed = sys.argv[2] if len(sys.argv) > 2 else "42"
     v = summary["seeds"][seed]
+    experiment, prefix = EXPERIMENTS[path.name]
+    exp_id = experiment.split()[0]
     policy = {
         "model": "MK-SH-V (A1-V)",
-        "checkpoint": f"a1v_real_s{seed}",
+        "checkpoint": f"{prefix}{seed}",
         "checkpoint_sha256": v["sha256"],
-        "experiment": "E42 (docs/E42_CRITERIA_2026-10-22.md)",
+        "experiment": experiment,
         "temperature": {
             "value": v["T"],
             "fitted_on": "cal_temperature (3,150 synthetic calibration cases), NLL grid",
@@ -47,10 +50,18 @@ def main() -> int:
             },
         },
         "tau_grid": summary["tau_grid"],
-        "response_semantics": RESPONSE_SEMANTICS,
+        "response_semantics": {
+            "decide": "softmax(logits / T) over the valid options; argmax is the choice",
+            "abstain": "max calibrated probability < tau -> choice null, reason_code below_validated_threshold",
+            "reason_codes": {"below_validated_threshold":
+                             "max calibrated probability below tau; the 5 % selective-risk budget "
+                             f"was validated on the held-out synthetic test ({exp_id}), both seeds"},
+        },
         "bounds": "guarantee protocol- and distribution-specific (synthetic families); "
                   "real-image abstention not validated (see model card)",
     }
+    if exp_id != "E42":  # E46+ checkpoints were trained and calibrated on upscaled input
+        policy["input_rule"] = INPUT_RULE
     out = ROOT / "release/inference-policy.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(policy, indent=2) + "\n", encoding="utf-8")

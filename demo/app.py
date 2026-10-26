@@ -2,8 +2,8 @@
 
 Canonical source: demo/ in the mk-sh-v repository. The decision path below
 (load policy, one encoder pass over image + text, softmax(logits / T), apply
-the frozen abstention gate) is the shipped E41/E42 behaviour and must not
-change with the skin.
+the frozen abstention gate) is the shipped E47/E48 behaviour, including the
+E46 input rule (upscale to 1,024 px), and must not change with the skin.
 """
 
 from __future__ import annotations
@@ -29,8 +29,8 @@ torch.set_num_threads(2)  # cpu-basic gives two vCPUs
 # local checkout wins (tests and offline runs); the Space uses the Hub repo
 PKG = Path(os.environ.get("MKSHV_MODEL_DIR") or snapshot_download(MODEL_ID))
 POLICY = json.loads((PKG / "inference-policy.json").read_text(encoding="utf-8"))
-T = POLICY["temperature"]["value"]        # fitted on cal_temperature (E42)
-TAU = POLICY["abstention"]["threshold"]   # fitted on cal_policy (E42), CP-upper rule
+T = POLICY["temperature"]["value"]        # fitted on cal_temperature (E48, E42 protocol)
+TAU = POLICY["abstention"]["threshold"]   # fitted on cal_policy (E48), CP-upper rule
 
 _model = NeoMMEMarkerScorer()
 _model.ensure_markers(32)
@@ -49,8 +49,10 @@ _CASES_FILE = HERE / "cases.json"
 CASES_DB = json.loads(_CASES_FILE.read_text(encoding="utf-8")) if _CASES_FILE.exists() else []
 EXAMPLES = [[str(HERE / c["image"]), c["state"], c["question"],
              "\n".join(f"{oid}: {desc}" for oid, desc in c["options"])] for c in CASES_DB]
-ANSWERS = [i for i, c in enumerate(CASES_DB) if c["verdict"] == "answer"]
-REFUSALS = [i for i, c in enumerate(CASES_DB) if c["verdict"] == "abstain"]
+ANSWERS = [i for i, c in enumerate(CASES_DB) if c["verdict"] == "answer" and c["top"] == c["gold"]]
+# failures shown, not hidden: refusals below tau and confident errors above it
+FAILURES = [(i, "refused") for i, c in enumerate(CASES_DB) if c["verdict"] == "abstain"] + \
+           [(i, "wrong") for i, c in enumerate(CASES_DB) if c["verdict"] == "answer" and c["top"] != c["gold"]]
 
 
 def parse_options(text: str) -> tuple[Option, ...]:
@@ -81,7 +83,7 @@ def decide(image, state_text: str, question: str, options_text: str):
         id="demo", group_id="demo", source="demo", language="en", domain="documents",
         state=state_text, question=question, options=options)
     enc = _model.encode_cases([case], max_state_tokens=700, max_option_tokens=96)
-    batch = _model.build_batch(enc, [image], "cpu", max_side=1024)
+    batch = _model.build_batch(enc, [image], "cpu", max_side=1024, upscale_to=1024)
     t0 = time.perf_counter()
     with torch.inference_mode():
         logits = forward_a1v(_model, batch)
@@ -107,7 +109,7 @@ def decide(image, state_text: str, question: str, options_text: str):
         abstain = ("<div class='reason'>choice = null &middot; reason_code "
                    "<code>below_validated_threshold</code></div>")
     meta = (f"one encoder pass &middot; {dt:.1f} s on this CPU &middot; T = {T:g}, tau = {TAU:g} "
-            "(E42, fitted on calibration splits)")
+            "(E48, fitted on calibration splits)")
     return bar_html, verdict, abstain, meta
 
 
@@ -220,9 +222,9 @@ def build() -> gr.Blocks:
         gr.HTML("<header id='bar'><img src='/gradio_api/file=static/logo-mark.png' alt='MK-SH-V mark: a whale shark over an amber band'>"
                 "<div><h1>MK-SH-V</h1><p>A 260M visual decision model: calibrated probabilities, "
                 "a choice, and a refusal below the gate.</p></div>"
-                "<div class='nums'><div class='num'><b>0.826</b><span>real screenshots, held out</span></div>"
+                "<div class='nums'><div class='num'><b>0.828</b><span>real screenshots, held out</span></div>"
                 "<div class='num gate'><b>&tau; 0.55</b><span>validated gate</span></div>"
-                "<div class='num'><b>86 %</b><span>coverage, CP95 risk &le; 3.4 %*</span></div></div>"
+                "<div class='num'><b>98.6 %</b><span>coverage, CP95 risk &le; 4.8 %*</span></div></div>"
                 "<nav class='links'><a href='https://huggingface.co/Gjusev/MK-SH-V'>Model card</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v'>Code and results</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v#the-decision-contract'>How it decides</a></nav></header>")
@@ -236,15 +238,15 @@ def build() -> gr.Blocks:
                     case_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
                                            f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
                                            min_width=150, size="sm") for i in ANSWERS]
-                gr.HTML("<p class='caveat'>On screenshots the model detects a finished-task screen; it does "
-                        "not check that the goal in the State is the one finished (measured in E43: paired with "
-                        "an unrelated goal it still says yes 86 to 88 % of the time). Changing the goal will not change "
-                        "the answer.</p>")
-                gr.HTML("<p class='group-label'>The gate refuses &mdash; top pick below tau 0.55</p>")
+                gr.HTML("<p class='caveat'>On screenshots the claim is end-of-task screen detection. Checking "
+                        "that the goal in the State is the one finished is only partial (measured in E47: paired "
+                        "with an unrelated goal it still says yes about 22 % of the time), so it is not claimed.</p>")
+                gr.HTML("<p class='group-label'>Where it fails &mdash; a refusal below tau 0.55, and a confident "
+                        "wrong answer above it (real receipts: about 1 in 4 kept answers is wrong)</p>")
                 with gr.Row(elem_id="cases2"):
-                    refuse_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
-                                             f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
-                                             min_width=150, size="sm") for i in REFUSALS]
+                    fail_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
+                                           f"{CASES_DB[i]['language'].upper()} · {kind}", icon=EXAMPLES[i][0],
+                                           min_width=150, size="sm") for i, kind in FAILURES]
                 image_in = gr.Image(type="pil", label="Your image: document page or screenshot", height=300)
                 question_in = gr.Textbox(label="Question", value=EXAMPLES[0][2] if EXAMPLES else "")
                 with gr.Row():
@@ -257,30 +259,26 @@ def build() -> gr.Blocks:
                 abstain_out = gr.HTML()
                 probs_out = gr.HTML()
                 meta_out = gr.Markdown(elem_id="meta")
-        with gr.Accordion("* The shipped policy and its held-out validation (E42)", open=False):
+        with gr.Accordion("* The shipped policy and its held-out validation (E48)", open=False):
             gr.Markdown(
-                f"This demo runs the released policy: temperature **T = {T:g}** and gate "
-                f"**tau = {TAU:g}**, fitted on calibration splits disjoint from every "
-                "reported set. Held-out validation, exact two-sided Clopper-Pearson 95 %"
+                f"This demo runs the released policy (E47 checkpoint, seed 43): temperature "
+                f"**T = {T:g}** and gate **tau = {TAU:g}**, fitted on calibration splits disjoint "
+                "from every reported set. Held-out validation, exact two-sided Clopper-Pearson 95 %"
                 " (budget: 5 % selective risk):\n\n"
                 "| Set | Coverage | Selective risk | CP95 upper |\n"
                 "|---|---|---|---|\n"
-                "| synthetic test s42 | 0.861 | 2.65 % | 3.2 % (held) |\n"
-                "| synthetic test s43 | 0.864 | 2.84 % | 3.4 % (held) |\n"
-                "| real GUI s42/s43 | 0.983 | 16.7 / 21.3 % | above budget |\n"
-                "| real CORD s42/s43 | 0.023 / 0.123 | 38.5 / 23.9 % | above budget |\n\n"
-                "A screens-specific gate fitted on 400 fresh real GUI episodes (E43) held the budget "
-                "on one seed (coverage 24.6 %, CP95 upper 1.5 %) and missed on the other (6.2 %), "
-                "so it is not shipped.\n\n"
+                "| synthetic test s43 (shipped) | 0.986 | 3.45 % | 4.1 % (held) |\n"
+                "| synthetic test s42 | 1.000 | 4.14 % | 4.8 % (held) |\n"
+                "| real GUI s43/s42 | 0.973 / 1.000 | 16.1 / 20.0 % | above budget |\n"
+                "| real CORD s43/s42 | 0.892 / 1.000 | 25.3 / 26.6 % | above budget |\n"
+                "| 3,000 fresh numeric documents s43 | 0.876 | 22.9 % | above budget |\n\n"
                 "The budget holds on the synthetic test only. On real images abstention "
-                "is the campaign's declared open problem, and this demo shows it "
-                "unfiltered: the receipts are refused, and on the first one the "
-                "model's top pick would have been wrong.")
+                "is the campaign's declared open problem, and this demo shows it unfiltered.")
         gr.Markdown(
             "Example images: CORD v2 (Park et al. 2019, NAVER Clova) and GUI-Odyssey "
             "(Lu et al. 2024, OpenGVLab), both CC BY 4.0. Model: Apache-2.0.")
         ins, outs = [image_in, state_in, question_in, options_in], [probs_out, verdict_out, abstain_out, meta_out]
-        for btn, i in [*zip(case_btns, ANSWERS), *zip(refuse_btns, REFUSALS)]:
+        for btn, i in [*zip(case_btns, ANSWERS), *zip(fail_btns, [i for i, _ in FAILURES])]:
             btn.click(lambda i=i: tuple(EXAMPLES[i]), None, ins).then(decide, ins, outs)
         go.click(decide, ins, outs)
     return app

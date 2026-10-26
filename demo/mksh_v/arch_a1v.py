@@ -38,6 +38,25 @@ from mokka_decisions.contracts import DecisionCase
 from .sequence import MAX_MARKERS, build_tail, rows_to_probabilities  # noqa: F401 (re-exported)
 
 
+def upscale_to_side(image: Any, side: int | None) -> Any:
+    """E46 input rule, copied from src/mksh_v/visual.py (the demo ships without visual.py).
+
+    The NeoMME processor only ever downscales; enlarge so the longest side
+    equals ``side`` (Lanczos). ``side=None`` disables the rule.
+    """
+    if image is None or not side:
+        return image
+    w, h = image.size
+    longest = max(w, h)
+    if longest >= side:
+        return image
+    from PIL import Image as PILImage
+
+    scale = side / longest
+    new = (min(side, max(1, round(w * scale))), min(side, max(1, round(h * scale))))
+    return image.resize(new, PILImage.Resampling.LANCZOS)
+
+
 # --------------------------------------------------------------------------
 # the scorer
 # --------------------------------------------------------------------------
@@ -109,10 +128,17 @@ class NeoMMEMarkerScorer(nn.Module):
         device,
         *,
         max_side: int | None = None,
+        upscale_to: int | None = None,
     ) -> dict:
-        """Assemble the padded batch: prefix (doc or doc+grid) + tail per row."""
+        """Assemble the padded batch: prefix (doc or doc+grid) + tail per row.
+
+        ``upscale_to`` (E46) enlarges images whose longest side is below it
+        before the processor; ``None`` keeps every earlier experiment intact.
+        """
         if len(encoded) != len(images):
             raise ValueError("encoded cases and images must align")
+        if upscale_to:
+            images = [upscale_to_side(im, upscale_to) for im in images]
         pad = self.tokenizer.pad_token_id
         if pad is None:
             pad = 0

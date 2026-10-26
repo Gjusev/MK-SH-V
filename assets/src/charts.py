@@ -4,24 +4,27 @@ bar is direct-labelled and the README carries the same numbers as tables.
 
     python assets/src/charts.py      # writes assets/src/charts.html, then render.py
 
-Numbers: MK-SH-V from runs/e41/e41_report.json and runs/e42-calib/e42_summary.json
-(read here); comparators as published in README (E39-r2 jev zero-shot, E39 OCR arm,
-E39 synthetic-only), measured by us on the same 2,586 rows.
+Numbers: MK-SH-V (E47 checkpoints) from runs/e48/e48_summary.json, the E39
+synthetic-only arm from runs/e41/e41_report.json (read here); other comparators as
+published in README (E39-r2 jev zero-shot, E39 OCR arm), measured by us on the same
+2,586 rows.
 """
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 E41 = json.loads((ROOT / "runs/e41/e41_report.json").read_text(encoding="utf-8"))["seeds"]
-E42 = json.loads((ROOT / "runs/e42-calib/e42_summary.json").read_text(encoding="utf-8"))["seeds"]
+E48 = json.loads((ROOT / "runs/e48/e48_summary.json").read_text(encoding="utf-8"))["seeds"]
+N_GUI, N_CORD = 2010, 576
 
 def mk(seed):
-    s = E41[seed]; b = s["real_by_slice"]
-    return {"gui": b["gui"]["e41"], "cord": b["cord"]["e41"], "real": s["real_acc"]}
+    a = E48[seed]["raw_acc"]
+    real = (round(a["gui"] * N_GUI) + round(a["cord"] * N_CORD)) / (N_GUI + N_CORD)
+    return {"gui": a["gui"], "cord": a["cord"], "real": real}
 
 ACC = [  # label, sub, values, own
+    ("MK-SH-V s43", "260M, shipped", mk("43"), True),
     ("MK-SH-V s42", "260M, trained", mk("42"), True),
-    ("MK-SH-V s43", "260M, trained", mk("43"), True),
     ("jev-vlm-4b", "~4B, zero-shot", {"gui": 0.731, "cord": 0.972, "real": 0.785}, False),
     ("OCR + MK-SH-1", "~25M, trained", {"gui": 0.472, "cord": 0.486, "real": 0.475}, False),
     ("Same model, synthetic only", "260M, E39", {"gui": round(E41["42"]["real_by_slice"]["gui"]["e39"] * 2010) / 2010,
@@ -35,9 +38,10 @@ PANELS = [("gui", "Screenshots: is the goal completed?", "GUI-Odyssey, n = 2,010
 def gate_rows():
     rows = []
     for key, label in (("test_nonfr", "Synthetic test"), ("test_fr", "Synthetic test, French"),
+                       ("fresh_ft", "Fresh numeric documents"),
                        ("gui", "Real screenshots"), ("cord", "Real receipts"), ("task", "Text routing task")):
-        for seed in ("42", "43"):
-            t = E42[seed]["tables"][key]["overall"]
+        for seed in ("43", "42"):
+            t = E48[seed]["tables"][key]["overall"]
             rows.append((label, seed, t["coverage"], t["risk"], t["cp95"][0], t["cp95"][1]))
     return rows
 
@@ -77,7 +81,7 @@ def gate_svg(c):
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
            f'<rect width="{W}" height="{H}" fill="{c["bg"]}"/>',
            f'<text x="40" y="58" class="h" fill="{c["ink"]}">The refusal gate on held-out sets</text>',
-           f'<text x="40" y="92" class="s" fill="{c["ink2"]}">Selective risk at tau = 0.55 with its exact 95 % Clopper-Pearson interval; the budget holds when the whole interval stays left of 5 %.</text>']
+           f'<text x="40" y="92" class="s" fill="{c["ink2"]}">Selective risk at each seed&#8217;s fitted tau (0.55 shipped s43, 0.30 s42), exact 95 % Clopper-Pearson; the budget holds when the interval stays left of 5 %.</text>']
     for t in (0, .05, .10, .15, .20, .25, .30):
         x = X(t)
         out.append(f'<line x1="{x}" y1="128" x2="{x}" y2="{H - 56}" stroke="{c["grid"]}" stroke-width="{1.5}"/>')

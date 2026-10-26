@@ -59,7 +59,7 @@
   ],
   "gold": "illegible",
   "top": "illegible",
-  "pmax": 0.961,
+  "pmax": 1.0,
   "verdict": "answer",
   "image": "examples/case-02.png"
  },
@@ -115,7 +115,7 @@
   ],
   "gold": "conflict",
   "top": "conflict",
-  "pmax": 0.999,
+  "pmax": 1.0,
   "verdict": "answer",
   "image": "examples/case-04.png"
  },
@@ -149,7 +149,7 @@
   ],
   "gold": "5",
   "top": "5",
-  "pmax": 0.998,
+  "pmax": 1.0,
   "verdict": "answer",
   "image": "examples/case-05.png"
  },
@@ -169,11 +169,11 @@
     "Yes"
    ]
   ],
-  "verdict": "abstain",
   "gold": "true",
-  "top": null,
-  "pmax": 0.507,
-  "note": "kept: README case table; the model's top pick (false) would have been wrong (total 302.016 IDR)",
+  "note": "kept: README case table; total 302.016 IDR",
+  "top": "true",
+  "pmax": 0.978,
+  "verdict": "answer",
   "image": "examples/case-06.png"
  },
  {
@@ -192,11 +192,11 @@
     "Ja"
    ]
   ],
-  "verdict": "abstain",
   "gold": "true",
-  "top": null,
-  "pmax": 0.522,
   "note": "kept: README case table; CORD train-0, total 1,591,600 IDR",
+  "top": "true",
+  "pmax": 0.782,
+  "verdict": "answer",
   "image": "examples/case-07.png"
  },
  {
@@ -219,11 +219,11 @@
     "above 200.000 IDR"
    ]
   ],
-  "verdict": "abstain",
   "gold": "high",
-  "top": null,
-  "pmax": 0.418,
   "note": "kept: 3-option range question; total 302,016 IDR",
+  "top": "low",
+  "pmax": 0.757,
+  "verdict": "answer",
   "image": "examples/case-08.png"
  },
  {
@@ -231,7 +231,7 @@
   "family": "field_threshold",
   "language": "es",
   "state": "Página de documento escaneada.",
-  "question": "¿El total de este documento es de al menos 968.865 IDR?",
+  "question": "¿El total de este documento es de al menos 1.637.151 IDR?",
   "options": [
    [
     "false",
@@ -242,9 +242,9 @@
     "Sí"
    ]
   ],
-  "gold": "true",
+  "gold": "false",
   "top": null,
-  "pmax": 0.507,
+  "pmax": 0.524,
   "verdict": "abstain",
   "gt_total_text": "1,591,600",
   "image": "examples/case-09.png"
@@ -265,11 +265,11 @@
     "Yes"
    ]
   ],
-  "verdict": "answer",
   "gold": "true",
-  "top": "true",
-  "pmax": 0.999,
   "note": "kept: README case table; GUI-Odyssey train episode 4884755305395394, final step",
+  "top": "true",
+  "pmax": 0.998,
+  "verdict": "answer",
   "image": "examples/case-10.png"
  },
  {
@@ -290,7 +290,7 @@
   ],
   "gold": "true",
   "top": "true",
-  "pmax": 0.998,
+  "pmax": 1.0,
   "verdict": "answer",
   "image": "examples/case-11.png"
  },
@@ -312,7 +312,7 @@
   ],
   "gold": "false",
   "top": "false",
-  "pmax": 0.999,
+  "pmax": 1.0,
   "verdict": "answer",
   "image": "examples/case-12.png"
  }

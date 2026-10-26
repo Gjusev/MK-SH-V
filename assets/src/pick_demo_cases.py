@@ -28,24 +28,24 @@ EXISTING = [
     dict(kind="gui", src=str(EX / "gui-notes-fin.png"), family="task_done", language="en",
          state="Goal: Create a online meeting and share the link to your friend.",
          question="Does the screenshot show the goal as completed?",
-         options=[("false", "No"), ("true", "Yes")], verdict="answer", gold="true", top="true", pmax=0.999,
+         options=[("false", "No"), ("true", "Yes")], gold="true",
          note="kept: README case table; GUI-Odyssey train episode 4884755305395394, final step"),
     dict(kind="cord", src=str(EX / "cord-receipt-1.png"), family="field_threshold", language="en",
          state="Scanned document page.",
          question="Is the total on this document at least 45.662 IDR?",
-         options=[("false", "No"), ("true", "Yes")], verdict="abstain", gold="true", top=None, pmax=0.507,
-         note="kept: README case table; the model's top pick (false) would have been wrong (total 302.016 IDR)"),
+         options=[("false", "No"), ("true", "Yes")], gold="true",
+         note="kept: README case table; total 302.016 IDR"),
     dict(kind="cord", src=str(EX / "cord-receipt-2.png"), family="field_threshold", language="de",
          state="Gescannte Dokumentseite.",
          question="Beträgt die Gesamtsumme auf diesem Dokument mindestens 120.000 IDR?",
-         options=[("false", "Nein"), ("true", "Ja")], verdict="abstain", gold="true", top=None, pmax=0.522,
+         options=[("false", "Nein"), ("true", "Ja")], gold="true",
          note="kept: README case table; CORD train-0, total 1,591,600 IDR"),
     dict(kind="cord", src=str(EX / "cord-receipt-1.png"), family="field_threshold", language="en",
          state="Scanned document page.",
          question="Which range does the total on this document fall into?",
          options=[("low", "below 100.000 IDR"), ("mid", "100.000 to 200.000 IDR"), ("high", "above 200.000 IDR")],
-         verdict="abstain", gold="high", top=None, pmax=0.418, note="kept: 3-option range question; total 302,016 IDR"),
-]
+         gold="high", note="kept: 3-option range question; total 302,016 IDR"),
+]  # verdict, top and pmax are measured on the current weights in main(), never written by hand
 
 WANT_SYN = [("doc_type", "en"), ("form_complete", "es"), ("source_conflict", "de"),
             ("task_done", "en"), ("urgency", "en"), ("screen_state", "de")]
@@ -64,7 +64,7 @@ def decide_on(app, img_path, r):
     nums = [float(x.strip(" %")) for x in re.findall(r"prob-num'>([^<]*)<", bars)]
     ids = re.findall(r"prob-id'>([^<]*)<", bars)
     pmax = max(nums) / 100
-    return pmax, (ids[nums.index(max(nums))] if pmax >= 0.55 else None)
+    return pmax, (ids[nums.index(max(nums))] if pmax >= app.TAU else None)
 
 
 def entry(kind, src, r, pmax, top):
@@ -78,7 +78,13 @@ def entry(kind, src, r, pmax, top):
 
 def main() -> None:
     import app
-    picked = list(EXISTING)
+    picked = []
+    for c in EXISTING:  # re-decided on the shipped weights (E41 values were hardcoded before)
+        r = dict(c, options=[{"id": i, "description": d} for i, d in c["options"]])
+        pmax, top = decide_on(app, Path(c["src"]), r)
+        picked.append(dict(c, top=top, pmax=round(pmax, 3),
+                           verdict="answer" if pmax >= app.TAU else "abstain"))
+        print("existing", c["family"], c["language"], picked[-1]["verdict"], f"p={pmax:.3f}", top, flush=True)
     used = {c["question"] + c["language"] for c in picked}
     # synthetic: one per family at the wanted language, favourable only
     for fam, lang in WANT_SYN:

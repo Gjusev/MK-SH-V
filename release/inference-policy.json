@@ -1,12 +1,12 @@
 {
   "model": "MK-SH-V (A1-V)",
-  "checkpoint": "a1v_real_s42",
-  "checkpoint_sha256": "e4b4f6f5a56fedae18886e378cd9fb8f84afb1a77536b168a2fdfb990d9641a5",
-  "experiment": "E42 (docs/E42_CRITERIA_2026-10-22.md)",
+  "checkpoint": "a1v_e47_s43",
+  "checkpoint_sha256": "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29",
+  "experiment": "E48 (docs/E48_CRITERIA_2026-10-25.md)",
   "temperature": {
-    "value": 1.5455,
+    "value": 1.124,
     "fitted_on": "cal_temperature (3,150 synthetic calibration cases), NLL grid",
-    "crosscheck_mokka": 1.545524
+    "crosscheck_mokka": 1.124037
   },
   "abstention": {
     "threshold": 0.55,
@@ -15,11 +15,11 @@
     "fitted_on": "cal_policy (3,150), disjoint from every reported set",
     "held_out_validation": {
       "set": "synthetic test non-FR (4,200)",
-      "coverage": 0.8612,
-      "selective_risk": 0.0265,
+      "coverage": 0.9855,
+      "selective_risk": 0.0345,
       "cp95": [
-        0.0216,
-        0.0323
+        0.0292,
+        0.0406
       ]
     }
   },
@@ -43,8 +43,9 @@
     "decide": "softmax(logits / T) over the valid options; argmax is the choice",
     "abstain": "max calibrated probability < tau -> choice null, reason_code below_validated_threshold",
     "reason_codes": {
-      "below_validated_threshold": "max calibrated probability below tau; the 5 % selective-risk budget was validated on the held-out synthetic test (E42), both seeds"
+      "below_validated_threshold": "max calibrated probability below tau; the 5 % selective-risk budget was validated on the held-out synthetic test (E48), both seeds"
     }
   },
-  "bounds": "guarantee protocol- and distribution-specific (synthetic families); real-image abstention not validated (see model card)"
+  "bounds": "guarantee protocol- and distribution-specific (synthetic families); real-image abstention not validated (see model card)",
+  "input_rule": "upscale the image (Lanczos) so its longest side is 1,024 px when smaller, then process with max_side 1,024 (E46); build_batch(..., max_side=1024, upscale_to=1024)"
 }

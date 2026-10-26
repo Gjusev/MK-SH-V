@@ -10,11 +10,6 @@ was validated on held-out data. The visual sibling of
 [MK-SH-1](https://github.com/Gjusev/MK-SH-1).
 
 <p align="center">
-  <a href="https://cdn.jsdelivr.net/gh/Gjusev/mk-sh-v@main/assets/mkshv-film.mp4"><img src="assets/mkshv-film.gif" width="100%" alt="MK-SH-V launch film: the model answers a real screenshot at 99.9 percent, refuses a real receipt at 50.7 percent below the gate tau 0.55, beats a 15 times larger model on real screenshots, and keeps 86 percent coverage with a 95 percent Clopper-Pearson risk bound of 3.2 percent on the held-out synthetic test"></a>
-  <br><sub>27-second film, every number measured. Muted loop; click for the video with sound.</sub>
-</p>
-
-<p align="center">
   <a href="https://huggingface.co/Gjusev/MK-SH-V"><b>Model</b></a> ·
   <a href="https://huggingface.co/spaces/Gjusev/MK-SH-V-demo"><b>Live demo</b></a> ·
   <a href="#use-it"><b>Use it</b></a> ·
@@ -22,31 +17,36 @@ was validated on held-out data. The visual sibling of
   <a href="https://github.com/Gjusev/MK-SH-1"><b>MK-SH-1</b></a>
 </p>
 
-| 0.826 | τ = 0.55 | 86 % |
+| 0.828 | τ = 0.55 | 98.6 % |
 |:---|:---|:---|
-| accuracy on real screenshots, held out; a ~15× larger model run zero-shot scores 0.731 | the refusal gate, fitted on a calibration split by a rule frozen in advance | answered on the held-out synthetic test, with a 95 % Clopper-Pearson risk bound of 3.2 to 3.4 % |
+| accuracy on real screenshots, held out; a ~15× larger model run zero-shot scores 0.731 | the refusal gate, fitted on a calibration split by a rule frozen in advance | answered on the held-out synthetic test, with a 95 % Clopper-Pearson risk bound of 4.1 % |
 
 ## What it does
 
-Two real cases, run through the released weights and the shipped policy:
+Three real cases, run through the released weights and the shipped policy:
 
 | Input | Question | Calibrated probabilities | Output |
 |---|---|---|---|
-| <img src="demo/examples/gui-notes-fin.png" width="72" alt="phone screenshot of a chat with meeting links, from GUI-Odyssey"> | Does the screenshot show the goal as completed? | true **0.999**, false 0.001 | **choice: true** |
-| <img src="demo/examples/cord-receipt-1.png" width="72" alt="photographed receipt with a total of 302.016 IDR, from CORD"> | Is the total on this document at least 45.662 IDR? | false 0.507, true 0.493 | **choice: null**, `below_validated_threshold` |
+| <img src="demo/examples/gui-notes-fin.png" width="72" alt="phone screenshot of a chat with meeting links, from GUI-Odyssey"> | Does the screenshot show the goal as completed? | true **0.998**, false 0.002 | **choice: true** |
+| <img src="demo/examples/cord-receipt-1.png" width="72" alt="photographed receipt with a total of 302.016 IDR, from CORD"> | Is the total on this document at least 45.662 IDR? | true **0.978**, false 0.022 | **choice: true** |
+| <img src="demo/examples/cord-receipt-1.png" width="72" alt="the same receipt"> | Which range does the total fall into? (below 100.000, 100.000 to 200.000, above 200.000 IDR) | low **0.757**, the other two 0.243 together | **choice: low**, wrong |
 
-The second row is the point. The receipt's total is 302.016 IDR, so the right
-answer is true; the model leaned to false by a hair, and the gate refused
-instead of answering wrong. On real receipts that refusal is the norm today
-(see [the gate, held out](#the-refusal-gate-held-out)): it is honest, not yet
-useful there.
+The receipt's total is 302.016 IDR. The E41 release refused the second
+question at 0.507; this one reads the total and answers it. The third row is
+where it stops: the right range is "above 200.000", and the model picked
+"below 100.000" with a confidence that clears the gate. On real receipts
+about a quarter of the answers the gate lets through are wrong (see [the gate,
+held out](#the-refusal-gate-held-out)); the gate's risk budget is validated
+on the synthetic test only.
 
 How a decision is made: one encoder pass reads the image and the text
 together, each option is marked inline and scored by a shared head, and the
 softmax runs over the valid options only. The temperature T only rescales
 confidence, so it never changes a choice. The gate tau was fitted on a
-calibration split (E42) as the smallest threshold whose Clopper-Pearson 95 %
-upper bound on selective risk stays within a 5 % budget. It is **not** a chat
+calibration split (E48, by the E42 protocol) as the smallest threshold whose
+Clopper-Pearson 95 % upper bound on selective risk stays within a 5 % budget.
+Images whose longest side is under 1,024 px are first enlarged to it
+(Lanczos), exactly as in training and calibration (E46). It is **not** a chat
 model and generates no text.
 
 ```mermaid
@@ -89,7 +89,8 @@ case = DecisionCase(
     question="Does the screenshot show the goal as completed?",
     options=(Option(id="false", description="No"), Option(id="true", description="Yes")))
 enc = model.encode_cases([case], max_state_tokens=700, max_option_tokens=96)
-batch = model.build_batch(enc, [Image.open("screenshot.png").convert("RGB")], "cpu", max_side=1024)
+batch = model.build_batch(enc, [Image.open("screenshot.png").convert("RGB")], "cpu",
+                          max_side=1024, upscale_to=1024)   # the input rule in inference-policy.json
 with torch.inference_mode():
     probs = (forward_a1v(model, batch) / T).softmax(-1)[0].tolist()
 top = max(range(len(probs)), key=probs.__getitem__)
@@ -98,63 +99,62 @@ choice = case.options[top].id if probs[top] >= tau else None   # None = below_va
 
 About one second per decision on a laptop CPU. Up to 8 options per question
 in the demo (the head has 32 markers). Evaluated in English, Spanish, German
-and French (French synthetic test 0.874 and 0.884, its gate outside budget);
+and French (French synthetic test 0.930 and 0.919, its gate outside budget);
 the real-image questions are in English, Spanish and German.
 
 ## Measured against the field
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/chart-accuracy-dark.png">
-  <img src="assets/chart-accuracy.png" alt="Accuracy on real held-out images. Screenshots: MK-SH-V 0.826 and 0.783, jev-vlm-4b 0.731, OCR plus MK-SH-1 0.472, synthetic only 0.493. Receipts: MK-SH-V 0.550 and 0.602, jev-vlm-4b 0.972, OCR 0.486, synthetic only 0.394. All real: 0.765 and 0.742 against 0.785, 0.475 and 0.471.">
+  <img src="assets/chart-accuracy.png" alt="Accuracy on real held-out images. Screenshots: MK-SH-V 0.828 (shipped seed 43) and 0.800, jev-vlm-4b 0.731, OCR plus MK-SH-1 0.472, synthetic only 0.493. Receipts: MK-SH-V 0.734 and 0.734, jev-vlm-4b 0.972, OCR 0.486, synthetic only 0.394. All real: 0.807 and 0.786 against 0.785, 0.475 and 0.471.">
 </picture>
 
 Every arm was run by us on the same 2,586 real held-out cases with pinned
 revisions; labels come from each source's ground truth. On real screenshots
 the 260M model leads a ~15× larger zero-shot model; on receipt thresholds it
-does not, and a deterministic rules baseline (0.594) sits level with it there.
-Overall the two are statistically close (Δ CI95 [−5.4, +1.2] pp, seed 42).
-That comparator may have seen these sources in pretraining; its card cannot
-tell us.
+trails it (0.734 against 0.972) and sits above a deterministic rules baseline
+(0.594). Overall the two are level (0.807 and 0.786 against 0.785); no paired
+test was run for this checkpoint, so read that as a tie. That comparator may
+have seen these sources in pretraining; its card cannot tell us.
 
 | Arm | Params | Real overall | Receipts (CORD) | Screenshots (GUI) |
 |---|---|---|---|---|
-| **MK-SH-V s42** | **260M** | **0.765** | 0.550 | **0.826** |
-| **MK-SH-V s43** | **260M** | **0.742** | 0.602 | 0.783 |
+| **MK-SH-V s43 (shipped)** | **260M** | **0.807** | 0.734 | **0.828** |
+| **MK-SH-V s42** | **260M** | **0.786** | 0.734 | **0.800** |
 | jev-vlm-4b, zero-shot | ~4B | 0.785 | 0.972 | 0.731 |
 | OCR → MK-SH-1 | ~25M | 0.475 | 0.486 | 0.472 |
 | Same model, synthetic only (E39) | 260M | 0.471 | 0.394 | 0.493 |
 
-Adding real data moved real accuracy by +29.4 pp (CI95 [+25.9, +32.9], seed
-42) and +27.2 pp ([+23.3, +31.3], seed 43), paired by episode. The declared
-cost: −2.5 pp on the synthetic test (0.908 and 0.909), concentrated in two
-families. Text competence from MK-SH-1 is kept through replay: testC 1.000,
-routing task 0.810 and 0.830.
+How it got here. E41 added real data to the synthetic-only model (+29.4 pp
+real accuracy, CI95 [+25.9, +32.9], seed 42, paired by episode). E44 to E47
+fine-tuned that checkpoint for printed numbers: E46 enlarges every image to
+1,024 px before the encoder, E47 adds digit-reading data. E48 confirmed the
+numeric result on 3,000 fresh documents and refitted the gate. Against the
+E41 release the synthetic test rises from 0.908 and 0.909 to 0.959 on both
+seeds and real receipts from 0.550 and 0.602 to 0.734. Text competence from
+MK-SH-1 is kept through replay: testC 1.000, routing task 0.830 and 0.833.
+Criteria for every step: `docs/E44_CRITERIA_*.md` to `docs/E48_CRITERIA_*.md`.
 
 ## The refusal gate, held out
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/chart-gate-dark.png">
-  <img src="assets/chart-gate.png" alt="Selective risk at tau 0.55 with exact 95 percent Clopper-Pearson intervals per held-out set and seed. Synthetic test: 2.6 and 2.8 percent, upper bounds 3.2 and 3.4 percent, inside the 5 percent budget. French synthetic 5.7 and 5.8 percent, real screenshots 16.7 and 21.3 percent, real receipts 38.5 and 23.9 percent, text routing 18.2 and 16.5 percent: outside the budget.">
+  <img src="assets/chart-gate.png" alt="Selective risk at each seed's fitted tau (0.55 for the shipped seed 43, 0.30 for seed 42) with exact 95 percent Clopper-Pearson intervals per held-out set. Synthetic test: 3.5 and 4.1 percent, upper bounds 4.1 and 4.8 percent, inside the 5 percent budget. French synthetic, fresh numeric documents, real screenshots 16.1 and 20.0 percent, real receipts 25.3 and 26.6 percent and text routing: outside the budget.">
 </picture>
 
-> On our held-out synthetic evaluation, both 260M checkpoints achieved over
-> 86 % coverage while maintaining a 95 % Clopper-Pearson upper confidence
-> bound on selective risk below 5 %.
+> On our held-out synthetic evaluation, both 260M checkpoints answered at
+> least 98.6 % of cases while maintaining a 95 % Clopper-Pearson upper
+> confidence bound on selective risk below 5 % (4.1 % and 4.8 %).
 
-That sentence is the whole claim, and the chart shows where it stops. On real
-screenshots the gate keeps 98 % of cases while 17 to 21 % of the kept answers
-are wrong; on real receipts it refuses almost everything (coverage 2 to 12 %).
-The confidence signal that separates right from wrong on the synthetic
-distribution does not yet do so on real images. That is the campaign's open
-problem, published with its per-set tables (`runs/e42-calib/`), not hidden.
-
-E43 tried the obvious fix: a screens-domain temperature and gate, fitted on
-400 fresh real GUI calibration episodes (criteria frozen before the data was
-generated). One seed holds the budget with room to spare (s42: 24.6 %
-coverage, CP95 upper 1.5 %), the other does not (s43: 42.3 % coverage, CP95
-upper 6.2 %), so the claim rule for both seeds fails and real-GUI abstention
-stays open. Confidence does rank errors there (AUROC 0.79 and 0.84 on the
-calibration split), just not reliably enough to certify 5 %.
+That sentence is the whole claim, and the chart shows where it stops. With
+the shipped seed, the gate keeps 97 % of real screenshots while 16 % of the
+kept answers are wrong, 89 % of real receipts with 25 % wrong, and 88 % of
+the fresh numeric documents with 23 % wrong. The confidence signal that
+separates right from wrong on the synthetic distribution does not yet do so
+on real images. That is the campaign's open problem, published with its
+per-set tables (`runs/e48/`), not hidden. A screens-specific gate (E43, on
+the E41 checkpoint) held the budget on one seed and missed on the other, so
+real-image abstention stays open.
 
 ## Use cases
 
@@ -163,28 +163,28 @@ measurement stops.
 
 1. **End-of-task screen detection over screenshots.** "Does this screenshot
    show the goal as completed": agent supervision, UI QA, step verification.
-   Rests on GUI-Odyssey held-out pairs, 0.826 and 0.783. Bound, sharpened by
-   E43's goal-swap diagnostic (each final screenshot paired with an unrelated
-   goal; accuracy 0.12 and 0.135, below chance on both seeds): the model
-   detects whether the screen shows a finished task, not whether it shows
-   *this* goal finished, so use it as end-of-task screen detection, not goal
-   verification. Also binary questions in EN, ES and DE from that corpus; not
-   a general GUI understanding model, and the gate is not validated on real
-   screens (E43 below).
+   Rests on GUI-Odyssey held-out pairs, 0.828 and 0.800. Bound, from the
+   goal-swap diagnostic (each final screenshot paired with an unrelated goal):
+   E47 rejects the wrong goal 0.775 and 0.785 of the time, up from 0.12 and
+   0.135 in E41 but under the 0.80 bar frozen for a goal claim. Use it as
+   end-of-task screen detection, not goal verification. Also binary questions
+   in EN, ES and DE from that corpus; not a general GUI understanding model,
+   and the gate is not validated on real screens.
 2. **Document state decisions.** Document type, form completeness, a ticket's
    urgency, conflicting sources. Rests on the E38 synthetic families
-   (doc_type, screen_state, source_conflict, task_done and urgency at 0.99
-   to 1.00 held out; form_complete 0.86). Bound: **printed numeric thresholds
-   ("is the total at least X") are not a capability.** That family sits at
-   chance on the synthetic test (0.507 and 0.510; the synthetic-only E39 model
-   reached 0.597) and near chance on real receipts (0.550 and 0.602, level
-   with a rules baseline at 0.594); the gate refuses most of these cases, which
-   is the correct behaviour. Numeric comparison is the next experiment (E44).
+   (doc_type, form_complete, screen_state, source_conflict, task_done and
+   urgency at 0.995 to 1.000 held out, seed 42). **Printed numeric thresholds** ("is the total at least
+   X") are now a measured capability with a ceiling: 0.718 and 0.725 on the
+   synthetic test, 0.737 and 0.760 on 3,000 fresh documents nobody had read
+   (E48, criteria frozen before generation), and 0.734 on real receipts
+   against a rules baseline at 0.594. Bound: fine gaps under 1 % between total
+   and threshold remain the hard part, the fresh set shares the test
+   templates, and the gate is not validated for this family.
 3. **Calibrated scoring with a safety valve.** Decision queues where refusals
-   route to a human. Rests on the E42 held-out result above. Bound: the
+   route to a human. Rests on the E48 held-out result above. Bound: the
    guarantee holds on the evaluated synthetic distribution only.
 4. **Mixed text and visual queues.** Rests on the retained text sets (testC
-   1.000, task 0.810 and 0.830). Bound: descriptive; the shipped policy was
+   1.000, task 0.830 and 0.833). Bound: descriptive; the shipped policy was
    fitted on the visual calibration split.
 
 ## Rigor
@@ -192,7 +192,7 @@ measurement stops.
 The claims are only as good as the record, and the record includes its
 corrections:
 
-- **Criteria frozen before measurement, every time.** E37 to E42 criteria are
+- **Criteria frozen before measurement, every time.** E37 to E48 criteria are
   committed before any job runs (`docs/E*_CRITERIA_*.md`); amendments land as
   commits with their evidence, before results are read.
 - **A mislabel corrected in public.** E39's kernel printed "transfer
@@ -206,6 +206,10 @@ corrections:
 - **The evaluation that guided the fix is disclosed.** The E38c real set was
   inspected for error analysis before E41 designed its training data; it was
   never trained or tuned on, and all selection used separate dev splits.
+- **The shipped seed, and why.** Seed 42's fitted tau is 0.30, the bottom of
+  the grid, so its gate never refuses a two-option question. Seed 43 (tau
+  0.55) keeps a working gate and ships. The reason is that calibration-split
+  property, not its held-out accuracy.
 - **Comparators measured, not quoted.** jev-vlm-4b and OCR → MK-SH-1 were run
   by us on the same rows with pinned revisions.
 
@@ -237,6 +241,10 @@ sources' ground truth with rules committed before generation). The film's
 soundtrack is generated in code; its effects are Kenney (CC0); type is Geist
 (SIL OFL 1.1). Full tables: `THIRD_PARTY_NOTICES.md` and
 `docs/data-licenses.md`.
+
+Previous release: the E41 checkpoint (seed 42, E42 policy) and its
+[launch film](https://cdn.jsdelivr.net/gh/Gjusev/mk-sh-v@main/assets/mkshv-film.mp4),
+whose numbers are those of that release.
 
 Sibling text model: [MK-SH-1](https://github.com/Gjusev/MK-SH-1) (Hugging
 Face: [Gjusev/MK-SH-1](https://huggingface.co/Gjusev/MK-SH-1)).
