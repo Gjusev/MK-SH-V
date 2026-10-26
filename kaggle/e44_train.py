@@ -120,7 +120,29 @@ def load_bind(exp: str = "e44") -> tuple[dict[str, list[list[dict]]], list[dict]
     return out, [r for r in rows if r["split"] == "dev"]
 
 
+def _watchdog(seconds: float, why: str) -> None:
+    """E49 incident (5h35m hung run): hard-exit after `seconds` no matter where the
+    process is (a hung pip/dataloader/orphaned worker must never outlive its budget)."""
+    import os
+    import threading
+
+    def die():
+        import time as _t
+
+        _t.sleep(max(60.0, seconds))
+        print(f"[watchdog] {why}: exiting after {seconds:.0f}s", flush=True)
+        os._exit(0)
+
+    threading.Thread(target=die, daemon=True).start()
+
+
 def run_worker(seed: int, steps: int, smoke: bool, t0: float, exp: str = "e44") -> None:
+    import time as _t
+
+    cfg0 = CONFIGS[exp]
+    if not smoke:
+        _watchdog(cfg0.get("wall_h", WALL_BUDGET_S / 3600) * 3600 - (_t.time() - t0) + 900,
+                   f"worker {exp} s{seed}")
     import torch
     from mksh_v.arch_a1v import NeoMMEMarkerScorer, forward_a1v
     from mksh_v.train_compare import case_of_row, fixed_dev_half, macro_family_accuracy
@@ -369,11 +391,14 @@ def main() -> None:
         return
 
     t0 = time.time()
+    _watchdog(CONFIGS[EXP].get("wall_h", WALL_BUDGET_S / 3600) * 3600 + 1800, "parent")
+    print(f"[parent {time.strftime('%H:%M:%S')}] E44 start, exp={EXP}, heartbeat before pip", flush=True)
     WORK.mkdir(parents=True, exist_ok=True)
     import e39_train as T
     import e41_train as E41
 
     T.pip_install()
+    print(f"[parent {time.strftime('%H:%M:%S')}] pip done", flush=True)
     import torch
 
     if torch.cuda.device_count() < 2:
@@ -386,6 +411,7 @@ def main() -> None:
     def save():
         (WORK / f"{EXP}_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
+    print(f"[parent {time.strftime('%H:%M:%S')}] smoke next", flush=True)
     smoke = E41.finish(spawn(42, 0, SMOKE_STEPS, True, t0), "smoke", 3600)
     summary["smoke"] = smoke
     save()
@@ -393,6 +419,7 @@ def main() -> None:
         summary["status"] = "failed (smoke)"
         save()
         raise SystemExit(f"E44 ABORT: smoke {smoke}")
+    print(f"[parent {time.strftime('%H:%M:%S')}] workers next", flush=True)
     procs = {seed: spawn(seed, gpu, STEPS, False, t0) for seed, gpu in SEEDS.items()}
     for seed, sp in procs.items():
         wall_s = CONFIGS[EXP].get("wall_h", WALL_BUDGET_S / 3600) * 3600
