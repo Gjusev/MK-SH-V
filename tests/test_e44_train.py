@@ -19,7 +19,7 @@ def test_selection_key_mean_of_three():
     assert K.selection_key(0.9, 0.6, 0.3, 0.8) == ((0.9 + 0.6 + 0.3) / 3, 0.8)
 
 
-@pytest.mark.parametrize("exp", ["e44", "e45"])
+@pytest.mark.parametrize("exp", ["e44", "e45", "e49"])
 def test_bind_rows_pinned_and_paired(monkeypatch, exp):
     monkeypatch.setattr(K, "find_file_dir", lambda *a, **k: ROOT / f"data/{exp}/bind")
     pairs, dev = K.load_bind(exp)
@@ -38,3 +38,21 @@ def test_bind_rows_pinned_and_paired(monkeypatch, exp):
 
 def test_e45_inits_from_e44_outputs():
     assert {v[0] for v in K.CONFIGS["e45"]["init"].values()} == {"mkshv-e44-train"}
+
+
+def test_e49_inits_from_e47_release_checkpoints():
+    init = K.CONFIGS["e49"]["init"]
+    assert {v[0] for v in init.values()} == {"mkshv-e47-train"}
+    assert init[43][2].startswith("afcbeaa4")  # the released seed
+    assert K.CONFIGS["e49"]["weights"] == K.CONFIGS["e47"]["weights"] and K.CONFIGS["e49"]["side"] == 1024
+
+
+def test_bind_guard_aborts_on_missing_image(monkeypatch, tmp_path):
+    row = {"bind": "goal", "pair_id": "p", "split": "train", "img_src": "bind", "image": "shots/x_fin.png"}
+    (tmp_path / "rows.jsonl").write_text(json.dumps(row) + "\n", encoding="utf-8")
+    import hashlib
+    sha = hashlib.sha256((tmp_path / "rows.jsonl").read_bytes()).hexdigest()
+    monkeypatch.setitem(K.CONFIGS, "tmp", dict(K.CONFIGS["e49"], bind_sha=sha))
+    monkeypatch.setattr(K, "find_file_dir", lambda *a, **k: tmp_path)
+    with pytest.raises(SystemExit, match="bind images missing"):
+        K.load_bind("tmp")

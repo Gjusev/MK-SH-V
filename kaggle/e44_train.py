@@ -57,6 +57,15 @@ CONFIGS["e47"] = dict(CONFIGS["e46a"], criteria="docs/E47_CRITERIA_2026-10-25.md
                             43: ("mkshv-e46a-train", "a1v_e46a_s43",
                                  "169004453125d703a2e2c946158bb6f74f0be3a53b185ad6a6a5e903d24133b7")},
                       alloc_conf="expandable_segments:True")
+# E49 (docs/E49_CRITERIA_2026-10-26.md): E47 rows + goal / goal_match rows of 2,000 new GUI
+# episodes (images inside the bind dataset, img_src "bind"), init from the E47 checkpoints
+CONFIGS["e49"] = dict(CONFIGS["e47"], criteria="docs/E49_CRITERIA_2026-10-26.md",
+                      bind_slug="mkshv-e49-bind",
+                      bind_sha="bc526c84d0b8007e23b7a9ab8b256d6b753f7dc46e2a720c96903d1862cef928",
+                      init={42: ("mkshv-e47-train", "a1v_e47_s42",
+                                 "8b166fb995069d0f80f95aec9fd759ef47a72fc0cde1338ca453b8adb6d19452"),
+                            43: ("mkshv-e47-train", "a1v_e47_s43",
+                                 "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29")})
 EXP = "e44"  # kernel default; the E45 kernel sets it before main()
 SMOKE_ONLY: tuple[str, ...] = ()  # E46 smoke kernel: these arms, one GPU each, 20 steps, then stop
 SEEDS = {42: 0, 43: 1}
@@ -99,6 +108,9 @@ def load_bind(exp: str = "e44") -> tuple[dict[str, list[list[dict]]], list[dict]
     if got != cfg["bind_sha"]:
         raise SystemExit(f"E44 ABORT: bind rows sha {got}")
     rows = [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
+    missing = [r["image"] for r in rows if r.get("img_src") == "bind" and not (p.parent / r["image"]).is_file()]
+    if missing:  # E49: images ship inside the bind dataset; fail before any GPU work
+        raise SystemExit(f"E44 ABORT: {len(missing)} bind images missing, first {missing[0]}")
     pairs: dict[str, dict[str, list[dict]]] = {}
     for r in rows:
         if r["split"] == "train":
@@ -138,6 +150,7 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float, exp: str = "e44") 
     rt_root = E41.realtrain_root()
     real, real_dev = E41.load_realtrain(rt_root)
     bind, bind_dev = load_bind(exp)
+    bind_root = find_file_dir(cfg["bind_slug"], "rows.jsonl")  # E49 images (img_src "bind")
     replay = [case_of_row(r) for r in T.load_replay_mix(T.find_bundle())]
     if smoke:
         dev_sel, real_dev, bind_dev = dev_sel[:SMOKE_EVAL_ROWS], real_dev[:SMOKE_EVAL_ROWS], bind_dev[:SMOKE_EVAL_ROWS]
@@ -153,7 +166,7 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float, exp: str = "e44") 
     def open_bind(r):
         if r["img_src"] is None:  # text-only row (e45 cmp_text)
             return None
-        base = roots["E38a"] if r["img_src"] == "e38a" else rt_root
+        base = {"e38a": roots["E38a"], "bind": bind_root}.get(r["img_src"], rt_root)
         return Image.open(base / r["image"]).convert("RGB")
 
     ck_slug, ck_tag, ck_sha = cfg["init"][seed]

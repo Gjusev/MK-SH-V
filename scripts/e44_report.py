@@ -26,9 +26,9 @@ OUT = ROOT / "runs/e44"
 EXP = "e44"
 CRITERIA = {"e44": "docs/E44_CRITERIA_2026-10-23.md", "e45": "docs/E45_CRITERIA_2026-10-24.md",
             "e46a": "docs/E46_CRITERIA_2026-10-25.md", "e46b": "docs/E46_CRITERIA_2026-10-25.md",
-            "e47": "docs/E47_CRITERIA_2026-10-25.md"}
+            "e47": "docs/E47_CRITERIA_2026-10-25.md", "e49": "docs/E49_CRITERIA_2026-10-26.md"}
 # bind rows each experiment trained and selected on (E46 reuses the E45 pool)
-BIND = {"e44": "e44", "e45": "e45", "e46a": "e45", "e46b": "e45", "e47": "e47"}
+BIND = {"e44": "e44", "e45": "e45", "e46a": "e45", "e46b": "e45", "e47": "e47", "e49": "e49"}
 
 
 def e41_exact(seed: int) -> dict:
@@ -39,6 +39,40 @@ def e41_exact(seed: int) -> dict:
     mean = lambda rows: sum(r["correct"] for r in rows) / len(rows)  # noqa: E731
     return {"test_nonfr": mean(tn), "task_done": mean(gui),
             "testC": mean(load(run / "eval_testC.jsonl")), "task": mean(load(run / "eval_task.jsonl"))}
+def exact_ref(run: Path) -> dict:
+    """E49 G3 reference: a previous run's per-case eval files (exact counts), CORD included."""
+    real = load(run / "eval_real.jsonl")
+    mean = lambda rows: sum(r["correct"] for r in rows) / len(rows)  # noqa: E731
+    return {"test_nonfr": mean(load(run / "eval_test_nonfr.jsonl")),
+            "task_done": mean([r for r in real if r["family"] == "task_done"]),
+            "cord": mean([r for r in real if r["family"] == "field_threshold"]),
+            "testC": mean(load(run / "eval_testC.jsonl")), "task": mean(load(run / "eval_task.jsonl"))}
+
+
+def goal_sets(seed: int) -> dict:
+    """E49: M3 and M3F accuracies plus per-episode both-right counts (descriptive)."""
+    out = {}
+    for name, rows_p, pred_p in (("M3", ROOT / "runs/e44/m3_rows.jsonl", OUT / f"m3_s{seed}.jsonl"),
+                                 ("M3F", ROOT / "data/e49/m3f/rows.jsonl", OUT / f"m3f_s{seed}.jsonl")):
+        meta = {r["id"]: r for r in load(rows_p)}
+        ok: dict[str, dict[str, bool]] = defaultdict(dict)
+        swap_specific = []
+        for c in load(pred_p):
+            r = meta[c["id"]]
+            ok[r["group_id"]][r["m3"]] = c["pred"] == c["gold"]
+            if r["m3"] == "swap":
+                goal = r.get("goal") or r["state"]
+                if " any " not in f" {goal.lower()} ":
+                    swap_specific.append(c["pred"] == c["gold"])
+        assert all(set(v) == {"own", "swap"} for v in ok.values()), name
+        out[name] = {"swap": round(sum(v["swap"] for v in ok.values()) / len(ok), 4),
+                     "own": round(sum(v["own"] for v in ok.values()) / len(ok), 4),
+                     "both_right": sum(v["own"] and v["swap"] for v in ok.values()), "episodes": len(ok),
+                     "swap_without_any": {"acc": round(sum(swap_specific) / len(swap_specific), 4),
+                                          "n": len(swap_specific)}}
+    return out
+
+
 E41 = {42: {"test_nonfr": 0.9083, "task_done": 0.826, "testC": 1.0, "task": 0.81},
        43: {"test_nonfr": 0.9088, "task_done": 0.783, "testC": 1.0, "task": 0.83}}
 
@@ -107,7 +141,9 @@ def seed_report(seed: int) -> dict:
             "N_exact": {k: sum(r["correct"] for r in v) / len(v) for k, v in (
                 ("test_nonfr", ev["test_nonfr"]), ("task_done", real_fam["task_done"]),
                 ("testC", ev["testC"]), ("task", ev["task"]))},
-            "per_family_test": {k: acc(v) for k, v in sorted(fam.items())}}
+            "per_family_test": {k: acc(v) for k, v in sorted(fam.items())},
+            **({"goal_sets": goal_sets(seed)} if EXP == "e49" else {}),
+            "cord_exact": sum(r["correct"] for r in real_fam["field_threshold"]) / len(real_fam["field_threshold"])}
 
 
 def main() -> int:
@@ -121,7 +157,8 @@ def main() -> int:
         prep()
         return 0
     seeds = {s: seed_report(s) for s in SEEDS}
-    ref = {s: e41_exact(s) for s in SEEDS} if EXP == "e47" else E41
+    ref = ({s: e41_exact(s) for s in SEEDS} if EXP == "e47" else
+           {s: exact_ref(ROOT / f"runs/e47/runs/a1v_e47_s{s}") for s in SEEDS} if EXP == "e49" else E41)
     g1 = all(x["M1"]["syn"]["S"] >= 0.50 and min(x["M1"]["syn"]["acc"]["L"], x["M1"]["syn"]["acc"]["H"]) >= 0.90
              and x["M2_field_threshold_test"] >= 0.70 for x in seeds.values())
     g2 = all(x["M3"]["swap"] >= 0.80 and x["M3"]["own"] >= 0.80 for x in seeds.values())
@@ -134,6 +171,14 @@ def main() -> int:
         g3 = {s: {"N1": ref[s]["test_nonfr"] - x["N1_test_nonfr"] <= 0.020,
                   "N2": ref[s]["task_done"] - x["N2_real_gui"] <= 0.030,
                   "N3": all(ref[s][k] - x["N3"][k] <= 0.030 for k in ("testC", "task"))}
+              for s, x in seeds.items()}
+    if EXP == "e49":  # docs/E49_CRITERIA_2026-10-26.md: own gates, E47 exact counts as reference
+        g1 = all(x["M2_field_threshold_test"] >= 0.70 for x in seeds.values())
+        g2 = all(x["goal_sets"][m][k] >= 0.80 for x in seeds.values() for m in ("M3", "M3F") for k in ("swap", "own"))
+        g3 = {s: {"N1": ref[s]["test_nonfr"] - x["N_exact"]["test_nonfr"] <= 0.020,
+                  "N2": ref[s]["task_done"] - x["N_exact"]["task_done"] <= 0.030,
+                  "N3": all(ref[s][k] - x["N_exact"][k] <= 0.030 for k in ("testC", "task")),
+                  "M4": ref[s]["cord"] - x["cord_exact"] <= 0.030}
               for s, x in seeds.items()}
     g3_ok = all(all(v.values()) for v in g3.values())
     out = {"criteria": CRITERIA[EXP], "seeds": seeds,
