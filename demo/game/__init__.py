@@ -29,7 +29,8 @@ TAU = 0.55               # abstention gate, fitted on cal_policy (E48, CP-upper 
 COVERAGE = 0.9855        # held-out synthetic test s43
 CP95_UPPER = 0.0406      # exact Clopper-Pearson 95% upper bound of selective risk
 CHECKPOINT = "a1v_e47_s43"
-CHECKPOINT_SHA = "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29"
+CHECKPOINT_SHA = "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29"  # best.pt provenance
+WEIGHTS_SHA = "ff4a47599b0f127af6393ff7e74996c9f0e6e47a182fa5ccca4a672251c79491"  # release/model.safetensors
 MODEL_ID = "Gjusev/MK-SH-V"
 PLATE = (f"tau {TAU:g} · coverage {COVERAGE:.1%} · CP95 ≤ {CP95_UPPER:.1%} · "
          f"E47 s43 / E48 policy")
@@ -58,8 +59,8 @@ def load_model():
     pkg = Path(os.environ.get("MKSHV_MODEL_DIR") or snapshot_download(MODEL_ID))
     import hashlib
     got = hashlib.sha256((pkg / "model.safetensors").read_bytes()).hexdigest()
-    if got != CHECKPOINT_SHA:
-        raise RuntimeError(f"Amber Checkpoint ABORT: weights sha {got} != pinned {CHECKPOINT_SHA}")
+    if got != WEIGHTS_SHA:
+        raise RuntimeError(f"Amber Checkpoint ABORT: weights sha {got} != pinned {WEIGHTS_SHA}")
     m = NeoMMEMarkerScorer()
     m.ensure_markers(32)
     m.load_state_dict(load_file(str(pkg / "model.safetensors")), strict=True)
