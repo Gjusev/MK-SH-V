@@ -1,0 +1,1982 @@
+{
+ "policy": {
+  "checkpoint": "a1v_e47_s43",
+  "checkpoint_sha256": "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29",
+  "T": 1.124,
+  "tau": 0.55,
+  "coverage": 0.9855,
+  "cp95_upper": 0.0406
+ },
+ "days": [
+  {
+   "day": 1,
+   "date": "24 OCT 1974",
+   "today": "1974-10-24",
+   "slips": [
+    {
+     "title": "Day 1",
+     "text": "Veldanian passports only. All other issuers: deny at the gate.",
+     "pinned": "PINNED 24 OCT"
+    }
+   ],
+   "manifest": [
+    "OSTER, S.",
+    "FALK, D.",
+    "VANCE, T.",
+    "ALBRECHT, B.",
+    "OSTER, D.",
+    "OSTER, V.",
+    "THALER, R.",
+    "MERCER, S."
+   ],
+   "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+   "docs": [
+    {
+     "id": "d1-1",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "OSTER, V.",
+     "doc_no": "VD-1197-65",
+     "series": "B",
+     "issued": "18 MAY 1968",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 21,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-1.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d1-1-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d1-2",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "ALBRECHT, B.",
+     "doc_no": "VD-2809-17",
+     "series": "B",
+     "issued": "16 MAY 1970",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 28,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-2.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d1-2-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d1-3",
+     "issuer": "REPUBLIC OF KORVENIA",
+     "nationality": "KORVENIA",
+     "holder": "OSTER, S.",
+     "doc_no": "KV-6952-94",
+     "series": "A",
+     "issued": "21 FEB 1967",
+     "expires": "22 APR 1975",
+     "expiry_iso": "1975-04-22",
+     "expiry_delta": 180,
+     "stay_days": 28,
+     "declared": 300,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-3.png",
+     "violations": [
+      "issuer"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d1-3-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d1-4",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "MERCER, S.",
+     "doc_no": "VD-8185-74",
+     "series": "A",
+     "issued": "17 MAR 1967",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 14,
+     "declared": 300,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-4.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d1-4-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d1-5",
+     "issuer": "REPUBLIC OF KORVENIA",
+     "nationality": "KORVENIA",
+     "holder": "FALK, D.",
+     "doc_no": "KV-1309-20",
+     "series": "B",
+     "issued": "14 MAR 1972",
+     "expires": "22 APR 1975",
+     "expiry_iso": "1975-04-22",
+     "expiry_delta": 180,
+     "stay_days": 28,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-5.png",
+     "violations": [
+      "issuer"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d1-5-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d1-6",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "VANCE, T.",
+     "doc_no": "VD-1928-87",
+     "series": "B",
+     "issued": "24 JAN 1966",
+     "expires": "23 DEC 1974",
+     "expiry_iso": "1974-12-23",
+     "expiry_delta": 60,
+     "stay_days": 14,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-6.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d1-6-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d1-7",
+     "issuer": "REPUBLIC OF KORVENIA",
+     "nationality": "KORVENIA",
+     "holder": "THALER, R.",
+     "doc_no": "KV-5597-94",
+     "series": "B",
+     "issued": "17 JAN 1968",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 28,
+     "declared": 1200,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-7.png",
+     "violations": [
+      "issuer"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d1-7-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d1-8",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "OSTER, D.",
+     "doc_no": "VD-3530-67",
+     "series": "D",
+     "issued": "14 JUL 1972",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 21,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d1-8.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d1-8-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 1 at Amber Checkpoint, 24 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied. Manifest (8 names): OSTER, S.; FALK, D.; VANCE, T.; ALBRECHT, B.; OSTER, D.; OSTER, V.; THALER, R.; MERCER, S..",
+       "gold": "yes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "day": 2,
+   "date": "25 OCT 1974",
+   "today": "1974-10-25",
+   "slips": [
+    {
+     "title": "Day 1",
+     "text": "Veldanian passports only. All other issuers: deny at the gate.",
+     "pinned": "PINNED 24 OCT"
+    },
+    {
+     "title": "Day 2 · A",
+     "text": "Foreigners must hold a valid work permit. No permit, no entry.",
+     "pinned": "PINNED 25 OCT"
+    },
+    {
+     "title": "Day 2 · B",
+     "text": "Holder must appear on today's manifest. Unlisted names: deny.",
+     "pinned": "PINNED 25 OCT"
+    }
+   ],
+   "manifest": [
+    "VANCE, O.",
+    "REZNICK, D.",
+    "KOVAC, S.",
+    "GRIMM, J.",
+    "LINHARD, M.",
+    "MARLOW, V.",
+    "DRAEGER, A.",
+    "OKTAY, V."
+   ],
+   "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+   "docs": [
+    {
+     "id": "d2-1",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "KOVAC, S.",
+     "doc_no": "VD-3082-71",
+     "series": "C",
+     "issued": "11 MAR 1973",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 28,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": false,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-1.png",
+     "violations": [
+      "seal"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d2-1-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-1-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-1-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d2-2",
+     "issuer": "REPUBLIC OF KORVENIA",
+     "nationality": "KORVENIA",
+     "holder": "MARLOW, V.",
+     "doc_no": "KV-9288-59",
+     "series": "D",
+     "issued": "19 FEB 1968",
+     "expires": "23 DEC 1974",
+     "expiry_iso": "1974-12-23",
+     "expiry_delta": 60,
+     "stay_days": 28,
+     "declared": 3800,
+     "work_permit": true,
+     "permit_no": "WP-9744",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-2.png",
+     "violations": [
+      "issuer"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d2-2-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "no"
+      },
+      {
+       "id": "d2-2-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-2-cpermit",
+       "kind": "permit",
+       "family": "form_complete",
+       "q": "Does the holder hold a valid work permit?",
+       "question": "Does the holder hold a valid work permit?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d2-3",
+     "issuer": "REPUBLIC OF KORVENIA",
+     "nationality": "KORVENIA",
+     "holder": "REZNICK, D.",
+     "doc_no": "KV-9861-86",
+     "series": "B",
+     "issued": "23 FEB 1970",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 14,
+     "declared": 2400,
+     "work_permit": false,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-3.png",
+     "violations": [
+      "issuer",
+      "permit"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d2-3-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "no"
+      },
+      {
+       "id": "d2-3-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-3-cpermit",
+       "kind": "permit",
+       "family": "form_complete",
+       "q": "Does the holder hold a valid work permit?",
+       "question": "Does the holder hold a valid work permit?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d2-4",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "DRAEGER, N.",
+     "doc_no": "VD-3596-96",
+     "series": "B",
+     "issued": "27 DEC 1970",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 28,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": false,
+     "image": "assets/docs/d2-4.png",
+     "violations": [
+      "manifest"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d2-4-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-4-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "no"
+      },
+      {
+       "id": "d2-4-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d2-5",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "VANCE, O.",
+     "doc_no": "VD-1949-46",
+     "series": "D",
+     "issued": "9 NOV 1973",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 28,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-5.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d2-5-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-5-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-5-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d2-6",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "OKTAY, V.",
+     "doc_no": "VD-7805-30",
+     "series": "C",
+     "issued": "13 AUG 1967",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 7,
+     "declared": 2400,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-6.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d2-6-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-6-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-6-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d2-7",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "LINHARD, M.",
+     "doc_no": "VD-4605-93",
+     "series": "B",
+     "issued": "17 SEP 1966",
+     "expires": "22 APR 1975",
+     "expiry_iso": "1975-04-22",
+     "expiry_delta": 180,
+     "stay_days": 7,
+     "declared": 2400,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-7.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d2-7-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-7-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-7-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d2-8",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "DRAEGER, A.",
+     "doc_no": "VD-6172-78",
+     "series": "C",
+     "issued": "7 SEP 1971",
+     "expires": "22 APR 1975",
+     "expiry_iso": "1975-04-22",
+     "expiry_delta": 180,
+     "stay_days": 14,
+     "declared": 300,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d2-8.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d2-8-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-8-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d2-8-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 2 at Amber Checkpoint, 25 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document. Manifest (8 names): VANCE, O.; REZNICK, D.; KOVAC, S.; GRIMM, J.; LINHARD, M.; MARLOW, V.; DRAEGER, A.; OKTAY, V..",
+       "gold": "yes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "day": 3,
+   "date": "27 OCT 1974",
+   "today": "1974-10-27",
+   "slips": [
+    {
+     "title": "Day 1",
+     "text": "Veldanian passports only. All other issuers: deny at the gate.",
+     "pinned": "PINNED 24 OCT"
+    },
+    {
+     "title": "Day 2 · A",
+     "text": "Foreigners must hold a valid work permit. No permit, no entry.",
+     "pinned": "PINNED 25 OCT"
+    },
+    {
+     "title": "Day 2 · B",
+     "text": "Holder must appear on today's manifest. Unlisted names: deny.",
+     "pinned": "PINNED 25 OCT"
+    },
+    {
+     "title": "Day 3 · NEW",
+     "text": "Expired documents: deny. Expiry must fall on or after today's date.",
+     "pinned": "PINNED 27 OCT"
+    }
+   ],
+   "manifest": [
+    "MERCER, A.",
+    "KOVAC, S.",
+    "LINHARD, W.",
+    "VOSS, C.",
+    "JUNOT, P.",
+    "THALER, R.",
+    "DRAEGER, K.",
+    "MERCER, V."
+   ],
+   "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+   "docs": [
+    {
+     "id": "d3-1",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "KOVAC, S.",
+     "doc_no": "VD-9163-47",
+     "series": "D",
+     "issued": "11 NOV 1972",
+     "expires": "21 OCT 1974",
+     "expiry_iso": "1974-10-21",
+     "expiry_delta": -3,
+     "stay_days": 7,
+     "declared": 300,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-1.png",
+     "violations": [
+      "expiry"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d3-1-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-1-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-1-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-1-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d3-2",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "MERCER, V.",
+     "doc_no": "VD-8633-82",
+     "series": "A",
+     "issued": "3 SEP 1971",
+     "expires": "22 APR 1975",
+     "expiry_iso": "1975-04-22",
+     "expiry_delta": 180,
+     "stay_days": 28,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-2.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d3-2-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-2-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-2-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-2-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d3-3",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "DRAEGER, K.",
+     "doc_no": "VD-2404-94",
+     "series": "A",
+     "issued": "24 JUL 1967",
+     "expires": "26 FEB 1974",
+     "expiry_iso": "1974-02-26",
+     "expiry_delta": -240,
+     "stay_days": 7,
+     "declared": 1200,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-3.png",
+     "violations": [
+      "expiry"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d3-3-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-3-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-3-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-3-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d3-4",
+     "issuer": "REPUBLIC OF KORVENIA",
+     "nationality": "KORVENIA",
+     "holder": "MERCER, A.",
+     "doc_no": "KV-9751-24",
+     "series": "C",
+     "issued": "28 JUL 1972",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 7,
+     "declared": 900,
+     "work_permit": true,
+     "permit_no": "WP-1450",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-4.png",
+     "violations": [
+      "issuer"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d3-4-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "no"
+      },
+      {
+       "id": "d3-4-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-4-cpermit",
+       "kind": "permit",
+       "family": "form_complete",
+       "q": "Does the holder hold a valid work permit?",
+       "question": "Does the holder hold a valid work permit?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-4-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d3-5",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "MERCER, P.",
+     "doc_no": "VD-1839-71",
+     "series": "B",
+     "issued": "8 FEB 1966",
+     "expires": "23 DEC 1974",
+     "expiry_iso": "1974-12-23",
+     "expiry_delta": 60,
+     "stay_days": 7,
+     "declared": 900,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": false,
+     "image": "assets/docs/d3-5.png",
+     "violations": [
+      "manifest"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d3-5-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-5-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "no"
+      },
+      {
+       "id": "d3-5-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-5-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d3-6",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "THALER, R.",
+     "doc_no": "VD-1796-29",
+     "series": "D",
+     "issued": "11 AUG 1971",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 7,
+     "declared": 2400,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-6.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d3-6-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-6-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-6-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-6-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d3-7",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "JUNOT, P.",
+     "doc_no": "VD-3545-74",
+     "series": "B",
+     "issued": "4 JUN 1968",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 14,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": false,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-7.png",
+     "violations": [
+      "seal"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d3-7-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-7-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-7-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "no"
+      },
+      {
+       "id": "d3-7-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d3-8",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "VOSS, C.",
+     "doc_no": "VD-7246-13",
+     "series": "A",
+     "issued": "3 AUG 1972",
+     "expires": "23 DEC 1974",
+     "expiry_iso": "1974-12-23",
+     "expiry_delta": 60,
+     "stay_days": 14,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d3-8.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d3-8-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-8-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-8-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      },
+      {
+       "id": "d3-8-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 27 OCT 1974)?",
+       "state": "Day 3 at Amber Checkpoint, 27 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today). Manifest (8 names): MERCER, A.; KOVAC, S.; LINHARD, W.; VOSS, C.; JUNOT, P.; THALER, R.; DRAEGER, K.; MERCER, V..",
+       "gold": "yes"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "day": 4,
+   "date": "28 OCT 1974",
+   "today": "1974-10-28",
+   "slips": [
+    {
+     "title": "Day 1",
+     "text": "Veldanian passports only. All other issuers: deny at the gate.",
+     "pinned": "PINNED 24 OCT"
+    },
+    {
+     "title": "Day 2 · A",
+     "text": "Foreigners must hold a valid work permit. No permit, no entry.",
+     "pinned": "PINNED 25 OCT"
+    },
+    {
+     "title": "Day 2 · B",
+     "text": "Holder must appear on today's manifest. Unlisted names: deny.",
+     "pinned": "PINNED 25 OCT"
+    },
+    {
+     "title": "Day 3 · NEW",
+     "text": "Expired documents: deny. Expiry must fall on or after today's date.",
+     "pinned": "PINNED 27 OCT"
+    },
+    {
+     "title": "Day 4 · NEW",
+     "text": "Stays over 30 days are not permitted at this checkpoint.",
+     "pinned": "PINNED 28 OCT"
+    },
+    {
+     "title": "Day 4 · NEW",
+     "text": "Declared currency capped at 5,000 VEL. Higher amounts: deny.",
+     "pinned": "PINNED 28 OCT"
+    }
+   ],
+   "manifest": [
+    "GRIMM, E.",
+    "REZNICK, L.",
+    "VOSS, I.",
+    "KOVAC, M.",
+    "MARLOW, I.",
+    "DRAEGER, D.",
+    "HALDER, J.",
+    "EDRIC, A."
+   ],
+   "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+   "docs": [
+    {
+     "id": "d4-1",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "MARLOW, I.",
+     "doc_no": "VD-9210-76",
+     "series": "B",
+     "issued": "3 APR 1971",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 32,
+     "declared": 2400,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-1.png",
+     "violations": [
+      "stay"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d4-1-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-1-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-1-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-1-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-1-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "no"
+      },
+      {
+       "id": "d4-1-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d4-2",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "REZNICK, L.",
+     "doc_no": "VD-4102-56",
+     "series": "C",
+     "issued": "28 SEP 1969",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 7,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-2.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d4-2-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-2-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-2-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-2-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-2-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-2-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d4-3",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "EDRIC, A.",
+     "doc_no": "VD-7850-78",
+     "series": "A",
+     "issued": "16 OCT 1970",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 7,
+     "declared": 6100,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-3.png",
+     "violations": [
+      "amount"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d4-3-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-3-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-3-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-3-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-3-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-3-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "no"
+      }
+     ]
+    },
+    {
+     "id": "d4-4",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "KOVAC, M.",
+     "doc_no": "VD-5066-93",
+     "series": "B",
+     "issued": "25 OCT 1966",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 45,
+     "declared": 2400,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-4.png",
+     "violations": [
+      "stay"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d4-4-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-4-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-4-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-4-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-4-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "no"
+      },
+      {
+       "id": "d4-4-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d4-5",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "DRAEGER, D.",
+     "doc_no": "VD-2358-54",
+     "series": "C",
+     "issued": "3 JAN 1968",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 14,
+     "declared": 300,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-5.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d4-5-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-5-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-5-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-5-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-5-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-5-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d4-6",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "GRIMM, E.",
+     "doc_no": "VD-4438-31",
+     "series": "A",
+     "issued": "2 SEP 1973",
+     "expires": "22 OCT 1974",
+     "expiry_iso": "1974-10-22",
+     "expiry_delta": -2,
+     "stay_days": 28,
+     "declared": 300,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-6.png",
+     "violations": [
+      "expiry"
+     ],
+     "verdict": "deny",
+     "checks": [
+      {
+       "id": "d4-6-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-6-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-6-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-6-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "no"
+      },
+      {
+       "id": "d4-6-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-6-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d4-7",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "HALDER, J.",
+     "doc_no": "VD-4277-50",
+     "series": "C",
+     "issued": "12 JUL 1972",
+     "expires": "28 NOV 1975",
+     "expiry_iso": "1975-11-28",
+     "expiry_delta": 400,
+     "stay_days": 14,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-7.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d4-7-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-7-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-7-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-7-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-7-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-7-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    },
+    {
+     "id": "d4-8",
+     "issuer": "REPUBLIC OF VELDANIA",
+     "nationality": "VELDANIA",
+     "holder": "VOSS, I.",
+     "doc_no": "VD-8944-97",
+     "series": "C",
+     "issued": "24 FEB 1968",
+     "expires": "7 NOV 1974",
+     "expiry_iso": "1974-11-07",
+     "expiry_delta": 14,
+     "stay_days": 28,
+     "declared": 3800,
+     "work_permit": null,
+     "permit_no": "",
+     "seal": true,
+     "manifest_listed": true,
+     "image": "assets/docs/d4-8.png",
+     "violations": [],
+     "verdict": "approve",
+     "checks": [
+      {
+       "id": "d4-8-ctype",
+       "kind": "type",
+       "family": "doc_type",
+       "q": "Is this a Veldanian passport, issued by Veldania?",
+       "question": "Is this a Veldanian passport, issued by Veldania?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-8-cmanifest",
+       "kind": "manifest",
+       "family": "source_conflict",
+       "q": "Is the holder on today's manifest?",
+       "question": "Is the holder on today's manifest?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-8-cseal",
+       "kind": "seal",
+       "family": "form_complete",
+       "q": "Is the entry seal present on the document?",
+       "question": "Is the entry seal present on the document?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-8-cexpiry",
+       "kind": "expiry",
+       "family": "field_threshold",
+       "q": "Is the document unexpired (expiry on or after {date})?",
+       "question": "Is the document unexpired (expiry on or after 28 OCT 1974)?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-8-cstay",
+       "kind": "stay",
+       "family": "field_threshold",
+       "q": "Is the declared stay 30 days or fewer?",
+       "question": "Is the declared stay 30 days or fewer?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      },
+      {
+       "id": "d4-8-camount",
+       "kind": "amount",
+       "family": "field_threshold",
+       "q": "Is the declared amount within the 5,000 VEL cap?",
+       "question": "Is the declared amount within the 5,000 VEL cap?",
+       "state": "Day 4 at Amber Checkpoint, 28 OCT 1974. Rules of entry: Veldanian passports only; all other issuers are denied; foreigners must hold a valid work permit; the holder must be on today's manifest; the entry seal must be present on the document; the document must be unexpired (expiry on or after today); stays over 30 days are not permitted; the declared amount is capped at 5,000 VEL. Manifest (8 names): GRIMM, E.; REZNICK, L.; VOSS, I.; KOVAC, M.; MARLOW, I.; DRAEGER, D.; HALDER, J.; EDRIC, A..",
+       "gold": "yes"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "generator": {
+  "commit": "647c67ab8bbf7826250b6ed74ff2a5b42c575903",
+  "fonts_sha256": {
+   "IBMPlexMono-Regular.ttf": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
+   "IBMPlexMono-SemiBold.ttf": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
+   "IBMPlexSans[wdth,wght].ttf": "3b031aa4216174205bd8471f88a49b91f093169e9e87bd5262242bc5967fe2e3",
+   "SpecialElite-Regular.ttf": "9f59e3a0e1c0008f2ef97b1c94e5d96c43748bbc92993570d1133454a484254c"
+  },
+  "images_sha256": {
+   "assets/docs/d1-1.png": "23bd5bbb43032d04bcecd294431420cb9a6d5a2458c4b2f4d07293e57b8038e1",
+   "assets/docs/d1-2.png": "894931a81ba6ba9dbc1e8ffe408f081d3f18393be8c80248bb3e77b0fd287115",
+   "assets/docs/d1-3.png": "1a81948b1fa89a5870e0bf9cb605d3b64fdd370b287fe4563be3c5e5f0d15628",
+   "assets/docs/d1-4.png": "03fd7e6708263862b518832a9e73bf2e18a79e036cd24eddbacc69e933fbf786",
+   "assets/docs/d1-5.png": "2eb9e0e9992b133f07d8903af196f150e35dfc352ea7bb7aec5e924157d78587",
+   "assets/docs/d1-6.png": "f14ceea143a9f4ddc85c1e3f2d581ca93655c5fffb4bac9ee9f66affa770284f",
+   "assets/docs/d1-7.png": "171d59f711abdb26b4f988aefe24263b7f84da08f88b1793e13b86d7be1335fd",
+   "assets/docs/d1-8.png": "25656b981a0c32a00e978c906d2bd7e2826da7837049db2037e05173cf250ab0",
+   "assets/docs/d2-1.png": "de82103fa632530c9e3877ff2c73cf75f7db0c9bf4e5a54e72a8d96f3437ba93",
+   "assets/docs/d2-2.png": "5e7b79573c60b81daf0a1ea3146ff8836f3201a3fe13ee172e46fa60ff77fd6f",
+   "assets/docs/d2-3.png": "d57eff5fb80722281551ac1722cc89781899ad348e1d2645f4bc41eb30cb4034",
+   "assets/docs/d2-4.png": "e36fc5beaf0f0b4896a9d39accb3a18030cdf280facc2fa6ce49de17dd816a88",
+   "assets/docs/d2-5.png": "7fbf317a87a69fa163bb31713eb6dc037cec428b91b7514f06b12bbfad6fa69e",
+   "assets/docs/d2-6.png": "44c32c91266421707d220c4fe8f9f53f0fc7c51a2ec73990beb166b3f409af4d",
+   "assets/docs/d2-7.png": "e2c2dd90fef3c3e424b21b735efed075aef9652ea60e2c38ac38f43c1046978e",
+   "assets/docs/d2-8.png": "feaa19ed79ed0ac360e0a6196aa2703f807c8e854fb15114fdb1285dcc7fbce4",
+   "assets/docs/d3-1.png": "a7bc4703336d4f217142803c6f18ba96e55ad7f905da057b2c8a788bb87d786c",
+   "assets/docs/d3-2.png": "682c4a58bca42451ee69f6729feb2b69887e8d76a8fca8dd99e318e548b4bc89",
+   "assets/docs/d3-3.png": "cbdf29875cae1ac6ca87392f07956cd6e9c0b6525d14a682be6ec1cafbe5f95b",
+   "assets/docs/d3-4.png": "3c0b6fe72133476ff400226fef022533d4d8561ca3caad8b3d0789b96620920f",
+   "assets/docs/d3-5.png": "51b970647a749e0a208ba2b9dde599e09b7060b82bf6ba7ab4360dfb522fe438",
+   "assets/docs/d3-6.png": "cad05c4fed6145e652d79ca3b0e4cb91b475fa55bb80db7a662c1422390877c2",
+   "assets/docs/d3-7.png": "99971163b60bb28805245568587253d5b74e780c99e48f7b9eb10e68b39fb5d1",
+   "assets/docs/d3-8.png": "7568fbaa755d7ed96cd1be721e7889ece00138334168be3287a906103e073175",
+   "assets/docs/d4-1.png": "4fbf3bbb56de12b62e197a97ed85dbdc721f3543e08fcd3fc5115eed6253d179",
+   "assets/docs/d4-2.png": "39176fb5e15bbfce4578b23b07bbbaff6ab1a4ee041131ec74b71a2f717ade78",
+   "assets/docs/d4-3.png": "24137dc544b3ef9c67caf004bd9f60f095c56b1f9e118782cc73a0718dba271c",
+   "assets/docs/d4-4.png": "f024902dfbb66c6dc9c7b7d678638e3239e8ab510c27b3cc613797e10149d08c",
+   "assets/docs/d4-5.png": "6c60a7adef90096ec0eaba3343f800a1d7ffb519053362a98cdb9703cb841da5",
+   "assets/docs/d4-6.png": "7eb06210c083ced5906d558cc6afcc38d26ca2f52af767c44e567c3dbb254463",
+   "assets/docs/d4-7.png": "cd002f08e17769c9789e85c2111d8354540324c705e8546b051b86c60b2f7764",
+   "assets/docs/d4-8.png": "d80e9003ff36b969e8b65ba8ac112d070880a5bacc2f7f23bc59e5f311941757"
+  }
+ }
+}

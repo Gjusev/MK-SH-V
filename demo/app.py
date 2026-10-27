@@ -41,6 +41,10 @@ _model.eval()
 
 FIGURE = (HERE / "figure" / "decision-gate.html").read_text(encoding="utf-8")
 
+from game import ACP_CSS, build_tab  # noqa: E402  (the playable Amber Checkpoint tab)
+
+GAME_FONTS = ("<link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Special+Elite&display=swap'>")
+
 EXAMPLES_DIR = HERE / "examples"
 # The case set: train-split images picked by assets/src/pick_demo_cases.py and run
 # through these weights and policy (favourable answers verified against gold,
@@ -228,37 +232,12 @@ def build() -> gr.Blocks:
                 "<nav class='links'><a href='https://huggingface.co/Gjusev/MK-SH-V'>Model card</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v'>Code and results</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v#the-decision-contract'>How it decides</a></nav></header>")
-        with gr.Row(equal_height=False):
-            with gr.Column(scale=6, min_width=340):
-                gr.HTML("<p id='cases-label'>Real cases from the training splits, one click. "
-                        "Or drop your own page or screenshot below and press Decide.</p>")
-                gr.HTML("<p class='group-label'>The model answers &mdash; confident, and correct "
-                        "(checked against each source's gold label)</p>")
-                with gr.Row(elem_id="cases"):
-                    case_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
-                                           f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
-                                           min_width=150, size="sm") for i in ANSWERS]
-                gr.HTML("<p class='caveat'>On screenshots the claim is end-of-task screen detection. Checking "
-                        "that the goal in the State is the one finished is only partial (measured in E47: paired "
-                        "with an unrelated goal it still says yes about 22 % of the time), so it is not claimed.</p>")
-                gr.HTML("<p class='group-label'>Where it fails &mdash; a refusal below tau 0.55, and a confident "
-                        "wrong answer above it (real receipts: about 1 in 4 kept answers is wrong)</p>")
-                with gr.Row(elem_id="cases2"):
-                    fail_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
-                                           f"{CASES_DB[i]['language'].upper()} · {kind}", icon=EXAMPLES[i][0],
-                                           min_width=150, size="sm") for i, kind in FAILURES]
-                image_in = gr.Image(type="pil", label="Your image: document page or screenshot", height=300)
-                question_in = gr.Textbox(label="Question", value=EXAMPLES[0][2] if EXAMPLES else "")
-                with gr.Row():
-                    state_in = gr.Textbox(label="State", value=EXAMPLES[0][1] if EXAMPLES else "", lines=3, scale=3, min_width=200)
-                    options_in = gr.Textbox(label="Options, one per line: id: description",
-                                            value=EXAMPLES[0][3] if EXAMPLES else "", lines=3, scale=2, min_width=160)
-                go = gr.Button("Decide", variant="primary")
-            with gr.Column(scale=5, min_width=340, elem_id="decision"):
-                verdict_out = gr.HTML(EMPTY)
-                abstain_out = gr.HTML()
-                probs_out = gr.HTML()
-                meta_out = gr.Markdown(elem_id="meta")
+        with gr.Tabs():
+            with gr.Tab("Decision demo"):
+                _demo_tab()
+            with gr.Tab("Amber Checkpoint"):
+                gr.HTML(GAME_FONTS)
+                build_tab(_model)
         with gr.Accordion("* The shipped policy and its held-out validation (E48)", open=False):
             gr.Markdown(
                 f"This demo runs the released policy (E47 checkpoint, seed 43): temperature "
@@ -285,5 +264,43 @@ def build() -> gr.Blocks:
 
 
 if __name__ == "__main__":
-    gr.set_static_paths([str(HERE / "figure"), str(HERE / "static")])
+    gr.set_static_paths([str(HERE / "figure"), str(HERE / "static"), str(HERE / "game")])
     build().launch()
+
+
+def _demo_tab() -> None:
+    with gr.Row(equal_height=False):
+        with gr.Column(scale=6, min_width=340):
+            gr.HTML("<p id='cases-label'>Real cases from the training splits, one click. "
+                    "Or drop your own page or screenshot below and press Decide.</p>")
+            gr.HTML("<p class='group-label'>The model answers &mdash; confident, and correct "
+                    "(checked against each source's gold label)</p>")
+            with gr.Row(elem_id="cases"):
+                case_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
+                                       f"{CASES_DB[i]['language'].upper()}", icon=EXAMPLES[i][0],
+                                       min_width=150, size="sm") for i in ANSWERS]
+            gr.HTML("<p class='caveat'>On screenshots the claim is end-of-task screen detection. Checking "
+                    "that the goal in the State is the one finished is only partial (measured in E47: paired "
+                    "with an unrelated goal it still says yes about 22 % of the time), so it is not claimed.</p>")
+            gr.HTML("<p class='group-label'>Where it fails &mdash; a refusal below tau 0.55, and a confident "
+                    "wrong answer above it (real receipts: about 1 in 4 kept answers is wrong)</p>")
+            with gr.Row(elem_id="cases2"):
+                fail_btns = [gr.Button(f"{CASES_DB[i]['family'].replace('_', ' ')} · "
+                                       f"{CASES_DB[i]['language'].upper()} · {kind}", icon=EXAMPLES[i][0],
+                                       min_width=150, size="sm") for i, kind in FAILURES]
+            image_in = gr.Image(type="pil", label="Your image: document page or screenshot", height=300)
+            question_in = gr.Textbox(label="Question", value=EXAMPLES[0][2] if EXAMPLES else "")
+            with gr.Row():
+                state_in = gr.Textbox(label="State", value=EXAMPLES[0][1] if EXAMPLES else "", lines=3, scale=3, min_width=200)
+                options_in = gr.Textbox(label="Options, one per line: id: description",
+                                        value=EXAMPLES[0][3] if EXAMPLES else "", lines=3, scale=2, min_width=160)
+            go = gr.Button("Decide", variant="primary")
+        with gr.Column(scale=5, min_width=340, elem_id="decision"):
+            verdict_out = gr.HTML(EMPTY)
+            abstain_out = gr.HTML()
+            probs_out = gr.HTML()
+            meta_out = gr.Markdown(elem_id="meta")
+    ins, outs = [image_in, state_in, question_in, options_in], [probs_out, verdict_out, abstain_out, meta_out]
+    for btn, i in [*zip(case_btns, ANSWERS), *zip(fail_btns, [i for i, _ in FAILURES])]:
+        btn.click(lambda i=i: tuple(EXAMPLES[i]), None, ins).then(decide, ins, outs)
+    go.click(decide, ins, outs)

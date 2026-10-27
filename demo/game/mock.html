@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Amber Checkpoint — Day 3 mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+/* Amber Checkpoint · Day 3 mid-game · 1200x800 · tokens per docs/internal/AMBER_CHECKPOINT_ART.md
+   One lamp above the desk: every shadow is +2/+2 hard offset. No gradients, no glow. */
+:root{
+  --ink:#23251D; --paper:#EFE7D2; --kraft:#D9CBA8; --olive:#6B6A45;
+  --navy:#1B2A41; --track:#24354F; --fpaper:#F7F6F3; --pale:#B7C2D0;
+  --amber:#E8A13C; --amberink:#9A6416; --approve:#2F6B47; --deny:#9E3B32;
+  --seal:#2B3A55; --desk:#403D2F; --desk2:#332F22; --muted:#4A4534;
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E");
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:#2E2B20}
+body{font-family:'IBM Plex Sans',sans-serif;color:var(--ink)}
+.stage{width:1200px;height:800px;background:var(--desk);padding:16px;display:flex;flex-direction:column;gap:20px;position:relative;overflow:hidden}
+.stage::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.05;pointer-events:none}
+
+/* ============ TOP · RULE BOARD ============ */
+.board{height:148px;background:var(--kraft);border-radius:6px;position:relative;
+  box-shadow:3px 3px 0 rgba(0,0,0,.28);display:flex;align-items:stretch;padding:12px 16px;gap:14px}
+.board::before{content:"";position:absolute;left:0;top:0;bottom:0;width:7px;background:var(--desk2);border-radius:6px 0 0 6px}
+.board-head{width:158px;flex:none;display:flex;flex-direction:column;justify-content:space-between;padding-right:6px}
+.day-banner{font-family:'Special Elite',serif;font-size:24px;color:var(--olive);line-height:1.05;letter-spacing:.5px}
+.day-banner small{display:block;font-size:16px;color:var(--ink);margin-top:2px}
+.datestamp{width:78px;height:44px;border:2px solid var(--ink);border-radius:50%/40%;display:flex;align-items:center;justify-content:center;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.5px;color:var(--ink);transform:rotate(-3deg);line-height:1.25;text-align:center}
+.slips{display:flex;gap:14px;align-items:flex-start;flex:1;padding-top:2px}
+.slip{width:168px;background:var(--paper);box-shadow:3px 3px 0 rgba(0,0,0,.22);padding:10px 10px 8px;position:relative;transform:rotate(-.5deg)}
+.slip:nth-child(2){transform:rotate(1.6deg)}
+.slip:nth-child(3){transform:rotate(-2.2deg);margin-top:4px}
+.slip:nth-child(4){transform:rotate(.4deg);margin-top:3px}
+.slip::before{content:"";position:absolute;top:-4px;left:50%;width:9px;height:9px;border-radius:50%;
+  background:var(--deny);box-shadow:inset -2px -2px 0 rgba(0,0,0,.35), 2px 2px 0 rgba(0,0,0,.18)}
+.slip h3{font-family:'Special Elite',serif;font-size:16px;font-weight:400;margin-bottom:4px}
+.slip p{font-size:12.5px;line-height:1.35;color:var(--ink)}
+.slip .d{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);display:block;margin-top:5px;letter-spacing:.5px}
+.slip.today h3{border-bottom:2px solid var(--amberink);display:inline-block;padding-bottom:1px}
+
+/* ============ MAIN ROW ============ */
+.main{flex:1;display:flex;gap:20px;min-height:0}
+
+/* --- CENTER · DOCUMENT --- */
+.doczone{flex:1;position:relative;display:flex;align-items:center;justify-content:center}
+.tray{position:absolute;width:512px;height:560px;background:#C7B58F;transform:rotate(.8deg);
+  box-shadow:5px 5px 0 rgba(0,0,0,.34);border-radius:4px}
+.tray::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.06}
+.docwrap{position:relative;width:472px;filter:drop-shadow(6px 8px 0 rgba(0,0,0,.38))}
+.doc{background:var(--paper);transform:rotate(-.4deg);position:relative;padding:22px 26px 20px;
+  clip-path:polygon(0 5px,3px 3px,5px 0,calc(100% - 6px) 0,100% 4px,100% calc(100% - 5px),calc(100% - 4px) 100%,4px 100%,0 calc(100% - 6px))}
+.doc::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.045;pointer-events:none}
+.crease{position:absolute;top:0;bottom:0;left:33%;width:1px;background:rgba(35,37,29,.14);box-shadow:1px 0 0 rgba(255,255,255,.35)}
+.doc header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:14px}
+.doc .rep{font-family:'Special Elite',serif;font-size:19px;line-height:1.15}
+.doc .rep small{display:block;font-family:'IBM Plex Sans',sans-serif;font-size:11.5px;font-weight:600;letter-spacing:1.6px;color:var(--muted);margin-top:3px}
+.doc .no{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);text-align:right;line-height:1.5}
+.docbody{display:flex;gap:18px}
+.portrait{width:56px;height:70px;border:2px solid var(--ink);background:#E6D8B9;flex:none;position:relative;overflow:hidden}
+.portrait i,.portrait b{background:#857C5F;
+  -webkit-mask-image:repeating-linear-gradient(45deg,#000 0 1px,transparent 1px 2px);
+  mask-image:repeating-linear-gradient(45deg,#000 0 1px,transparent 1px 2px)}
+.portrait i{position:absolute;left:19px;top:13px;width:18px;height:18px;border-radius:50%}
+.portrait b{position:absolute;left:7px;top:35px;width:42px;height:28px;border-radius:13px 13px 0 0}
+.portrait::before{content:"PHOTO";position:absolute;left:-7px;top:30px;width:74px;text-align:center;background:var(--ink);color:var(--paper);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:3px;padding:2px 0;transform:rotate(-18deg);z-index:2}
+.portrait::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.2}
+.fields{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:9px 14px}
+.f{min-width:0}
+.f label{display:block;font-size:9.5px;font-weight:600;letter-spacing:1.4px;color:var(--muted)}
+.f span{font-family:'IBM Plex Mono',monospace;font-size:13.5px;font-weight:600;color:var(--ink)}
+.f.bad span{border-bottom:2px solid var(--amberink)}
+.manifest{margin-top:14px;border-top:1px solid rgba(35,37,29,.35);padding-top:9px;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--muted);letter-spacing:.3px}
+.manifest b{color:var(--ink);font-weight:600}
+.docfoot{display:flex;justify-content:space-between;align-items:flex-end;margin-top:16px}
+.seal{width:62px;height:62px;border-radius:50%;border:3px solid var(--seal);position:relative;display:flex;align-items:center;justify-content:center;transform:rotate(-8deg)}
+.seal::before{content:"";position:absolute;inset:4px;border:1.5px solid var(--seal);border-radius:50%}
+.seal::after{content:"★";font-size:22px;color:var(--seal);line-height:1}
+.stampzone{width:172px;height:64px;border:2px dashed rgba(35,37,29,.42);display:flex;align-items:center;justify-content:center;
+  font-size:9.5px;letter-spacing:1.6px;font-weight:600;color:rgba(35,37,29,.62)}
+/* routing tag: the gate abstained on check 3 */
+.tag{position:absolute;top:-12px;right:-20px;transform:rotate(3deg);z-index:3}
+.clip{width:14px;height:30px;border:2.5px solid var(--muted);border-radius:7px;margin:0 auto -6px;position:relative;background:transparent}
+.clip::after{content:"";position:absolute;left:2px;top:2px;bottom:2px;width:5px;border:1.5px solid var(--muted);border-radius:4px}
+.tagslip{background:var(--paper);box-shadow:2px 2px 0 rgba(0,0,0,.25);padding:7px 10px;border-top:2px solid var(--amberink)}
+.tagslip h4{font-family:'Special Elite',serif;font-size:13px;font-weight:400;color:var(--ink)}
+.tagslip p{font-size:10px;letter-spacing:.8px;font-weight:600;color:var(--deny);margin-top:1px}
+
+/* --- RIGHT · AMBER SYSTEM + STAMPS --- */
+.right{width:360px;flex:none;display:flex;flex-direction:column;gap:0}
+.panel{background:var(--navy);border-radius:16px;padding:18px 20px 14px;color:var(--fpaper);position:relative;box-shadow:4px 4px 0 rgba(0,0,0,.3)}
+.panel::before{content:"";position:absolute;inset:0;border-radius:16px;background-image:var(--grain);opacity:.03;pointer-events:none}
+.p-head{display:flex;align-items:center;gap:10px;border-bottom:1px solid #2A3B58;padding-bottom:10px;margin-bottom:10px}
+.lamp{width:18px;height:18px;border-radius:50%;background:var(--amber);flex:none;box-shadow:inset -2px -2px 0 rgba(0,0,0,.25);position:relative}
+.lamp::after{content:"";position:absolute;left:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#F6C766}
+.p-head h2{font-size:15.5px;font-weight:600;letter-spacing:2.5px}
+.p-head small{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--pale);letter-spacing:1.2px;margin-top:2px;font-weight:400}
+.check{padding:8px 0 9px;border-bottom:1px solid #22324A}
+.check:last-of-type{border-bottom:none}
+.q{font-size:12.5px;color:var(--pale);line-height:1.35;margin-bottom:6px}
+.prob-row{display:grid;grid-template-columns:44px 1fr 52px;align-items:center;gap:3px 10px}
+.prob-id{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--fpaper)}
+.prob-bar{background:var(--track);height:16px;border-radius:8px;position:relative}
+.prob-fill{position:absolute;inset:0 auto 0 0;border-radius:8px;background:#8E9BAD}
+.top .prob-fill{background:var(--fpaper)}
+.tau{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;background:var(--amber);border-radius:2px;left:55%}
+.prob-num{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;color:var(--fpaper);font-variant-numeric:tabular-nums}
+.verdictline{display:flex;justify-content:space-between;margin-top:5px;font-size:11.5px;font-weight:600;letter-spacing:1.2px}
+.backed{color:var(--pale)}
+.routed{color:var(--amber)}
+.check.routed-row .prob-bar{outline:1.5px solid var(--amber);outline-offset:2px;border-radius:8px}
+.check.routed-row .prob-num{color:var(--amber)}
+.plate{margin-top:12px;border-top:1px solid #2A3B58;padding-top:9px;display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--fpaper)}
+.plate .gate{color:var(--amber)}
+/* stamps on the ledge */
+.ledge{flex:1;position:relative;margin-top:14px}
+.wood{position:absolute;left:6px;right:6px;bottom:0;height:30px;background:var(--desk2);border-radius:4px;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.wood::before{content:"";position:absolute;left:0;right:0;top:2px;height:2px;background:#5A543C}
+.stamps{position:absolute;left:0;right:0;bottom:20px;display:flex;justify-content:center;gap:36px}
+.stampbtn{background:none;border:none;padding:0;cursor:pointer;line-height:0;filter:drop-shadow(3px 4px 0 rgba(0,0,0,.38))}
+.stampbtn img{width:150px;height:90px;image-rendering:pixelated}
+.stampbtnapprove{transform:rotate(-2deg)}
+.stampbtndeny{transform:rotate(2deg)}
+.stampbtn:focus-visible{outline:2px solid var(--amber);outline-offset:3px}
+.wood{position:absolute;left:6px;right:6px;bottom:0;height:30px;background:var(--desk2);border-radius:4px;box-shadow:0 3px 0 rgba(0,0,0,.35)}
+.wood::before{content:"";position:absolute;left:0;right:0;top:2px;height:2px;background:#5A543C}
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <!-- TOP · RULE BOARD -->
+  <section class="board" aria-label="Rule board">
+    <div class="board-head">
+      <div class="day-banner">DAY 3<small>Rules of entry</small></div>
+      <div class="datestamp">27 OCT<br>1974</div>
+    </div>
+    <div class="slips">
+      <div class="slip">
+        <h3>Day 1</h3>
+        <p>Veldanian passports only. All other issuers: deny at the gate.</p>
+        <span class="d">PINNED 24 OCT</span>
+      </div>
+      <div class="slip">
+        <h3>Day 2 · A</h3>
+        <p>Foreigners must hold a valid work permit. No permit, no entry.</p>
+        <span class="d">PINNED 25 OCT</span>
+      </div>
+      <div class="slip">
+        <h3>Day 2 · B</h3>
+        <p>Holder must appear on today's manifest. Unlisted names: deny.</p>
+        <span class="d">PINNED 25 OCT</span>
+      </div>
+      <div class="slip today">
+        <h3>Day 3 — NEW</h3>
+        <p>Expired documents: deny. Expiry must fall on or after today's date.</p>
+        <span class="d">PINNED 27 OCT</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- CENTER · DOCUMENT -->
+    <section class="doczone" aria-label="Document under inspection">
+      <div class="tray"></div>
+      <div class="docwrap">
+        <div class="tag">
+          <div class="clip"></div>
+          <div class="tagslip">
+            <h4>SECONDARY INSPECTION</h4>
+            <p>CHECK 3 · EXPIRY</p>
+          </div>
+        </div>
+        <div class="doc">
+          <div class="crease"></div>
+          <header>
+            <div class="rep">REPUBLIC OF VELDANIA<small>TEMPORARY ENTRY PERMIT</small></div>
+            <div class="no">NO. VD-2214-88<br>SERIES C</div>
+          </header>
+          <div class="docbody">
+            <div class="portrait"><i></i><b></b></div>
+            <div class="fields">
+              <div class="f"><label>HOLDER</label><span>HALDER, L.</span></div>
+              <div class="f"><label>NATIONALITY</label><span>VELDANIA</span></div>
+              <div class="f"><label>ISSUED</label><span>12 MAR 1971</span></div>
+              <div class="f bad"><label>EXPIRES</label><span>30 SEP 1974</span></div>
+              <div class="f"><label>STAY</label><span>14 DAYS</span></div>
+              <div class="f"><label>DECLARED</label><span>1,200 VEL</span></div>
+            </div>
+          </div>
+          <div class="manifest">MANIFEST 27 OCT · 8 NAMES — <b>HALDER, L. · LISTED</b></div>
+          <div class="docfoot">
+            <div class="seal" title="Entry seal"></div>
+            <div class="stampzone">ADJUDICATION<br>AREA</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT · AMBER SYSTEM -->
+    <aside class="right" aria-label="AMBER SYSTEM panel">
+      <div class="panel">
+        <div class="p-head">
+          <div class="lamp" title="Gate lamp"></div>
+          <h2>AMBER SYSTEM<small>BOOTH 04 · MODEL MK-SH-V</small></h2>
+        </div>
+
+        <div class="check">
+          <div class="q">Is this a Veldanian passport, issued by Veldania?</div>
+          <div class="prob-row top">
+            <span class="prob-id">yes</span>
+            <span class="prob-bar"><span class="prob-fill" style="width:99.2%"></span><span class="tau"></span></span>
+            <span class="prob-num">99.2%</span>
+          </div>
+          <div class="verdictline"><span class="backed">● BACKED · p ≥ τ</span><span class="backed">gate: clear</span></div>
+        </div>
+
+        <div class="check">
+          <div class="q">Is the holder on today's manifest?</div>
+          <div class="prob-row">
+            <span class="prob-id">yes</span>
+            <span class="prob-bar"><span class="prob-fill" style="width:96.8%"></span><span class="tau"></span></span>
+            <span class="prob-num">96.8%</span>
+          </div>
+          <div class="verdictline"><span class="backed">● BACKED · p ≥ τ</span><span class="backed">gate: clear</span></div>
+        </div>
+
+        <div class="check routed-row">
+          <div class="q">Is the document unexpired (expiry on or after 27 OCT 1974)?</div>
+          <div class="prob-row">
+            <span class="prob-id">yes</span>
+            <span class="prob-bar"><span class="prob-fill" style="width:51.0%"></span><span class="tau"></span></span>
+            <span class="prob-num">51.0%</span>
+          </div>
+          <div class="verdictline"><span class="routed">● SECONDARY INSPECTION</span><span class="routed">51.0% &lt; τ 0.55</span></div>
+        </div>
+
+        <div class="plate">
+          <span>τ 0.55 · CP95 ≤ 4.06%</span>
+          <span class="gate">E47 s43 · E48 policy</span>
+        </div>
+      </div>
+
+      <div class="ledge">
+        <div class="stamps">
+          <button class="stampbtn stampbtnapprove" aria-label="Approve" title="APPROVE"><img alt="APPROVE rubber stamp"
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAwCAYAAACG5f33AAAAAXNSR0IArs4c6QAAAg1JREFUaIHtm1uOgzAMRUM1+2EZLAaJWctUYjEsgxV1PmbSGmM7LyCU3iP1o80DuNzGiQnOgXq0fTds2b60v9zjt3030GOnnEdDGj12OMcr8z2P0/35re27B/3QmtIdOdotOVCHuchzttp4p1J9VAfO49Q4sOJf0B/vwBst3FO0FMduXbe0Di1b/G25A6mA7zomSibY4lq4NqvjCOPeIQIeOZZaY6EWifmY517xYuAdVBHwHbC0ubGC00fW2nAX8yBy1xp+KtxUXKPbqgWcuMALpgkpCggnvvDCaZqIAgIdNZIjCutER2GQDgTMRJzGgHS+rMLYDM1Z6/nyUHtfbo37fP1rTmNAPKIDtTun3bGz1stF6lfrEw4sBAIWAgELSYrCHC168fFi63p7k7IKgwMLMR2oRTn+PeSQ3Hql63EtaofOJ3TdFDgwE7+UMx1YG80xqWNlrPM8kuPMlQgy0OkgH5gA8oE7gHRWJNoWPGRjIuFP5aIeazrsznqCp3KFcAeaOxPAmtDOBFoR0xYFTGN2RBUQjvwjtErLcuARS7/YjeE5G8il+qH5ntb/5bb4ljKPUyNdO0lILDaZO/9jiWA5jixxFt+OG+qTvJ6wyesaYptPdVwOdI+0ms6qleIKvejC68a+omX1l3JMj//7Hjbm5SQxz4x4PbUTqyGHab9p7R1zVUoUtvqurdOl+AUCIsmSvr1kAgAAAABJRU5ErkJggg=="></button>
+          <button class="stampbtn stampbtndeny" aria-label="Deny" title="DENY"><img alt="DENY rubber stamp"
+            src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAFAAAAAwCAYAAACG5f33AAAAAXNSR0IArs4c6QAAAiNJREFUaIHtm9utgzAMhgNiIl7ZhgG6y+kAbMMrK3FeiuQY35LQEFR/UqWWhDSYP3auITj1WKbxBT9UunQvlYcrR8vH/ZdUBytaGTC9Axf+Sv/4l5jXrYsuLNO4h8Q3yCkR58Hf8X34O0zn8t0BqNNOJe53V/ApQAP2MGFet7dw08n3cX7t4sqqKr+TyAfCdk3K9MO8bh2XfvIND/Ox3LNh20TP+XnLO/6NfREXCS1KlJRLlduS8rBBWR+oZvpRJNv0oYHo9mT6oAQPR8YVmMlhs0iBbkg7h80iBcKmTHVHHAGPwnY8Cl9Ib8jjCHgQKWSAP3B/cJnGV04fURsna/4V5+MCGk5PzZ/yPNw9ZBOmorJDM1AX53V7L9OYPHvCveGUmZuUclvAg0ghkQFrTJDmMK9bd8zTtdY/JWek3ffZIX1gLbCaNB+nRXEuGn/Th7oPLGQICYvWV5OriFwlfgNSgT4ysTME0O/DI4/UYGIdaRyU9g9bgF0XftJDNEFr/auWUFflQAJcA3aDGhA70h5EdEgFHviIRIdUYKtj4hYRRyKuQB2yCbvheHCrFPcHehM+g20kTuk7ui2idWFvwmc4W5B7Y6SbU4814HytqPqqehy2ydriWxNpO/HV/2Hduqxu8Q1G1UhHGHLfdA2lFtYvWpfhrepEcMsPZBChDr4QBapv0Lrp3FrG3X6UElhzPu8pUEe92PGvdjSLulbzcKDzYP4BALTHSA2KXp8AAAAASUVORK5CYII="></button>
+        </div>
+        <div class="wood"></div>
+      </div>
+    </aside>
+
+  </div>
+</div>
+</body>
+</html>
