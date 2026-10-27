@@ -222,7 +222,7 @@ THEME = gr.themes.Base(
 
 
 def build() -> gr.Blocks:
-    with gr.Blocks(css=CSS, theme=THEME, title="MK-SH-V · visual decisions with a gate") as app:
+    with gr.Blocks(css=CSS + ACP_CSS, theme=THEME, title="MK-SH-V · visual decisions with a gate") as app:
         gr.HTML("<header id='bar'><img src='/gradio_api/file=static/logo-mark.png' alt='MK-SH-V mark: a whale shark over an amber band'>"
                 "<div><h1>MK-SH-V</h1><p>A 260M visual decision model: calibrated probabilities, "
                 "a choice, and a refusal below the gate.</p></div>"

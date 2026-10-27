@@ -39,7 +39,8 @@ HONESTY = ("AMBER SYSTEM: E47 seed 43, E48 policy; every check measured in "
            "the gate is validated on the synthetic protocol (E48).")
 
 DAYS = json.loads((HERE / "days.json").read_text(encoding="utf-8"))["days"]
-ASSETS = "assets"  # served via gr.set_static_paths(demo/game)
+ASSETS = "assets"  # static root: demo/game (gr.set_static_paths)
+FILE = "/gradio_api/file=" + ASSETS  # gradio file route for <img> srcs
 
 _model = None
 _model_lock = threading.Lock()
@@ -235,7 +236,7 @@ def _impression(kind: str, doc_id: str) -> str:
         return ""
     r = random.Random(stable_seed("amber", "stamp", doc_id, kind))
     ir, ix, iy = round(r.uniform(-2, 2), 1), r.randint(-3, 3), r.randint(-3, 3)
-    img = f"{ASSETS}/stamp_{'approve' if kind == 'approve' else 'deny'}_160x96_v7.png"
+    img = f"{FILE}/stamp_{'approve' if kind == 'approve' else 'deny'}_160x96_v7.png"
     return (f"<div class='impression {kind}' style='--ir:{ir}deg;--ix:{ix}px;--iy:{iy}px'>"
             f"<img src='{img}' alt='{kind} stamp impression'></div>")
 
@@ -275,7 +276,7 @@ def _doc_html(s: dict) -> str:
   <section class='doczone' aria-label='Document under inspection'>
     <div class='tray'></div>
     <div class='docwrap'>{tag}
-      <div class='doc tilt-{i % 2}'><img src='{ASSETS}/docs/{d['id']}.png' alt='document {d["id"]}'>{stamp_zone}</div>
+      <div class='doc tilt-{i % 2}'><img src='{FILE}/docs/{d['id']}.png' alt='document {d["id"]}'>{stamp_zone}</div>
     </div>
     {_verdict_note(s)}
   </section>
@@ -341,7 +342,7 @@ def _ledger(s: dict, day: int) -> str:
         mark = h["player"] if h["player"] in ("approve", "deny") else "unstamped"
         cells.append(
             f"<div class='led{' ok' if ok else ' bad'}'>"
-            f"<img src='{ASSETS}/docs/{h['doc']}.png' alt=''>"
+            f"<img src='{FILE}/docs/{h['doc']}.png' alt=''>"
             f"<span class='led-mark'>{mark}</span>"
             f"<span class='led-gold'>gold: {h['gold']}</span></div>")
     return "".join(cells)
@@ -564,7 +565,7 @@ ACP_CSS = """
 }
 """
 
-_LAMP = "--lamp-on:url(assets/lamp_on_16_v3.png);--lamp-off:url(assets/lamp_off_16_v3.png)"
+_LAMP = "--lamp-on:url(/gradio_api/file=assets/lamp_on_16_v3.png);--lamp-off:url(/gradio_api/file=assets/lamp_off_16_v3.png)"
 
 
 def build_tab(model=None):
