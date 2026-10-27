@@ -77,11 +77,11 @@ SCENARIOS = {
         ("inv", {"listed": True}), ("inv", {"listed": True})],
     3: [("inv", {"total": "wide_in", "listed": True}), ("inv", {"total": "wide_over", "listed": True}),
         ("inv", {"total": "wide_in", "listed": True}), ("form", "complete"),
-        ("inv", {"total": "wide_in", "listed": False}), ("inv", {"total": "wide_over", "listed": True}),
+        ("inv", {"total": "wide_in", "listed": False}), ("inv", {"total": 5250.00, "listed": True}),
         ("inv", {"total": "wide_in", "listed": True}), ("form", "missing_required")],
-    4: [("inv", {"total": "fine_in", "listed": True}), ("inv", {"total": "fine_over", "listed": True}),
+    4: [("inv", {"total": "fine_in", "listed": True}), ("inv", {"total": "fine_over", "listed": True, "distract": False}),
         ("inv", {"total": "fine_in", "listed": True}), ("form", "complete"),
-        ("inv", {"total": "fine_over", "listed": True}), ("inv", {"total": "fine_in", "listed": False}),
+        ("inv", {"total": 5115.00, "listed": True}), ("inv", {"total": "fine_in", "listed": False}),
         ("form", "missing_required"), ("wrong",)],
 }
 
@@ -95,16 +95,24 @@ def make_doc(day: int, i: int, scen: tuple, sender: str | None = None) -> dict:
     sc = scen[1] if len(scen) > 1 else {}
     doc = {"id": did, "kind": kind, "image": f"assets/docs/{did}.png"}
     if kind == "inv":
-        total = rng.choice(TOTALS[sc["total"]]) if "total" in sc else rng.choice((312.50, 812.50, 1850.00))
+        # "total" is a TOTALS pool name, or a literal fine-gap value chosen by
+        # measurement (level design inside the validated distribution)
+        total = (sc["total"] if isinstance(sc.get("total"), float)
+                 else rng.choice(TOTALS[sc["total"]]) if "total" in sc
+                 else rng.choice((312.50, 812.50, 1850.00)))
         # the measured hard mode (E38a decisive counterfactuals): a competing
-        # amount printed on the same page, near the cap on day 4
-        gap = "fine" if str(sc.get("total", "")).startswith("fine") else "wide"
-        distractor = round(total + rng.choice((-1, 1)) * rng.uniform(40, 160), 2) if gap == "fine" else None
+        # amount printed on the same page, near the cap on fine gaps. The draw
+        # is always consumed (so frozen docs keep their byte-identical renders)
+        # but only used where the scenario wants the competing amount.
+        gap = "fine" if (isinstance(sc.get("total"), float) or str(sc.get("total", "")).startswith("fine")) else "wide"
+        drawn = round(total + rng.choice((-1, 1)) * rng.uniform(40, 160), 2) if gap == "fine" else None
+        distractor = drawn if (gap == "fine" and sc.get("distract", True)) else None
         content = amount_doc("invoice", total, rng, "en", distractor=distractor)
         if sender is not None:  # assigned by the day plan: unique companies per day
             content = replace(content, sender=sender)
             content = reprice(content, content.total_value, rng)
         doc.update(doc_type="invoice", total=content.total_value, sender=content.sender,
+                   distractor=distractor,
                    listed=sc.get("listed", True), template=f"acp-h0b0f{rng.randrange(2)}",
                    issuer="vel" if rng.random() < 0.7 else "kor")
     elif kind == "form":
@@ -214,7 +222,10 @@ def render_all(campaign: dict) -> dict:
                 if doc["kind"] == "inv":
                     # rebuild, then force the semantic fields the checks read:
                     # the printed sender and total must equal the plan's gold.
-                    content = amount_doc("invoice", doc["total"], rng, "en")
+                    # the near-cap competing amount (doc["distractor"]) is part
+                    # of the measured hard-mode design: it must reach the pixels.
+                    content = amount_doc("invoice", doc["total"], rng, "en",
+                                         distractor=doc.get("distractor"))
                     content = replace(content, sender=doc["sender"])
                     content = reprice(content, doc["total"], rng)
                     html = render_doc(content, doc["template"], theme)
