@@ -83,22 +83,23 @@ def test_full_campaign_state_machine():
             html = game.render_stage(s)
             assert "prob-bar" in html and "tau" in html
             assert "—" not in html and "–" not in html  # no em/en dashes (rubric)
-            assert "assets/docs/d" in html
+            assert "assets/docs/d" in html and "class='window" in html  # the traveler
             s = game.stamp(s, game._doc(s["day"], s["doc_i"])["verdict"])
             docs_seen += 1
             s = game.advance(s)
         assert s["phase"] == "day_end"
-        assert "LEDGER" in game.render_stage(s)
+        assert "BOOTH REPORT" in game.render_stage(s)
         s = game.advance(s)
         if s["phase"] == "intro":
             continue
         break
-    assert s["phase"] == "campaign_end" and docs_seen == 32
+    assert s["phase"] == "campaign_end" and docs_seen == 24
     assert "THE WEEK IN INK" in game.render_stage(s)
     sc = game.day_scores(s, 1)
     assert sc["player_acc"] == 1.0 and sc["model_acc"] == 1.0 and sc["routed"] == 0
-    assert sc["checks"] == 8  # day 1: one type check per document
+    assert sc["checks"] == 6  # day 1: one type check per document
     assert game.advance(s)["phase"] == "intro"  # replay resets to day 1
+    assert s["credits"] >= 0 and s["best_streak"] >= 0
 
 
 def test_wrong_stamp_scores_against_gold():

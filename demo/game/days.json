@@ -22,8 +22,8 @@
     "Meridian Foods",
     "Sierra Logistics",
     "Vela Marine",
-    "Cobalt Systems",
-    "Northwind Traders"
+    "Northwind Traders",
+    "Acme Supplies Ltd"
    ],
    "docs": [
     {
@@ -39,6 +39,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_08_24.png",
+      "name": "FALK W.",
+      "line": "Here. All in order.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "I will be back with better papers."
+     },
      "checks": [
       {
        "id": "d1-1-c1",
@@ -90,6 +97,13 @@
      "issuer": "kor",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_09_24.png",
+      "name": "THALER R.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d1-2-c1",
@@ -139,6 +153,13 @@
       "paper type"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_10_24.png",
+      "name": "EDRIC M.",
+      "line": "Long queue behind me.",
+      "approve_line": "Good day, then.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d1-3-c1",
@@ -190,6 +211,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_11_24.png",
+      "name": "MARLOW T.",
+      "line": "Cold one today, officer.",
+      "approve_line": "Safe roads to you too.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d1-4-c1",
@@ -239,6 +267,13 @@
       "paper type"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_12_24.png",
+      "name": "REZNICK D.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "Safe roads to you too.",
+      "deny_line": "This paper is valid where I come from."
+     },
      "checks": [
       {
        "id": "d1-5-c1",
@@ -290,109 +325,16 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_01_24.png",
+      "name": "OSTER H.",
+      "line": "Long queue behind me.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "There must be a mistake."
+     },
      "checks": [
       {
        "id": "d1-6-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      }
-     ]
-    },
-    {
-     "id": "d1-7",
-     "kind": "wrong",
-     "image": "assets/docs/d1-7.png",
-     "doc_type": "receipt",
-     "template": "acp-h1b0f0",
-     "issuer": "kor",
-     "violations": [
-      "paper type"
-     ],
-     "verdict": "deny",
-     "checks": [
-      {
-       "id": "d1-7-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "receipt",
-       "display": "document type"
-      }
-     ]
-    },
-    {
-     "id": "d1-8",
-     "kind": "inv",
-     "image": "assets/docs/d1-8.png",
-     "doc_type": "invoice",
-     "total": 812.5,
-     "sender": "Cobalt Systems",
-     "distractor": null,
-     "listed": true,
-     "template": "acp-h0b0f1",
-     "issuer": "vel",
-     "violations": [],
-     "verdict": "approve",
-     "checks": [
-      {
-       "id": "d1-8-c1",
        "kind": "type",
        "family": "doc_type",
        "state": "Scanned document page.",
@@ -453,9 +395,9 @@
    "manifest": [
     "Orion Print GmbH",
     "Northwind Traders",
-    "Sierra Logistics",
     "Acme Supplies Ltd",
     "Baltic Parts OY",
+    "Sierra Logistics",
     "Meridian Foods"
    ],
    "docs": [
@@ -472,6 +414,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_02_24.png",
+      "name": "FALK W.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "The bureau told me it was enough!"
+     },
      "checks": [
       {
        "id": "d2-1-c1",
@@ -517,7 +466,7 @@
        "options": [
         {
          "id": "g0",
-         "description": "Sierra Logistics"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g1",
@@ -525,7 +474,7 @@
         },
         {
          "id": "g2",
-         "description": "Acme Supplies Ltd"
+         "description": "Baltic Parts OY"
         },
         {
          "id": "g3",
@@ -533,7 +482,7 @@
         },
         {
          "id": "g4",
-         "description": "Baltic Parts OY"
+         "description": "Sierra Logistics"
         }
        ],
        "gold": "g1",
@@ -552,6 +501,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_03_24.png",
+      "name": "FALK W.",
+      "line": "Morning. Business papers.",
+      "approve_line": "Good day, then.",
+      "deny_line": "I will be back with better papers."
+     },
      "checks": [
       {
        "id": "d2-2-c1",
@@ -628,6 +584,13 @@
       "not on manifest"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_04_24.png",
+      "name": "EDRIC M.",
+      "line": "I have a permit number, if it helps.",
+      "approve_line": "Good day, then.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d2-3-c1",
@@ -681,11 +644,11 @@
         },
         {
          "id": "g2",
-         "description": "Acme Supplies Ltd"
+         "description": "Baltic Parts OY"
         },
         {
          "id": "g3",
-         "description": "Sierra Logistics"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g4",
@@ -710,6 +673,13 @@
       "incomplete form"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_05_24.png",
+      "name": "GRIMM A.",
+      "line": "Here. All in order.",
+      "approve_line": "Safe roads to you too.",
+      "deny_line": "There must be a mistake."
+     },
      "checks": [
       {
        "id": "d2-4-c1",
@@ -784,6 +754,13 @@
      "issuer": "kor",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_06_24.png",
+      "name": "REZNICK D.",
+      "line": "I have a permit number, if it helps.",
+      "approve_line": "Safe roads to you too.",
+      "deny_line": "There must be a mistake."
+     },
      "checks": [
       {
        "id": "d2-5-c1",
@@ -837,15 +814,15 @@
         },
         {
          "id": "g2",
-         "description": "Acme Supplies Ltd"
+         "description": "Baltic Parts OY"
         },
         {
          "id": "g3",
-         "description": "Sierra Logistics"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g4",
-         "description": "Baltic Parts OY"
+         "description": "Sierra Logistics"
         }
        ],
        "gold": "g1",
@@ -864,6 +841,13 @@
       "paper type"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_07_24.png",
+      "name": "LINHARD P.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "Thank you, officer.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d2-6-c1",
@@ -901,170 +885,6 @@
        "display": "document type"
       }
      ]
-    },
-    {
-     "id": "d2-7",
-     "kind": "inv",
-     "image": "assets/docs/d2-7.png",
-     "doc_type": "invoice",
-     "total": 812.5,
-     "sender": "Sierra Logistics",
-     "distractor": null,
-     "listed": true,
-     "template": "acp-h0b0f0",
-     "issuer": "vel",
-     "violations": [],
-     "verdict": "approve",
-     "checks": [
-      {
-       "id": "d2-7-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
-      {
-       "id": "d2-7-c2",
-       "kind": "manifest",
-       "family": "source_conflict",
-       "state": "Scanned document page.",
-       "question": "Which company is named as the sender on this document?",
-       "options": [
-        {
-         "id": "g0",
-         "description": "Northwind Traders"
-        },
-        {
-         "id": "g1",
-         "description": "Baltic Parts OY"
-        },
-        {
-         "id": "g2",
-         "description": "Acme Supplies Ltd"
-        },
-        {
-         "id": "g3",
-         "description": "Sierra Logistics"
-        },
-        {
-         "id": "g4",
-         "description": "Orion Print GmbH"
-        }
-       ],
-       "gold": "g3",
-       "display": "sender on manifest"
-      }
-     ]
-    },
-    {
-     "id": "d2-8",
-     "kind": "inv",
-     "image": "assets/docs/d2-8.png",
-     "doc_type": "invoice",
-     "total": 812.5,
-     "sender": "Acme Supplies Ltd",
-     "distractor": null,
-     "listed": true,
-     "template": "acp-h0b0f1",
-     "issuer": "vel",
-     "violations": [],
-     "verdict": "approve",
-     "checks": [
-      {
-       "id": "d2-8-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
-      {
-       "id": "d2-8-c2",
-       "kind": "manifest",
-       "family": "source_conflict",
-       "state": "Scanned document page.",
-       "question": "Which company is named as the sender on this document?",
-       "options": [
-        {
-         "id": "g0",
-         "description": "Orion Print GmbH"
-        },
-        {
-         "id": "g1",
-         "description": "Northwind Traders"
-        },
-        {
-         "id": "g2",
-         "description": "Baltic Parts OY"
-        },
-        {
-         "id": "g3",
-         "description": "Sierra Logistics"
-        },
-        {
-         "id": "g4",
-         "description": "Acme Supplies Ltd"
-        }
-       ],
-       "gold": "g4",
-       "display": "sender on manifest"
-      }
-     ]
     }
    ]
   },
@@ -1098,8 +918,8 @@
     "Northwind Traders",
     "Sierra Logistics",
     "Orion Print GmbH",
-    "Vela Marine",
-    "Acme Supplies Ltd"
+    "Acme Supplies Ltd",
+    "Cobalt Systems"
    ],
    "docs": [
     {
@@ -1115,6 +935,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_08_24.png",
+      "name": "BRANDT O.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d3-1-c1",
@@ -1164,7 +991,7 @@
         },
         {
          "id": "g1",
-         "description": "Vela Marine"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g2",
@@ -1218,6 +1045,13 @@
       "over the cap"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_09_24.png",
+      "name": "VOSS K.",
+      "line": "Third crossing this month.",
+      "approve_line": "About time.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d3-2-c1",
@@ -1263,7 +1097,7 @@
        "options": [
         {
          "id": "g0",
-         "description": "Vela Marine"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g1",
@@ -1319,6 +1153,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_10_24.png",
+      "name": "REZNICK D.",
+      "line": "Cold one today, officer.",
+      "approve_line": "Good day, then.",
+      "deny_line": "The bureau told me it was enough!"
+     },
      "checks": [
       {
        "id": "d3-3-c1",
@@ -1364,7 +1205,7 @@
        "options": [
         {
          "id": "g0",
-         "description": "Vela Marine"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g1",
@@ -1418,6 +1259,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_11_24.png",
+      "name": "BRANDT O.",
+      "line": "Invoice and permit, like the chancellery said.",
+      "approve_line": "About time.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d3-4-c1",
@@ -1494,6 +1342,13 @@
       "not on manifest"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_12_24.png",
+      "name": "FALK W.",
+      "line": "Invoice and permit, like the chancellery said.",
+      "approve_line": "Safe roads to you too.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d3-5-c1",
@@ -1597,6 +1452,13 @@
       "over the cap"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_01_24.png",
+      "name": "VOSS K.",
+      "line": "Long queue behind me.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d3-6-c1",
@@ -1650,7 +1512,7 @@
         },
         {
          "id": "g2",
-         "description": "Vela Marine"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g3",
@@ -1682,181 +1544,6 @@
        ],
        "gold": "true",
        "display": "within the 5,000.00 VEL cap"
-      }
-     ]
-    },
-    {
-     "id": "d3-7",
-     "kind": "inv",
-     "image": "assets/docs/d3-7.png",
-     "doc_type": "invoice",
-     "total": 312.5,
-     "sender": "Vela Marine",
-     "distractor": null,
-     "listed": true,
-     "template": "acp-h0b0f1",
-     "issuer": "vel",
-     "violations": [],
-     "verdict": "approve",
-     "checks": [
-      {
-       "id": "d3-7-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
-      {
-       "id": "d3-7-c2",
-       "kind": "manifest",
-       "family": "source_conflict",
-       "state": "Scanned document page.",
-       "question": "Which company is named as the sender on this document?",
-       "options": [
-        {
-         "id": "g0",
-         "description": "Orion Print GmbH"
-        },
-        {
-         "id": "g1",
-         "description": "Meridian Foods"
-        },
-        {
-         "id": "g2",
-         "description": "Vela Marine"
-        },
-        {
-         "id": "g3",
-         "description": "Northwind Traders"
-        },
-        {
-         "id": "g4",
-         "description": "Sierra Logistics"
-        }
-       ],
-       "gold": "g2",
-       "display": "sender on manifest"
-      },
-      {
-       "id": "d3-7-c3",
-       "kind": "amount",
-       "family": "field_threshold",
-       "state": "Scanned document page.",
-       "question": "Is the total on this document at least 5,000.00 VEL?",
-       "options": [
-        {
-         "id": "false",
-         "description": "No"
-        },
-        {
-         "id": "true",
-         "description": "Yes"
-        }
-       ],
-       "gold": "false",
-       "display": "within the 5,000.00 VEL cap"
-      }
-     ]
-    },
-    {
-     "id": "d3-8",
-     "kind": "form",
-     "image": "assets/docs/d3-8.png",
-     "doc_type": "form",
-     "form_label": "missing_required",
-     "form_title": "REQUEST FORM",
-     "template": "acp-h0b1f0",
-     "issuer": "vel",
-     "violations": [
-      "incomplete form"
-     ],
-     "verdict": "deny",
-     "checks": [
-      {
-       "id": "d3-8-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "form",
-       "display": "document type"
-      },
-      {
-       "id": "d3-8-c2",
-       "kind": "form",
-       "family": "form_complete",
-       "state": "Scanned document page.",
-       "question": "Is this form complete? Required fields are marked with *.",
-       "options": [
-        {
-         "id": "complete",
-         "description": "Complete: every required field is filled in and readable."
-        },
-        {
-         "id": "missing_required",
-         "description": "A required field is empty."
-        },
-        {
-         "id": "illegible",
-         "description": "Every required field is filled in, but at least one required value cannot be read."
-        }
-       ],
-       "gold": "missing_required",
-       "display": "form complete"
       }
      ]
     }
@@ -1914,6 +1601,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_02_24.png",
+      "name": "BRANDT O.",
+      "line": "Invoice and permit, like the chancellery said.",
+      "approve_line": "Good day, then.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d4-1-c1",
@@ -2017,6 +1711,13 @@
       "over the cap"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_03_24.png",
+      "name": "KESSLER B.",
+      "line": "Invoice and permit, like the chancellery said.",
+      "approve_line": "Thank you, officer.",
+      "deny_line": "The bureau told me it was enough!"
+     },
      "checks": [
       {
        "id": "d4-2-c1",
@@ -2118,6 +1819,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_04_24.png",
+      "name": "BRANDT O.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "The goods will move tonight.",
+      "deny_line": "The bureau told me it was enough!"
+     },
      "checks": [
       {
        "id": "d4-3-c1",
@@ -2217,6 +1925,13 @@
      "issuer": "vel",
      "violations": [],
      "verdict": "approve",
+     "traveler": {
+      "bust": "assets/busts/traveler_05_24.png",
+      "name": "GRIMM A.",
+      "line": "Morning. Business papers.",
+      "approve_line": "About time.",
+      "deny_line": "The bureau told me it was enough!"
+     },
      "checks": [
       {
        "id": "d4-4-c1",
@@ -2293,6 +2008,13 @@
       "over the cap"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_06_24.png",
+      "name": "LINHARD P.",
+      "line": "Third crossing this month.",
+      "approve_line": "Good day, then.",
+      "deny_line": "You are making a serious mistake, officer."
+     },
      "checks": [
       {
        "id": "d4-5-c1",
@@ -2396,6 +2118,13 @@
       "not on manifest"
      ],
      "verdict": "deny",
+     "traveler": {
+      "bust": "assets/busts/traveler_07_24.png",
+      "name": "THALER R.",
+      "line": "The truck is waiting outside.",
+      "approve_line": "Thank you, officer.",
+      "deny_line": "I will be back with better papers."
+     },
      "checks": [
       {
        "id": "d4-6-c1",
@@ -2483,135 +2212,12 @@
        "display": "within the 5,000.00 VEL cap"
       }
      ]
-    },
-    {
-     "id": "d4-7",
-     "kind": "form",
-     "image": "assets/docs/d4-7.png",
-     "doc_type": "form",
-     "form_label": "missing_required",
-     "form_title": "REQUEST FORM",
-     "template": "acp-h1b1f0",
-     "issuer": "vel",
-     "violations": [
-      "incomplete form"
-     ],
-     "verdict": "deny",
-     "checks": [
-      {
-       "id": "d4-7-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "form",
-       "display": "document type"
-      },
-      {
-       "id": "d4-7-c2",
-       "kind": "form",
-       "family": "form_complete",
-       "state": "Scanned document page.",
-       "question": "Is this form complete? Required fields are marked with *.",
-       "options": [
-        {
-         "id": "complete",
-         "description": "Complete: every required field is filled in and readable."
-        },
-        {
-         "id": "missing_required",
-         "description": "A required field is empty."
-        },
-        {
-         "id": "illegible",
-         "description": "Every required field is filled in, but at least one required value cannot be read."
-        }
-       ],
-       "gold": "missing_required",
-       "display": "form complete"
-      }
-     ]
-    },
-    {
-     "id": "d4-8",
-     "kind": "wrong",
-     "image": "assets/docs/d4-8.png",
-     "doc_type": "letter",
-     "template": "acp-h1b0f0",
-     "issuer": "kor",
-     "violations": [
-      "paper type"
-     ],
-     "verdict": "deny",
-     "checks": [
-      {
-       "id": "d4-8-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "letter",
-       "display": "document type"
-      }
-     ]
     }
    ]
   }
  ],
  "generator": {
-  "commit": "5544e5cdd51b2957b69864d7ffabeb5a0891a845",
+  "commit": "671e1a9467b1753283a55afcb857756ae57c61aa",
   "fonts_sha256": {
    "IBMPlexMono-Regular.ttf": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
    "IBMPlexMono-SemiBold.ttf": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
@@ -2625,32 +2231,24 @@
    "assets/docs/d1-4.png": "138840718c0728e000516ff2f2e8989075f433bdde7d3aef1d54ddcaad8e7a9e",
    "assets/docs/d1-5.png": "6766073d5aee2ac2c8b287375124da9af7a96346d1666bbefc262861747a7f94",
    "assets/docs/d1-6.png": "b5e5aa960a6b19c5b42e37397914a34ab2b10a256ea5f3e141c3afda134d06a1",
-   "assets/docs/d1-7.png": "85e3c063b20ee2b2c4d6a3b17782d0db1c73d567323c4a5b4b5d04e39441624f",
-   "assets/docs/d1-8.png": "ec498f18b8e039dcd874f980626c974ba6e2ed2669a4ac7a6806c5c6d03a3de3",
    "assets/docs/d2-1.png": "8b431ec915477515c2e27f51dbba179d6af02c835ccede179e49774c3585d406",
    "assets/docs/d2-2.png": "dee4d848db721c533d7843f75bc127041b6bf2c8c8e97dcd44b0bdc37d0705e9",
    "assets/docs/d2-3.png": "837b290ea045659d025cbe0afa61e109ab095fe9069a8d4f23d703fe38a86f7f",
    "assets/docs/d2-4.png": "25c84164129715a8ba419c365036e04e206f90f5e04e2ba8926cb1c6403ba929",
    "assets/docs/d2-5.png": "66cca99db76bf7c07ae46f22523204383c07a2685042f8c47b79ff446f987f91",
    "assets/docs/d2-6.png": "be4e1bb9156f031d0e63ac04f4fa86317af912e3efb6d81d5de2431f0065fdbc",
-   "assets/docs/d2-7.png": "f58ca3217f5f5570a89cc2e408762639e216e9454c63d6afcfc76882392155ee",
-   "assets/docs/d2-8.png": "07b11af44436a05aa0c5cb2bfcac99472a028e5fc68625a5f472560d6ddd121c",
    "assets/docs/d3-1.png": "2511e45739324bdadce67dfecb150a5058f3c39f4c9008d625ee419078db2d46",
    "assets/docs/d3-2.png": "d1ed69e89b4bd825adfbdc87c12613f3a9208fb1df5fd51bdffb733c6d67660f",
    "assets/docs/d3-3.png": "bea457e7647acbc97d5938b8728324e81e2f1dc44efe6c4a41587ab487e8a71c",
    "assets/docs/d3-4.png": "1e42192beb4ecfd2906f66868d149cfc683520163370da2f848f7ca02e8f5739",
    "assets/docs/d3-5.png": "bac4a04a05fa3477a6a8af70533369a9bcac3c12ac1a8847684a042a83cb2931",
    "assets/docs/d3-6.png": "8c6b482309db6a3f9b9910735a2f52d952acea2560f7cf967803f060c83dfae9",
-   "assets/docs/d3-7.png": "afbb69401f628f16d793f47003c212038728716c8a4208707ebb0fcc121fe861",
-   "assets/docs/d3-8.png": "9673da47b5009b79e5e048f990287c6cd0d5c7a8fb9482064b8c424ea647cbfd",
    "assets/docs/d4-1.png": "a359c86d0f8892152935ae5ce49dc7a16b0ccc27539eafd9482e2b2c4103cdf3",
    "assets/docs/d4-2.png": "a9cf2f34778843c56a33398a616602dafe836553ac3f58b177beb9d33c3882cb",
    "assets/docs/d4-3.png": "5ba8913be4b2362e52a2beaa12c873230eeca8e0161f1a3eebc25814ff835760",
    "assets/docs/d4-4.png": "f7ac2cf8e88c366f8b10f9b26e2a2f2841916b19e67cea75889d6901d5fbc4d6",
    "assets/docs/d4-5.png": "dac9566af1bb4003dd4902ce0388c268b92578dea7229399b7cce621431b40fa",
-   "assets/docs/d4-6.png": "15f048cb0f02589e53e43c2374dcf8b14f09aff685c44969c26d4820a066c9a7",
-   "assets/docs/d4-7.png": "3c44f04611f5be8672a11b78ec6c4cc49c4c34b5474e1170e06f695bbf1593d6",
-   "assets/docs/d4-8.png": "e07b3f26a5ca8fb7f8c381486594f238ef05b3dac7fac758cac68d4b424ce272"
+   "assets/docs/d4-6.png": "15f048cb0f02589e53e43c2374dcf8b14f09aff685c44969c26d4820a066c9a7"
   }
  }
 }

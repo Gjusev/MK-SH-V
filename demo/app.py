@@ -43,7 +43,7 @@ FIGURE = (HERE / "figure" / "decision-gate.html").read_text(encoding="utf-8")
 
 from game import ACP_CSS, build_tab  # noqa: E402  (the playable Amber Checkpoint tab)
 
-GAME_FONTS = ("<link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Special+Elite&display=swap'>")
+GAME_FONTS = ("<link rel='stylesheet' href='https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;600&family=Special+Elite&display=swap'>" + "<style>@media (max-width:480px){html,body{overflow-x:hidden !important;max-width:100vw !important}}</style>")
 
 EXAMPLES_DIR = HERE / "examples"
 # The case set: train-split images picked by assets/src/pick_demo_cases.py and run
@@ -204,6 +204,7 @@ footer { display: none !important; }
 #decision .tau-key { color:var(--acc) !important; }
 #meta, #meta p { color:var(--pale) !important; font-size:12.5px; margin-top:6px; }
 @media (max-width: 480px) { /* the game tab's phone gate: keep the shared header inside 390px */
+  html, body { overflow-x: hidden !important; max-width: 100vw !important; }
   #bar { grid-template-columns: auto 1fr; gap: 10px 14px; }
   #bar img { width: 42px; height: 42px; }
   #bar h1 { font-size: 19px; }

@@ -67,23 +67,54 @@ FORM_OPTIONS = [{"id": i, "description": d} for i, d in
                 zip(("complete", "missing_required", "illegible"), OPTION_TEXT["form_complete"]["en"])]
 TF_OPTIONS = [{"id": "false", "description": "No"}, {"id": "true", "description": "Yes"}]
 
-# (kind, scenario) per day. kind: inv=invoice declaration, form=declaration
+# (kind, scenario) per day, six documents each (v2.1 game design: fewer cases,
+# a day is a shorter shift). kind: inv=invoice declaration, form=declaration
 # form, wrong=private paper (receipt/letter). listed: sender on the manifest.
+# Slots 1-6 keep the five audited/sub-tau documents byte-identical
+# (d2-3, d2-4, d4-2, d3-6, d4-5); the dropped 7th/8th slots were never audited.
 SCENARIOS = {
-    1: [("inv", {}), ("inv", {}), ("wrong",), ("inv", {}), ("wrong",), ("inv", {}),
-        ("wrong",), ("inv", {})],
+    1: [("inv", {}), ("inv", {}), ("wrong",), ("inv", {}), ("wrong",), ("inv", {})],
     2: [("inv", {"listed": True}), ("form", "complete"), ("inv", {"listed": False}),
-        ("form", "missing_required"), ("inv", {"listed": True}), ("wrong",),
-        ("inv", {"listed": True}), ("inv", {"listed": True})],
+        ("form", "missing_required"), ("inv", {"listed": True}), ("wrong",)],
     3: [("inv", {"total": "wide_in", "listed": True}), ("inv", {"total": "wide_over", "listed": True}),
         ("inv", {"total": "wide_in", "listed": True}), ("form", "complete"),
-        ("inv", {"total": "wide_in", "listed": False}), ("inv", {"total": 5250.00, "listed": True}),
-        ("inv", {"total": "wide_in", "listed": True}), ("form", "missing_required")],
+        ("inv", {"total": "wide_in", "listed": False}), ("inv", {"total": 5250.00, "listed": True})],
     4: [("inv", {"total": "fine_in", "listed": True}), ("inv", {"total": "fine_over", "listed": True, "distract": False}),
         ("inv", {"total": "fine_in", "listed": True}), ("form", "complete"),
-        ("inv", {"total": 5115.00, "listed": True}), ("inv", {"total": "fine_in", "listed": False}),
-        ("form", "missing_required"), ("wrong",)],
+        ("inv", {"total": 5115.00, "listed": True}), ("inv", {"total": "fine_in", "listed": False})],
 }
+
+ASSETS_REF = "assets"
+
+# The window finally has people. Flavor only: names and lines never enter any
+# model input (the measured checks stay document-based, as frozen).
+TRAVELER_LINES = {
+    "arrival": ("Morning. Business papers.", "Here. All in order.", "Cold one today, officer.",
+                "The truck is waiting outside.", "Third crossing this month.",
+                "Invoice and permit, like the chancellery said.", "Long queue behind me.",
+                "I have a permit number, if it helps."),
+    "approve": ("Good day, then.", "About time.", "Thank you, officer.",
+                "Safe roads to you too.", "The goods will move tonight."),
+    "deny": ("There must be a mistake.", "This paper is valid where I come from.",
+             "I will be back with better papers.", "The bureau told me it was enough!",
+             "You are making a serious mistake, officer."),
+}
+NAMES = ("VOSS K.", "EDRIC M.", "GRIMM A.", "MARLOW T.", "KESSLER B.", "BRANDT O.",
+         "THALER R.", "REZNICK D.", "OSTER H.", "LINHARD P.", "FALK W.", "JUNOT L.")
+BUSTS = [f"traveler_{n:02d}_24.png" for n in range(1, 13)]
+
+
+def traveler_for(day: int, i: int) -> dict:
+    rng = random.Random(stable_seed("amber", "v2", "traveler", day, i))
+    bust = BUSTS[(day * 6 + i) % len(BUSTS)]
+    return {"bust": f"{ASSETS_REF}/busts/{bust}",
+            "name": rng.choice(NAMES),
+            "line": rng.choice(TRAVELER_LINES["arrival"]),
+            "approve_line": rng.choice(TRAVELER_LINES["approve"]),
+            "deny_line": rng.choice(TRAVELER_LINES["deny"])}
+
+
+ASSETS_REF = "assets"
 
 TOTALS = {"wide_in": WIDE_IN, "wide_over": WIDE_OVER, "fine_in": FINE_IN, "fine_over": FINE_OVER}
 
@@ -185,6 +216,8 @@ def plan() -> dict:
         it = iter(senders)
         docs = [make_doc(day, i + 1, sc, sender=next(it) if sc[0] == "inv" else None)
                 for i, sc in enumerate(SCENARIOS[day])]
+        for i, d in enumerate(docs, 1):
+            d["traveler"] = traveler_for(day, i)
         listed = [d["sender"] for d in docs if d["kind"] == "inv" and d["listed"]]
         fillers = [c for c in COMPANIES if c not in set(senders)]
         manifest = list(dict.fromkeys(listed + fillers))[:6]

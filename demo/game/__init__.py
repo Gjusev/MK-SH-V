@@ -119,8 +119,29 @@ def _doc_image(day: int, i: int):
 
 
 # ------------------------------------------------------------------ session ---
+# The shift clock starts at 08:00; each document advances it 35 minutes.
+SHIFT_START_MIN, MIN_PER_DOC = 8 * 60, 35
+
+
+def shift_clock(s: dict) -> str:
+    m = SHIFT_START_MIN + s["doc_i"] * MIN_PER_DOC + (0 if s["stamped"] is None else MIN_PER_DOC)
+    return f"{m // 60 % 24:02d}:{m % 60:02d}"
+
+
 def new_session() -> dict:
-    return {"phase": "intro", "day": 1, "doc_i": 0, "stamped": None, "history": []}
+    return {"phase": "intro", "day": 1, "doc_i": 0, "stamped": None, "history": [],
+            "streak": 0, "best_streak": 0, "credits": 0}
+
+
+def _score_call(s: dict, player: str, gold: str) -> None:
+    """Booth ledger: +5 a correct call, -10 a wrong one, -5 shirking unstamped."""
+    if player == gold:
+        s["streak"] += 1
+        s["best_streak"] = max(s["best_streak"], s["streak"])
+        s["credits"] += 5
+    else:
+        s["streak"] = 0
+        s["credits"] = max(0, s["credits"] - (10 if player in ("approve", "deny") else 5))
 
 
 def _doc(day_i: int, doc_i: int) -> dict:
@@ -153,6 +174,7 @@ def stamp(s: dict, kind: str) -> dict:
         d = _doc(s["day"], s["doc_i"])
         s["history"].append({"day": s["day"], "doc": d["id"], "player": kind, "gold": d["verdict"],
                              "violations": d["violations"]})
+        _score_call(s, kind, d["verdict"])
     return s
 
 
@@ -162,6 +184,7 @@ def file_unstamped(s: dict) -> dict:
         d = _doc(s["day"], s["doc_i"])
         s["history"].append({"day": s["day"], "doc": d["id"], "player": "unstamped",
                              "gold": d["verdict"], "violations": d["violations"]})
+        _score_call(s, "unstamped", d["verdict"])
     return s
 
 
@@ -181,6 +204,8 @@ def advance(s: dict) -> dict:
                 _prefetch(_doc_image(s["day"], nxt), _checks(s["day"], nxt))
         else:
             s["phase"] = "day_end"
+            if all(h["player"] == h["gold"] for h in s["history"] if h["day"] == s["day"]):
+                s["credits"] += 10  # clean-shift bonus
     elif s["phase"] == "day_end":
         if s["day"] < len(DAYS):
             s["day"] += 1
@@ -218,16 +243,22 @@ def render_stage(s: dict) -> str:
     return _campaign_end_html(s)
 
 
-def _board_html(day: int) -> str:
+def _board_html(day: int, s: dict | None = None) -> str:
     d = DAYS[day - 1]
     last = len(SLIPS_OF[day])
     slips = "".join(
         f"<div class='slip{' today' if i == last - 1 else ''}'><h3>{escape(t)}</h3>"
         f"<p>{escape(x)}</p><span class='d'>{escape(p)}</span></div>"
         for i, (t, x, p) in enumerate(SLIPS_OF[day]))
+    hud = ""
+    if s is not None:
+        hud = (f"<div class='hud'><span class='hud-credits'>{s['credits']} CR</span>"
+               f"<span class='hud-streak{' hot' if s['streak'] >= 3 else ''}'>"
+               f"STREAK {s['streak']}</span>"
+               f"<span class='hud-clock'>{shift_clock(s)}</span></div>")
     return (f"<section class='board' aria-label='Rule board'><div class='board-head'>"
             f"<div class='day-banner'>DAY {day}<small>Rules of entry</small></div>"
-            f"<div class='datestamp'>{d['date'].replace(' 19', '<br>19')}</div></div>"
+            f"<div class='datestamp'>{d['date'].replace(' 19', '<br>19')}{hud}</div></div>"
             f"<div class='slips'>{slips}</div></section>")
 
 
@@ -273,10 +304,25 @@ def _doc_html(s: dict) -> str:
            + " · ROUTED TO YOU</p></div></div>") if any_routed else ""
     stamp_zone = (_impression(s["stamped"], d["id"]) if s["stamped"] in ("approve", "deny")
                   else "<div class='stampzone'>ADJUDICATION AREA</div>")
+    t = d["traveler"]
+    if s["stamped"] == "approve":
+        line, mood = t["approve_line"], "leave"
+    elif s["stamped"] == "deny":
+        line, mood = t["deny_line"], "object"
+    elif s["stamped"] == "unstamped":
+        line, mood = "(The traveler does not move.)", "wait"
+    else:
+        line, mood = t["line"], ""
+    window = (f"<div class='window {mood}' aria-label='traveler at the window'>"
+              f"<img class='bust' src='{FILE}/busts/{t['bust'].rsplit('/', 1)[-1]}' "
+              f"alt='traveler portrait' width='48' height='48'>"
+              f"<div class='speech'><b>{escape(t['name'])}</b>"
+              f"<span>{escape(line)}</span></div></div>")
     return f"""
-{_board_html(day)}
+{_board_html(day, s)}
 <div class='main'>
   <section class='doczone' aria-label='Document under inspection'>
+    {window}
     <div class='tray'></div>
     <div class='docwrap'>{tag}
       <div class='doc tilt-{i % 2}'><img src='{FILE}/docs/{d['id']}.png' alt='document {d["id"]}'>{stamp_zone}</div>
@@ -323,15 +369,16 @@ def _intro_html(s: dict) -> str:
     sub = ("The week begins. You hold the stamps; the machine holds the probabilities."
            if first else "The board grows. The rules of every prior day still apply.")
     return f"""
-{_board_html(day)}
+{_board_html(day, s)}
 <div class='main intro'>
   <section class='introcard'>
     <div class='i-kicker'>REPUBLIC OF VELDANIA · BORDER BUREAU · BOOTH 04</div>
     <h1>{head}</h1>
     <p class='i-sub'>{sub}</p>
-    <p class='i-body'>Eight documents reach your desk today. AMBER SYSTEM prints one probability
+    <p class='i-body'>Six travelers reach your window today. AMBER SYSTEM prints one probability
       line per check; below the gate tau {TAU:g} it refuses to advise and the case is routed to you.
-      Your stamp is the decision of record.</p>
+      Your stamp is the decision of record. Correct calls pay 5 credits; wrong ones cost 10;
+      a clean shift pays a bonus of 10.</p>
     <p class='i-foot'>{escape(HONESTY)}</p>
   </section>
 </div>"""
@@ -363,13 +410,16 @@ def _scores_html(sc: dict) -> str:
 def _day_end_html(s: dict) -> str:
     day = s["day"]
     sc = day_scores(s, day)
+    clean = all(h["player"] == h["gold"] for h in s["history"] if h["day"] == day)
+    bonus = "<span class='bonus'>CLEAN SHIFT · +10 CR</span>" if clean else ""
     return f"""
-{_board_html(day)}
+{_board_html(day, s)}
 <div class='main'>
   <section class='endscreen'>
-    <div class='i-kicker'>END OF DAY · {escape(DAYS[day - 1]['date'])}</div>
-    <h1>DAY {day} LEDGER</h1>
+    <div class='i-kicker'>END OF SHIFT · {escape(DAYS[day - 1]['date'])}</div>
+    <h1>DAY {day} BOOTH REPORT</h1>
     {_scores_html(sc)}
+    <div class='wages'><span>{s['credits']} CR</span><span>streak best {s['best_streak']}</span>{bonus}</div>
     <div class='ledger'>{_ledger(s, day)}</div>
     <p class='i-foot'>{escape(HONESTY)}</p>
   </section>
@@ -389,12 +439,13 @@ def _campaign_end_html(s: dict) -> str:
     total = {k: round(v / n, 3) for k, v in total.items()}
     sc = {**total, "routed": routed, "checks": checks}
     return f"""
-{_board_html(n)}
+{_board_html(n, s)}
 <div class='main'>
   <section class='endscreen'>
     <div class='i-kicker'>END OF CAMPAIGN · BOOTH 04 CLOSED</div>
     <h1>THE WEEK IN INK</h1>
     {_scores_html(sc)}
+    <div class='wages'><span>{s['credits']} CR</span><span>streak best {s['best_streak']}</span></div>
     <p class='i-note'>You played inside the model's validated distribution: {checks} checks,
       every one a measured capability of the released checkpoint.</p>
     <p class='i-foot'>{escape(HONESTY)}</p>
@@ -552,21 +603,67 @@ ACP_CSS = """
 .acp-root .acp-advance:hover{background:var(--track)}
 
 @media (max-width:820px){
- /* the gradio block around the game adds ~38px of padding at phone widths;
-    slim it so the booth, not the shell, owns the viewport */
+ /* the gradio block around the game adds fixed padding at phone widths;
+    slim it so the booth, not the shell, owns the viewport (layout rules in
+    the PHONE FIRST block below) */
  .form:has(>.acp-root),.block:has(.acp-root),.wrap:has(.acp-root){padding-left:6px !important;padding-right:6px !important}
  .app:has(.acp-root),.fillable:has(.acp-root){padding:0 !important}
  .contain:has(.acp-root){padding:0 !important;border:none !important}
+ .wrap:has(.acp-root){padding:0 !important;margin:0 !important}
+ .gradio-container:has(.acp-root){padding:0 6px !important}
+ .fillable:has(.acp-root){max-width:100vw !important;overflow-x:hidden !important}
+ .gradio-container:has(.acp-root){max-width:100vw !important;overflow-x:hidden !important}
+ .column:has(.acp-root){padding:0 !important;gap:0 !important}
+ .tabs:has(.acp-root){max-width:100% !important;overflow-x:hidden !important}
+ .acp-root{margin:0 -6px}
+}
+/* TRAVELER WINDOW (Papers-Please soul, ours): bust + speech at the glass */
+.acp-root .window{display:flex;align-items:center;gap:12px;background:var(--kraft);border-radius:6px;
+ padding:8px 14px;box-shadow:3px 3px 0 rgba(0,0,0,.28);max-width:472px;position:relative;z-index:4}
+.acp-root .window .bust{width:48px;height:48px;image-rendering:pixelated;flex:none;
+ background:#E6D8B9;border:2px solid var(--ink);box-shadow:2px 2px 0 rgba(0,0,0,.2)}
+.acp-root .speech b{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;
+ letter-spacing:1px;color:var(--muted)}
+.acp-root .speech span{font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--ink)}
+.acp-root .window.object .speech span{color:var(--deny)}
+.acp-root .window.leave .speech span{color:var(--approve)}
+/* HUD: credits, streak, shift clock, under the date stamp */
+.acp-root .hud{display:flex;flex-direction:column;gap:1px;font-family:'IBM Plex Mono',monospace;
+ font-size:10.5px;font-weight:600;letter-spacing:1px;margin-top:6px}
+.acp-root .hud-credits{color:var(--ink)}
+.acp-root .hud-streak{color:var(--muted)}
+.acp-root .hud-streak.hot{color:var(--amberink)}
+.acp-root .hud-clock{color:var(--muted)}
+/* wages line on the report screens */
+.acp-root .wages{display:flex;gap:18px;align-items:center;font-family:'IBM Plex Mono',monospace;
+ font-size:15px;font-weight:600;color:var(--ink);margin:0 0 10px}
+.acp-root .wages .bonus{color:var(--approve);font-size:12px;letter-spacing:1px}
+
+/* PHONE FIRST (390): the booth stacks vertically, the desk never leaves the thumb */
+@media (max-width:820px){
  .acp-root .main{flex-direction:column}
  .acp-root .right{width:100%;max-width:100%}
  .acp-root .board{height:auto;flex-wrap:wrap}
- .acp-root .slips{flex-wrap:wrap}
- .acp-root .slip{flex:1 1 150px}
+ .acp-root .board-head{width:100%;flex-direction:row;justify-content:space-between;align-items:flex-start}
+ .acp-root .datestamp{display:none}
+ .acp-root .hud{flex-direction:row;gap:12px;margin-top:2px}
+ .acp-root .slips{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
+ .acp-root .slip{flex:0 0 168px}
+ .acp-root .window{order:0;width:100%;max-width:100%}
  .acp-root .tray{display:none}
- .acp-root .ledger{grid-template-columns:repeat(2,1fr)}
- .acp-root .desk{gap:16px}
- .acp-root .acp-stamp img{width:120px;height:72px}
+ .acp-root .doczone{order:1}
+ .acp-root .right{order:2}
+ .acp-root .ledger{grid-template-columns:repeat(3,1fr)}
+ .acp-root .desk{gap:14px;position:sticky;bottom:0;z-index:20}
+ .acp-root .acp-stamp img{width:116px;height:70px}
+ .acp-root .acp-plain,.acp-root .acp-advance{font-size:11.5px;padding:9px 12px}
+ .acp-root .docwrap{width:min(440px,100%)}
+ .acp-root .impression,.acp-root .impression img{width:120px;height:72px}
+ .acp-root .stampzone{width:130px;height:50px;font-size:8.5px}
+ .acp-root .introcard h1,.acp-root .endscreen h1{font-size:34px}
+ .acp-root .introcard,.acp-root .endscreen{padding:22px 20px}
 }
+
 @media (prefers-reduced-motion: reduce){
  .acp-root .prob-fill,.acp-root .impression,.acp-root .lamp.on{animation:none !important}
  .acp-root .acp-stamp:hover,.acp-root .acp-stamp:active{transform:none}

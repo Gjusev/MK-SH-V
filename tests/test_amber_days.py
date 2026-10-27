@@ -1,5 +1,6 @@
 """Amber Checkpoint days v2 (customs desk): determinism, gold per discrepancy,
 measured check framings, verdict rules."""
+import json
 import sys
 from pathlib import Path
 
@@ -19,8 +20,12 @@ def test_shape_and_mix():
     assert [d["day"] for d in c["days"]] == [1, 2, 3, 4]
     for d in c["days"]:
         verdicts = [x["verdict"] for x in d["docs"]]
-        assert 3 <= verdicts.count("deny") <= 5, (d["day"], verdicts)
+        assert 2 <= verdicts.count("deny") <= 3, (d["day"], verdicts)
         assert all(1 <= len(x["checks"]) <= 3 for x in d["docs"])
+        for x in d["docs"]:  # the window has people (flavor only, never model input)
+            t = x["traveler"]
+            assert t["name"] and t["line"] and (t["bust"].endswith("_24.png"))
+            assert "gold" not in json.dumps(t)
 
 
 def test_check_matrix_and_measured_framings():
@@ -82,6 +87,21 @@ def test_manifest_and_gap_design():
     assert all(4000 < t < 4996 for t in totals(4, "in")), "day-4 fine gaps within the cap"
     assert all(5005 < t <= 5250 for t in totals(4, "over")), "day-4 fine gaps over the cap"
     assert any(t < 4000 for t in totals(3, "in")), "day-3 keeps wide gaps too"
+
+
+def test_frozen_documents_unchanged():
+    import subprocess
+    p = ROOT / "demo/game/days.json"
+    written = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+    if written is None:
+        import pytest
+        pytest.skip("days.json not generated yet")
+    head = json.loads(subprocess.run(["git", "show", "HEAD:demo/game/days.json"],
+                                     capture_output=True, text=True, cwd=ROOT).stdout)
+    frozen = ["assets/docs/d2-3.png", "assets/docs/d2-4.png", "assets/docs/d4-2.png",
+              "assets/docs/d3-6.png", "assets/docs/d4-5.png"]
+    for f in frozen:
+        assert written["generator"]["images_sha256"][f] == head["generator"]["images_sha256"][f], f
 
 
 def test_written_days_json_matches_plan():
