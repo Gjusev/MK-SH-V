@@ -39,8 +39,11 @@ def push_space(api: HfApi) -> None:
     demo = ROOT / "demo"
     files = ["app.py", "requirements.txt", "README.md", "mksh_v/__init__.py",
              "mksh_v/arch_a1v.py", "mksh_v/sequence.py", "examples/NOTICE.md",
-             "demo_cases.json", "cases.json", "static/logo-mark.png"]
+             "demo_cases.json", "cases.json", "static/logo-mark.png",
+             "game/__init__.py", "game/days.json"]
     files += [f"examples/{p.name}" for p in sorted((demo / "examples").glob("*.png"))]
+    files += [f"game/{p.relative_to(demo / 'game').as_posix()}"
+              for p in sorted((demo / "game" / "assets").rglob("*")) if p.is_file()]
     for rel in files:
         if not (demo / rel).exists():
             continue

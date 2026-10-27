@@ -35,3 +35,12 @@ abstention when the top calibrated probability sits below the gate
 - Example images: CORD v2 train (Park et al. 2019, NAVER Clova, CC BY 4.0)
   and GUI-Odyssey task_split train (Lu et al. 2024, OpenGVLab, CC BY 4.0),
   resized for the demo.
+## Amber Checkpoint (playable tab)
+
+A four-day border-booth game where the model is the decision assistant.
+Every check on screen is a measured capability of this checkpoint, played in
+its measured framing: document type, form completeness, reading the sender
+against the day's manifest, and totals against a 5,000.00 VEL cap with fine
+gaps. Below the gate (tau 0.55) the machine refuses to advise and routes the
+document to you; the stamps are yours. Documents are synthetic, printed by
+our generator; the end screen reports player and model accuracy side by side.
