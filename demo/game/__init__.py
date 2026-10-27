@@ -73,7 +73,9 @@ def load_model():
 def decide_checks(image, checks: list[dict]) -> list[dict]:
     """The demo's decide() over all checks of one document in a single encoder
     pass (the E42 batch form of the same path): U1024 rule, softmax(logits / T),
-    gate tau. Returns one result per check, cached by check id."""
+    gate tau on the top option. Options come from the check (6-way doc_type,
+    3-way form, N names, 2-way threshold: every set is the measured one).
+    Cached by check id."""
     import torch
     from mokka_decisions.contracts import DecisionCase, Option
 
@@ -85,7 +87,7 @@ def decide_checks(image, checks: list[dict]) -> list[dict]:
         cases = [DecisionCase(
             id=c["id"], group_id=c["id"], source="amber-checkpoint", language="en",
             domain="documents", state=c["state"], question=c["question"],
-            options=(Option(id="yes", description="Yes"), Option(id="no", description="No")))
+            options=tuple(Option(id=o["id"], description=o["description"]) for o in c["options"]))
             for c in todo]
         with _model_lock, torch.inference_mode():
             from mksh_v.arch_a1v import forward_a1v
@@ -93,10 +95,11 @@ def decide_checks(image, checks: list[dict]) -> list[dict]:
             batch = model.build_batch(enc, [image] * len(cases), "cpu", max_side=1024, upscale_to=1024)
             probs = (forward_a1v(model, batch) / T).softmax(-1).tolist()
         for c, p in zip(todo, probs):
-            p_yes = p[0]
-            pred = "yes" if p_yes >= 0.5 else "no"
-            _cache[c["id"]] = {"p_yes": round(p_yes, 4),
-                               "pred": pred, "backed": max(p_yes, 1 - p_yes) >= TAU}
+            top = max(range(len(p)), key=lambda i: p[i])
+            _cache[c["id"]] = {"p_pred": round(p[top], 4),
+                               "pred": c["options"][top]["id"],
+                               "pred_desc": c["options"][top]["description"],
+                               "backed": p[top] >= TAU}
     return [_cache[c["id"]] for c in checks]
 
 
@@ -272,7 +275,7 @@ def _doc_html(s: dict) -> str:
   <section class='doczone' aria-label='Document under inspection'>
     <div class='tray'></div>
     <div class='docwrap'>{tag}
-      <div class='doc tilt-{i % 2}'><img src='{ASSETS}/docs/{d['id']}.png' alt='entry permit {escape(d['doc_no'])}'>{stamp_zone}</div>
+      <div class='doc tilt-{i % 2}'><img src='{ASSETS}/docs/{d['id']}.png' alt='document {d["id"]}'>{stamp_zone}</div>
     </div>
     {_verdict_note(s)}
   </section>
@@ -289,19 +292,21 @@ def _doc_html(s: dict) -> str:
 
 def _check_html(ck: dict, r: dict, n: int) -> str:
     q = escape(ck["question"])
-    p = r["p_yes"]
-    top = "yes" if p >= 0.5 else "no"
+    p = r["p_pred"]
+    # one bar per check (mock structure): the top option carries the signal
+    label = r["pred"] if ck["kind"] != "manifest" else r["pred_desc"]
+    label = {"true": "yes", "false": "no"}.get(label, label)
+    machine = label if ck["kind"] != "manifest" else escape(r["pred_desc"])
     if r["backed"]:
         verdict = (f"<div class='verdictline'><span class='backed'>● BACKED · p ≥ τ</span>"
-                   f"<span class='backed'>machine: {top.upper()}</span></div>")
-        row_cls = "prob-row top" if top == "yes" else "prob-row"
+                   f"<span class='backed'>machine: {machine}</span></div>")
     else:
         verdict = (f"<div class='verdictline'><span class='routed'>● SECONDARY INSPECTION</span>"
                    f"<span class='routed'>{p:.1%} &lt; τ {TAU:g}</span></div>")
-        row_cls = "prob-row routed-row"
     return (f"<div class='check{' routed-row' if not r['backed'] else ''}' id='check-{n}'>"
             f"<div class='q'>{q}</div>"
-            f"<div class='{row_cls}'><span class='prob-id'>yes</span>"
+            f"<div class='prob-row{' routed-row' if not r['backed'] else ''} top'>"
+            f"<span class='prob-id'>{escape(label)[:10]}</span>"
             f"<span class='prob-bar'><span class='prob-fill' style='width:{p * 100:.1f}%'></span>"
             f"<span class='tau'></span></span>"
             f"<span class='prob-num'>{p:.1%}</span></div>{verdict}</div>")

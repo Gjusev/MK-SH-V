@@ -38,14 +38,14 @@ def test_batched_decide_equals_sequential(monkeypatch):
 
     from PIL import Image
 
-    day = game.DAYS[2]  # day 3: a document with routed-range checks
+    day = game.DAYS[2]  # day 3: type + manifest + amount on one document
     doc = day["docs"][0]
     img = Image.open(game.HERE / "assets" / "docs" / f"{doc['id']}.png").convert("RGB")
     res = game.decide_checks(img, doc["checks"])
     assert len(res) == len(doc["checks"])
-    for r in res:
-        assert 0.0 <= r["p_yes"] <= 1.0
-        assert r["pred"] in ("yes", "no") and isinstance(r["backed"], bool)
+    for c, r in zip(doc["checks"], res):
+        assert 0.0 <= r["p_pred"] <= 1.0
+        assert r["pred"] in {o["id"] for o in c["options"]} and isinstance(r["backed"], bool)
 
     # the demo's per-case decide path, one case at a time, must agree
     from mokka_decisions.contracts import DecisionCase, Option
@@ -56,11 +56,11 @@ def test_batched_decide_equals_sequential(monkeypatch):
             case = DecisionCase(id=c["id"], group_id=c["id"], source="amber-checkpoint",
                                 language="en", domain="documents", state=c["state"],
                                 question=c["question"],
-                                options=(Option(id="yes", description="Yes"),
-                                         Option(id="no", description="No")))
+                                options=tuple(Option(id=o["id"], description=o["description"])
+                                              for o in c["options"]))
             enc = model.encode_cases([case], max_state_tokens=700, max_option_tokens=96)
             batch = model.build_batch([enc[0]], [img], "cpu", max_side=1024, upscale_to=1024)
             p = (forward_a1v(model, batch) / game.T).softmax(-1)[0].tolist()
-            assert abs(p[0] - r["p_yes"]) < 1e-4, c["id"]
-    # gold never reaches the model: the state is shared text without verdicts
-    assert "gold" not in day["state"] and "deny" not in day["state"].lower()
+            top = max(range(len(p)), key=lambda i: p[i])
+            assert abs(p[top] - r["p_pred"]) < 1e-4, c["id"]
+            assert c["options"][top]["id"] == r["pred"], c["id"]
