@@ -59,7 +59,7 @@ CAP = 5000.00
 WIDE_IN = (312.50, 812.50, 1850.00, 3420.00, 4100.00)
 WIDE_OVER = (6400.00, 8250.00)
 FINE_IN = (4650.00, 4895.00, 4995.00)
-FINE_OVER = (5015.00, 5040.00, 5250.00)
+FINE_OVER = (5015.00, 5180.00, 5250.00)
 
 DOC_TYPES = ("invoice", "receipt", "contract", "form", "letter", "other")
 TYPE_OPTIONS = [{"id": i, "description": d} for i, d in zip(DOC_TYPES, OPTION_TEXT["doc_type"]["en"])]
@@ -96,7 +96,11 @@ def make_doc(day: int, i: int, scen: tuple, sender: str | None = None) -> dict:
     doc = {"id": did, "kind": kind, "image": f"assets/docs/{did}.png"}
     if kind == "inv":
         total = rng.choice(TOTALS[sc["total"]]) if "total" in sc else rng.choice((312.50, 812.50, 1850.00))
-        content = amount_doc("invoice", total, rng, "en")
+        # the measured hard mode (E38a decisive counterfactuals): a competing
+        # amount printed on the same page, near the cap on day 4
+        gap = "fine" if str(sc.get("total", "")).startswith("fine") else "wide"
+        distractor = round(total + rng.choice((-1, 1)) * rng.uniform(40, 160), 2) if gap == "fine" else None
+        content = amount_doc("invoice", total, rng, "en", distractor=distractor)
         if sender is not None:  # assigned by the day plan: unique companies per day
             content = replace(content, sender=sender)
             content = reprice(content, content.total_value, rng)

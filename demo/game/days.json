@@ -1893,8 +1893,8 @@
      "total": 4650.0,
      "sender": "Sierra Logistics",
      "listed": true,
-     "template": "acp-h0b0f0",
-     "issuer": "kor",
+     "template": "acp-h0b0f1",
+     "issuer": "vel",
      "violations": [],
      "verdict": "approve",
      "checks": [
@@ -1994,7 +1994,7 @@
      "sender": "Orion Print GmbH",
      "listed": true,
      "template": "acp-h0b0f0",
-     "issuer": "vel",
+     "issuer": "kor",
      "violations": [
       "over the cap"
      ],
@@ -2264,7 +2264,7 @@
      "kind": "inv",
      "image": "assets/docs/d4-5.png",
      "doc_type": "invoice",
-     "total": 5040.0,
+     "total": 5180.0,
      "sender": "Cobalt Systems",
      "listed": true,
      "template": "acp-h0b0f0",
@@ -2369,8 +2369,8 @@
      "total": 4995.0,
      "sender": "Acme Supplies Ltd",
      "listed": false,
-     "template": "acp-h0b0f0",
-     "issuer": "kor",
+     "template": "acp-h0b0f1",
+     "issuer": "vel",
      "violations": [
       "not on manifest"
      ],
@@ -2590,7 +2590,7 @@
   }
  ],
  "generator": {
-  "commit": "c19a96769cb2be1046a3dffd5439ecbcd9954f40",
+  "commit": "21518ce52212fe8d5da29ff85d9b06fe32b4d513",
   "fonts_sha256": {
    "IBMPlexMono-Regular.ttf": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
    "IBMPlexMono-SemiBold.ttf": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
@@ -2622,12 +2622,12 @@
    "assets/docs/d3-6.png": "91de2cf093dd2889beb2564fe143c83ec9c2bd93a450e9fc30d5bc56020bf225",
    "assets/docs/d3-7.png": "afbb69401f628f16d793f47003c212038728716c8a4208707ebb0fcc121fe861",
    "assets/docs/d3-8.png": "9673da47b5009b79e5e048f990287c6cd0d5c7a8fb9482064b8c424ea647cbfd",
-   "assets/docs/d4-1.png": "7501df0ec3fdac6a2722a34a4a26e4d2f554f15c7c76943164664f90ada9a138",
-   "assets/docs/d4-2.png": "8b6a5fc8901409bc8f148060427c4aee7d30201f7c53b961154021b5b780e447",
+   "assets/docs/d4-1.png": "c1977e400a1344492c5f86e87346780f7acc23fd34f570f3cff24c2a372bc255",
+   "assets/docs/d4-2.png": "a9cf2f34778843c56a33398a616602dafe836553ac3f58b177beb9d33c3882cb",
    "assets/docs/d4-3.png": "9e905fcfafb6880630c1bd9f954d9052cfeef96aa5d36ceb3ed181f089e04a6e",
    "assets/docs/d4-4.png": "f7ac2cf8e88c366f8b10f9b26e2a2f2841916b19e67cea75889d6901d5fbc4d6",
-   "assets/docs/d4-5.png": "a8cf770866bebe95f16d69d0ce99153e2a219f8e0d6a3d22de65a0006030f15e",
-   "assets/docs/d4-6.png": "fa3db2063a02221977a34e29a22c3f2c554f78ac1a7517f48d76242b71b0aec3",
+   "assets/docs/d4-5.png": "371895572334a3e283e9939d1b74c835f34f984e6ea6d2db188235cf17b09404",
+   "assets/docs/d4-6.png": "a5bd3a7fe637cd378b8e74010b76acd6068c12df29881ee52c02851cc78107f9",
    "assets/docs/d4-7.png": "3c44f04611f5be8672a11b78ec6c4cc49c4c34b5474e1170e06f695bbf1593d6",
    "assets/docs/d4-8.png": "e07b3f26a5ca8fb7f8c381486594f238ef05b3dac7fac758cac68d4b424ce272"
   }
