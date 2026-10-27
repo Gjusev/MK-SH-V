@@ -132,6 +132,14 @@ def start_day(s: dict) -> dict:
     return s
 
 
+def stamp_approve(s: dict) -> dict:
+    return stamp(s, "approve")
+
+
+def stamp_deny(s: dict) -> dict:
+    return stamp(s, "deny")
+
+
 def stamp(s: dict, kind: str) -> dict:
     if s["phase"] == "doc" and s["stamped"] is None:
         s["stamped"] = kind
@@ -558,7 +566,6 @@ def build_tab(model=None):
     """The Amber Checkpoint tab: stage HTML + the desk (stamps, file, advance)."""
     import gradio as gr
 
-    advance_fn = advance  # the state-machine function, before the button shadows it
 
     global _model
     if model is not None:
@@ -573,7 +580,7 @@ def build_tab(model=None):
             deny = gr.Button("", elem_id="acp-deny", icon=str(HERE / f"{ASSETS}/stamp_deny_80x48_v7.png"),
                              interactive=False)
             file_plain = gr.Button("FILE WITHOUT STAMP", elem_classes=["acp-plain"], interactive=False)
-            advance = gr.Button("BEGIN DAY 1", elem_classes=["acp-advance"])
+            advance_btn = gr.Button("BEGIN DAY 1", elem_classes=["acp-advance"])
 
     def paint(sess):
         stage_html = f"<div class='acp-stage' style='{_LAMP}'>{render_stage(sess)}</div>"
@@ -587,11 +594,19 @@ def build_tab(model=None):
         else:
             lbl = "PLAY AGAIN"
         inter = sess["phase"] != "doc" or sess["stamped"] is not None
-        return stage_html, gr.update(label=lbl, interactive=inter), \
+        return stage_html, gr.update(value=lbl, interactive=inter), \
             gr.update(interactive=in_doc), gr.update(interactive=in_doc), gr.update(interactive=in_doc)
 
-    approve.click(lambda st: paint(stamp(st, "approve")), [s], [stage, advance, approve, deny, file_plain])
-    deny.click(lambda st: paint(stamp(st, "deny")), [s], [stage, advance, approve, deny, file_plain])
-    file_plain.click(lambda st: paint(file_unstamped(st)), [s], [stage, advance, approve, deny, file_plain])
-    advance.click(lambda st: paint(advance_fn(st)), [s], [stage, advance, approve, deny, file_plain])
+    outs = [s, stage, advance_btn, approve, deny, file_plain]
+
+    def run(fn):
+        def h(st):
+            st = fn(st)
+            return (st, *paint(st))
+        return h
+
+    approve.click(run(stamp_approve), [s], outs)
+    deny.click(run(stamp_deny), [s], outs)
+    file_plain.click(run(file_unstamped), [s], outs)
+    advance_btn.click(run(advance), [s], outs)
     return stage

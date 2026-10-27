@@ -244,13 +244,18 @@ GRAIN = ("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12
          "%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E")
 
 
-def worn_theme(seed: int, issuer: str) -> dict:
-    """The new worn-paper theme: Veldania's olive cream, Korvenia's grey, per-doc wear."""
+def worn_theme(seed: int, issuer: str) -> "Theme":
+    """The new worn-paper theme (an E38 Theme): Veldania's olive cream paper,
+    Korvenia's grey, per-doc wear in pad/dx/dy. Additive: E38 outputs untouched."""
+    from mksh_v.gen_e38a import FONT_FAMILIES, Theme
+
     r = random.Random(seed)
-    return {"paper": "#EFE7D2" if issuer == "vel" else "#E0DED4",
-            "ink": "#23251D", "accent": "#6B6A45" if issuer == "vel" else "#5C5C66",
-            "pad": r.randint(20, 26), "dx": r.randint(-3, 3), "dy": r.randint(-2, 2),
-            "grain": round(r.uniform(0.035, 0.05), 3), "bust": r.randrange(3)}
+    return Theme(font="DejaVu Serif",
+                 base_px=15,
+                 accent="#6B6A45" if issuer == "vel" else "#5C5C66",
+                 ink="#23251D",
+                 paper="#EFE7D2" if issuer == "vel" else "#E0DED4",
+                 pad=r.randint(20, 26), dx=r.randint(-3, 3), dy=r.randint(-2, 2))
 
 
 def permit_html(doc: dict, seal_b64: str | None) -> str:

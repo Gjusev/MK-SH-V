@@ -256,16 +256,9 @@ def build() -> gr.Blocks:
         gr.Markdown(
             "Example images: CORD v2 (Park et al. 2019, NAVER Clova) and GUI-Odyssey "
             "(Lu et al. 2024, OpenGVLab), both CC BY 4.0. Model: Apache-2.0.")
-        ins, outs = [image_in, state_in, question_in, options_in], [probs_out, verdict_out, abstain_out, meta_out]
-        for btn, i in [*zip(case_btns, ANSWERS), *zip(fail_btns, [i for i, _ in FAILURES])]:
-            btn.click(lambda i=i: tuple(EXAMPLES[i]), None, ins).then(decide, ins, outs)
-        go.click(decide, ins, outs)
     return app
 
 
-if __name__ == "__main__":
-    gr.set_static_paths([str(HERE / "figure"), str(HERE / "static"), str(HERE / "game")])
-    build().launch()
 
 
 def _demo_tab() -> None:
@@ -304,3 +297,8 @@ def _demo_tab() -> None:
     for btn, i in [*zip(case_btns, ANSWERS), *zip(fail_btns, [i for i, _ in FAILURES])]:
         btn.click(lambda i=i: tuple(EXAMPLES[i]), None, ins).then(decide, ins, outs)
     go.click(decide, ins, outs)
+
+
+if __name__ == "__main__":
+    gr.set_static_paths([str(HERE / "figure"), str(HERE / "static"), str(HERE / "game")])
+    build().launch()
