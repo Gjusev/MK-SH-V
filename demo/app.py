@@ -203,6 +203,15 @@ footer { display: none !important; }
 #decision .prob-head, #decision .prob-head span:first-child { color:var(--pale) !important; }
 #decision .tau-key { color:var(--acc) !important; }
 #meta, #meta p { color:var(--pale) !important; font-size:12.5px; margin-top:6px; }
+@media (max-width: 480px) { /* the game tab's phone gate: keep the shared header inside 390px */
+  #bar { grid-template-columns: auto 1fr; gap: 10px 14px; }
+  #bar img { width: 42px; height: 42px; }
+  #bar h1 { font-size: 19px; }
+  #bar p { font-size: 12.5px; }
+  #bar .nums { gap: 14px; }
+  #bar .num b { font-size: 16px; }
+  #bar .num span { font-size: 10px; }
+}
 @media (max-width: 760px) {
   #bar { grid-template-columns:auto 1fr; }
   #bar .nums { grid-column:1 / 3; gap:22px; flex-wrap:wrap; }
@@ -300,5 +309,6 @@ def _demo_tab() -> None:
 
 
 if __name__ == "__main__":
-    gr.set_static_paths([str(HERE / "figure"), str(HERE / "static"), str(HERE / "game")])
-    build().launch()
+    paths = [str(HERE / "figure"), str(HERE / "static"), str(HERE / "game")]
+    gr.set_static_paths(paths)
+    build().launch(allowed_paths=paths)

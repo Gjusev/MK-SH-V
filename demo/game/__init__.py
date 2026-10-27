@@ -40,7 +40,10 @@ HONESTY = ("AMBER SYSTEM: E47 seed 43, E48 policy; every check measured in "
 
 DAYS = json.loads((HERE / "days.json").read_text(encoding="utf-8"))["days"]
 ASSETS = "assets"  # static root: demo/game (gr.set_static_paths)
-FILE = "/gradio_api/file=" + ASSETS  # gradio file route for <img> srcs
+# gradio file= resolves against the SERVER cwd (Space root there, repo root here):
+# srcs must carry the absolute, URL-quoted path of the asset inside demo/game
+from urllib.parse import quote  # noqa: E402
+FILE = "/gradio_api/file=" + quote(str(HERE / ASSETS))
 
 _model = None
 _model_lock = threading.Lock()
@@ -549,6 +552,11 @@ ACP_CSS = """
 .acp-root .acp-advance:hover{background:var(--track)}
 
 @media (max-width:820px){
+ /* the gradio block around the game adds ~38px of padding at phone widths;
+    slim it so the booth, not the shell, owns the viewport */
+ .form:has(>.acp-root),.block:has(.acp-root),.wrap:has(.acp-root){padding-left:6px !important;padding-right:6px !important}
+ .app:has(.acp-root),.fillable:has(.acp-root){padding:0 !important}
+ .contain:has(.acp-root){padding:0 !important;border:none !important}
  .acp-root .main{flex-direction:column}
  .acp-root .right{width:100%;max-width:100%}
  .acp-root .board{height:auto;flex-wrap:wrap}
