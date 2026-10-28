@@ -107,10 +107,24 @@ def decide_checks(image, checks: list[dict]) -> list[dict]:
     return [_cache[c["id"]] for c in checks]
 
 
+_busy = False  # a compute is in flight (prefetch must not pile up behind it)
+
+
 def _prefetch(image, checks: list[dict]) -> None:
-    """Warm the next document's checks off the UI thread."""
-    if any(c["id"] not in _cache for c in checks):
-        threading.Thread(target=decide_checks, args=(image, checks), daemon=True).start()
+    """Warm the next document's checks off the UI thread. Skips when a compute
+    is already in flight: the draw path fills the gap synchronously then."""
+    global _busy
+    if _busy or all(c["id"] in _cache for c in checks):
+        return
+    _busy = True
+
+    def job():
+        global _busy
+        try:
+            decide_checks(image, checks)
+        finally:
+            _busy = False
+    threading.Thread(target=job, daemon=True).start()
 
 
 def _doc_image(day: int, i: int):
@@ -712,7 +726,9 @@ def build_tab(model=None):
 
     def run(fn):
         def h(st):
+            print(f"[amber] handler {getattr(fn, '__name__', fn)} fired", flush=True)
             st = fn(st)
+            print(f"[amber] -> {st['phase']} day {st['day']} doc {st['doc_i']}", flush=True)
             return (st, *paint(st))
         return h
 
