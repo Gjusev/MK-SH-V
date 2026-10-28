@@ -310,7 +310,7 @@ def build() -> gr.Blocks:
                 "a choice, and a refusal below the gate.</p></div>"
                 "<div class='nums'><div class='num'><b>0.828</b><span>real screenshots, held out</span></div>"
                 "<div class='num gate'><b>&tau; 0.55</b><span>validated gate</span></div>"
-                "<div class='num'><b>98.6 %</b><span>coverage, CP95 risk &le; 4.8 %*</span></div></div>"
+                "<div class='num'><b>98.6 %</b><span>coverage, CP95 risk &le; 4.1 %*</span></div></div>"
                 "<nav class='links'><a href='https://huggingface.co/Gjusev/MK-SH-V'>Model card</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v'>Code and results</a>"
                 "<a href='https://github.com/Gjusev/mk-sh-v#the-decision-contract'>How it decides</a></nav></header>")
