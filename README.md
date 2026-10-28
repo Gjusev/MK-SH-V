@@ -60,6 +60,20 @@ flowchart LR
     F -- no --> H["choice = null<br/>reason_code = below_validated_threshold"]
 ```
 
+## Play the booth
+
+The live demo ships with **Amber Checkpoint**, a Papers Please style booth played against
+the real model. Travelers hand you papers and claim firms; MK-SH-V reads each document
+and advises when its confidence clears the gate. Below tau = 0.55 it refuses to advise,
+the file gets a SECONDARY INSPECTION stamp and the case is yours. Every check in the
+game is a measured capability of the released checkpoint, and the refusals fire from the
+model's real probabilities, not from a script.
+
+<p align="center">
+  <a href="assets/amber-checkpoint.mp4"><img src="assets/amber-checkpoint.jpg" width="720" alt="39 second playthrough of Amber Checkpoint, the booth mini-game in the demo"></a>
+</p>
+<p align="center"><sub>39 s playthrough &middot; the invoice reads 5,250.00 and the model sits at p 0.536, under the gate</sub></p>
+
 ## Use it
 
 ```bash
