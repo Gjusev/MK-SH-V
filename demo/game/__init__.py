@@ -323,7 +323,7 @@ def _board_html(day: int, s: dict | None = None) -> str:
                f"<span class='hud-clock'>{shift_clock(s)}</span></div>")
     return (f"<section class='board' aria-label='Rule board'><div class='board-head'>"
             f"<div class='day-banner'>DAY {day}<small>Rules of entry</small></div>"
-            f"<div class='datestamp'>{d['date'].replace(' 19', '<br>19')}{hud}</div></div>"
+            f"<div class='dstack'><div class='datestamp'>{d['date'].replace(' 19', '<br>19')}</div>{hud}</div></div>"
             f"<div class='slips'>{slips}</div></section>")
 
 
@@ -644,6 +644,7 @@ ACP_CSS = """
 .acp-root .day-banner small{display:block;font-size:16px;color:var(--ink);margin-top:2px}
 .acp-root .datestamp{width:78px;height:44px;border:2px solid var(--ink);border-radius:50%/40%;display:flex;align-items:center;justify-content:center;
  font-family:'IBM Plex Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.5px;color:var(--ink);transform:rotate(-3deg);line-height:1.25;text-align:center}
+.acp-root .dstack{display:flex;flex-direction:row;align-items:center;gap:8px}
 .acp-root .slips{display:flex;gap:14px;align-items:flex-start;flex:1;padding-top:2px;min-width:0}
 .acp-root .slip{flex:1 1 0;min-width:0;background:var(--paper);box-shadow:3px 3px 0 rgba(0,0,0,.22);
  padding:10px 10px 8px;position:relative;transform:rotate(-.5deg)}
@@ -663,7 +664,7 @@ ACP_CSS = """
 
 /* CENTER - DOCUMENT */
 .acp-root .doczone{flex:1;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-width:0}
-.acp-root .tray{position:absolute;width:512px;height:560px;max-width:100%;background:#C7B58F;transform:rotate(.8deg);
+.acp-root .tray{position:absolute;width:512px;height:560px;max-height:calc(100% - 12px);max-width:100%;background:#C7B58F;transform:rotate(.8deg);
  box-shadow:5px 5px 0 rgba(0,0,0,.34);border-radius:4px}
 .acp-root .tray::after{content:"";position:absolute;inset:0;background-image:var(--grain);opacity:.06}
 .acp-root .docwrap{position:relative;width:min(472px,100%);filter:drop-shadow(6px 8px 0 rgba(0,0,0,.38))}
@@ -701,7 +702,7 @@ ACP_CSS = """
 .acp-root .lamp.on{background-image:var(--lamp-on);animation:lampblink .32s steps(1) 1}
 .acp-root .lamp.off{background-image:var(--lamp-off)}
 @keyframes lampblink{0%,50%{filter:brightness(.4)}25%,75%,100%{filter:none}}
-.acp-root .p-head h2{font-size:15.5px;font-weight:600;letter-spacing:2.5px;margin:0}
+.acp-root .p-head h2{font-size:15.5px;font-weight:600;letter-spacing:2.5px;margin:0;color:var(--fpaper)}
 .acp-root .p-head small{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--pale);letter-spacing:1.2px;margin-top:2px;font-weight:400}
 .acp-root .check{padding:8px 0 9px;border-bottom:1px solid #22324A}
 .acp-root .check:last-of-type{border-bottom:none}
@@ -725,6 +726,7 @@ ACP_CSS = """
 .acp-root .check.routed-row .prob-num{color:var(--amber)}
 .acp-root .plate{margin-top:12px;border-top:1px solid #2A3B58;padding-top:9px;display:flex;justify-content:space-between;
  font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--fpaper)}
+.acp-root .plate span{color:var(--pale)}
 .acp-root .plate .gate{color:var(--amber)}
 
 /* INTRO / END SCREENS */
@@ -753,7 +755,7 @@ ACP_CSS = """
 /* DESK - stamps live in a gr.Row styled as the ledge */
 .acp-root .desk{background:var(--desk);border-radius:4px;padding:10px 16px 14px;display:flex;gap:28px;
  align-items:center;justify-content:center;flex-wrap:wrap;box-shadow:0 3px 0 rgba(0,0,0,.35);border-top:2px solid #6E5C39;max-width:1200px;margin:0 auto;width:100%}
-.acp-root .acp-stamp{background:none;border:none;padding:0;cursor:pointer;line-height:0;position:relative;
+.acp-root .acp-stamp{background:none !important;border:none !important;padding:0 !important;cursor:pointer;line-height:0;font-size:0;color:transparent;position:relative;
  filter:drop-shadow(3px 4px 0 rgba(0,0,0,.38));transition:transform .12s ease, filter .12s ease;border-radius:0}
 .acp-root .acp-stamp img{width:150px;height:90px;image-rendering:pixelated;display:block}
 .acp-root .acp-stamp .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -796,9 +798,12 @@ ACP_CSS = """
 .acp-root .speech span{font-family:'IBM Plex Sans',sans-serif;font-size:14px;color:var(--ink)}
 .acp-root .window.object .speech span{color:var(--deny)}
 .acp-root .window.leave .speech span{color:var(--approve)}
+@media (min-width:821px){.acp-root .docwrap .polaroid{left:-72px;top:-4px}}
+@media (min-width:821px) and (max-width:1300px){.acp-root .docwrap .polaroid{left:-46px;transform:rotate(-4deg) scale(.85)}}
+@media (max-width:820px){.acp-root .docwrap .polaroid{left:auto;right:8px;top:-64px;transform:rotate(3deg) scale(.9)}}
 /* HUD: credits, streak, shift clock, under the date stamp */
-.acp-root .hud{display:flex;flex-direction:column;gap:1px;font-family:'IBM Plex Mono',monospace;
- font-size:10.5px;font-weight:600;letter-spacing:1px;margin-top:6px}
+.acp-root .hud{display:flex;flex-direction:column;gap:0;font-family:'IBM Plex Mono',monospace;
+ font-size:10px;font-weight:600;letter-spacing:.3px;line-height:1.3;margin-top:0}
 .acp-root .hud-credits{color:var(--ink)}
 .acp-root .hud-streak{color:var(--muted)}
 .acp-root .hud-streak.hot{color:var(--amberink)}
@@ -880,7 +885,7 @@ ACP_CSS = """
 }
 """
 
-_LAMP = "--lamp-on:url(/gradio_api/file=assets/lamp_on_16_v3.png);--lamp-off:url(/gradio_api/file=assets/lamp_off_16_v3.png)"
+_LAMP = f"--lamp-on:url({FILE}/lamp_on_16_v3.png);--lamp-off:url({FILE}/lamp_off_16_v3.png)"
 
 
 def build_tab(model=None):
@@ -896,9 +901,9 @@ def build_tab(model=None):
     with gr.Column(elem_classes=["acp-root"]):
         stage = gr.HTML(render_stage(new_session()))
         with gr.Row(elem_classes=["desk"]):
-            approve = gr.Button("", elem_id="acp-approve", icon=str(HERE / f"{ASSETS}/stamp_approve_80x48_v7.png"),
+            approve = gr.Button("APPROVE", elem_id="acp-approve", elem_classes=["acp-stamp"], icon=str(HERE / f"{ASSETS}/stamp_approve_80x48_v7.png"),
                                 interactive=False)
-            deny = gr.Button("", elem_id="acp-deny", icon=str(HERE / f"{ASSETS}/stamp_deny_80x48_v7.png"),
+            deny = gr.Button("DENY", elem_id="acp-deny", elem_classes=["acp-stamp"], icon=str(HERE / f"{ASSETS}/stamp_deny_80x48_v7.png"),
                              interactive=False)
             file_plain = gr.Button("FILE WITHOUT STAMP", elem_classes=["acp-plain"], interactive=False)
             gift_btn = gr.Button("TAKE THE GIFT", elem_classes=["acp-gift"], interactive=False)
