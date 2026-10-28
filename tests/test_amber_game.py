@@ -123,6 +123,85 @@ def test_unstamped_filing_and_routing_display():
     assert sc["routed"] >= 1 and sc["player_acc"] == 0.0
 
 
+def test_bribe_flow_and_inspection():
+    seed_cache()
+    s = game.new_session()
+    # walk to day 2 doc 6 (d2-6 carries the +40 gift): one full day first
+    for _ in range(1):
+        s = game.advance(s)  # intro -> day1 doc0
+        while s["phase"] == "doc":
+            s = game.stamp(s, game._doc(s["day"], s["doc_i"])["verdict"])
+            s = game.advance(s)
+        s = game.advance(s)  # day_end -> next intro
+    assert s["day"] == 2
+    while not (s["phase"] == "doc" and game._doc(2, s["doc_i"])["id"] == "d2-6"):
+        s = game.stamp(s, game._doc(2, s["doc_i"])["verdict"])
+        s = game.advance(s)
+    d = game._doc(2, s["doc_i"])
+    assert "bribe" in d and d["verdict"] == "deny"
+    html = game.render_stage(s)
+    assert "GIFT" in html and "TAKE" not in html  # tag renders; the button is gradio-side
+    before = s["credits"]
+    s = game.accept_gift(s)
+    assert s["credits"] == before + 40 and s["contraband"] == 1
+    assert game.accept_gift(s)["credits"] == before + 40  # once only
+    s = game.stamp(s, d["verdict"])
+    s = game.advance(s)  # enters day_end: inspection coin-flip runs
+    caught = any(b["caught"] for b in s["bribes"])
+    # doc 6 itself stamps correct (+5) and day 2 is clean (+10) on top of the gift
+    if caught:
+        assert s["credits"] == before + 40 + 5 + 10 - 60 and s["streak"] == 0
+    else:
+        assert s["credits"] == before + 40 + 5 + 10
+    # the coin is fixed per document: replay must agree
+    s2 = game.new_session()
+    for _ in range(1):
+        s2 = game.advance(s2)
+        while s2["phase"] == "doc":
+            s2 = game.stamp(s2, game._doc(s2["day"], s2["doc_i"])["verdict"])
+            s2 = game.advance(s2)
+        s2 = game.advance(s2)
+    while not (s2["phase"] == "doc" and game._doc(2, s2["doc_i"])["id"] == "d2-6"):
+        s2 = game.stamp(s2, game._doc(2, s2["doc_i"])["verdict"])
+        s2 = game.advance(s2)
+    s2 = game.accept_gift(s2)
+    s2 = game.stamp(s2, "deny")
+    s2 = game.advance(s2)
+    assert any(b["caught"] for b in s2["bribes"]) == caught
+
+
+def test_rank_thresholds_and_summary():
+    seed_cache()
+    s = game.advance(game.new_session())
+    while True:
+        while s["phase"] == "doc":
+            s = game.stamp(s, game._doc(s["day"], s["doc_i"])["verdict"])  # perfect week
+            s = game.advance(s)
+        if s["phase"] == "campaign_end":
+            break
+        s = game.advance(s)
+    html = game.render_stage(s)
+    # 24 correct x 5 + 4 clean days x 10 = 160 -> Officer of the Month
+    assert "OFFICER OF THE MONTH" in html and s["credits"] == 160
+    assert "acp-summary" in html and "Player accuracy 100%" in html
+
+
+def test_personas_reactions_and_sfx():
+    seed_cache()
+    s = game.advance(game.new_session())
+    d = game._doc(1, 0)
+    html = game.render_stage(s)
+    assert d["traveler"]["persona"].upper() in html
+    assert "data-sfx='ding'" not in html  # day-1 docs never route
+    assert "polaroid" in html
+    s = game.stamp(s, d["verdict"])
+    html = game.render_stage(s)
+    assert "data-sfx='thump'" in html
+    # reaction bust swaps in (smile on approve)
+    base = d["traveler"]["bust"].rsplit("/", 1)[-1].replace("_24.png", "")
+    assert f"{base}_smile_24.png" in html
+
+
 def test_constants_match_release_policy():
     assert game.TAU == 0.55 and game.T == 1.124
     assert game.COVERAGE == 0.9855 and game.CP95_UPPER == 0.0406

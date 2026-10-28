@@ -231,8 +231,70 @@ THEME = gr.themes.Base(
       body_text_color="#14181F", block_label_text_color="#5C6470")
 
 
+# Boots once per page: forces light mode forever, runs the synthesized booth
+# audio (no assets: noise burst thump, sine ding, day tick) off the stage's
+# data-sfx attributes, injects the mute switch into the site header, and adds
+# a copy button to the campaign summary. Reduced-motion users start muted.
+LIGHT_FORCE_JS = ("() => {"
+                  "window.__acpLightRan = true;"
+                  "const acpLight = () => {"
+                  "document.documentElement.style.colorScheme = 'light';"
+                  "document.querySelectorAll('.dark').forEach(e => e.classList.remove('dark'));"
+                  "document.body && document.body.classList.remove('dark');};"
+                  "acpLight();"
+                  "new MutationObserver(acpLight).observe(document.documentElement,"
+                  "{subtree: true, attributeFilter: ['class']});"
+                  "let AC = null, muted = localStorage.getItem('acpMute') === '1'"
+                  " || matchMedia('(prefers-reduced-motion: reduce)').matches;"
+                  "const ac = () => { if (!AC) { const C = window.AudioContext || window.webkitAudioContext;"
+                  " if (C) AC = new C(); } return AC; };"
+                  "const sfx = {"
+                  " thump() { const a = ac(); if (!a) return; const n = a.createBufferSource();"
+                  "  const b = a.createBuffer(1, a.sampleRate * 0.12, a.sampleRate);"
+                  "  const d = b.getChannelData(0);"
+                  "  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length) ** 2;"
+                  "  n.buffer = b; const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = 220;"
+                  "  const g = a.createGain(); g.gain.value = 0.8;"
+                  "  n.connect(f).connect(g).connect(a.destination); n.start(); },"
+                  " ding() { const a = ac(); if (!a) return; const o = a.createOscillator();"
+                  "  o.frequency.value = 880; const g = a.createGain();"
+                  "  g.gain.setValueAtTime(0.25, a.currentTime);"
+                  "  g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.7);"
+                  "  o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + 0.7); },"
+                  " tick() { const a = ac(); if (!a) return; const o = a.createOscillator();"
+                  "  o.frequency.value = 240; const g = a.createGain();"
+                  "  g.gain.setValueAtTime(0.15, a.currentTime);"
+                  "  g.gain.exponentialRampToValueAtTime(0.001, a.currentTime + 0.12);"
+                  "  o.connect(g).connect(a.destination); o.start(); o.stop(a.currentTime + 0.12); }"
+                  "};"
+                  "const play = name => { if (muted || !AC || !sfx[name]) return; try { sfx[name](); } catch (e) {} };"
+                  "document.addEventListener('pointerdown', () => ac(), { once: true });"
+                  "let lastSeq = null;"
+                  "const watch = () => { const st = document.querySelector('.acp-stage[data-seq]');"
+                  " if (st && st.dataset.seq !== lastSeq) { lastSeq = st.dataset.seq; play(st.dataset.sfx); }"
+                  " const bar = document.getElementById('bar');"
+                  " if (bar && !document.getElementById('acp-mute')) {"
+                  "  const b = document.createElement('button'); b.id = 'acp-mute';"
+                  "  b.style.cssText = 'background:#fff;border:1px solid #E3E5E9;border-radius:8px;"
+                  "padding:6px 10px;font-size:11px;letter-spacing:1px;cursor:pointer;color:#14181F';"
+                  "  const label = () => b.textContent = muted ? 'SOUND OFF' : 'SOUND ON';"
+                  "  b.onclick = () => { muted = !muted; localStorage.setItem('acpMute', muted ? '1' : '0');"
+                  "   if (!muted) ac(); label(); }; label(); bar.appendChild(b); }"
+                  " const sum = document.getElementById('acp-summary');"
+                  " if (sum && !document.getElementById('acp-copy')) {"
+                  "  const c = document.createElement('button'); c.id = 'acp-copy';"
+                  "  c.textContent = 'COPY REPORT';"
+                  "  c.onclick = () => navigator.clipboard && navigator.clipboard.writeText(sum.innerText);"
+                  "  sum.after(c); } };"
+                  "watch();"
+                  "new MutationObserver(watch).observe(document.body, { childList: true, subtree: true });"
+                  "return 'amber-bootstrap';}")
+
+
 def build() -> gr.Blocks:
-    with gr.Blocks(css=CSS + ACP_CSS, theme=THEME, title="MK-SH-V · visual decisions with a gate") as app:
+    with gr.Blocks(css=CSS + ACP_CSS + ":root{color-scheme:light !important}",
+                   js=LIGHT_FORCE_JS,
+                   theme=THEME, title="MK-SH-V · visual decisions with a gate") as app:
         gr.HTML("<header id='bar'><img src='/gradio_api/file=static/logo-mark.png' alt='MK-SH-V mark: a whale shark over an amber band'>"
                 "<div><h1>MK-SH-V</h1><p>A 260M visual decision model: calibrated probabilities, "
                 "a choice, and a refusal below the gate.</p></div>"

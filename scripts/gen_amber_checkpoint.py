@@ -102,16 +102,21 @@ TRAVELER_LINES = {
 NAMES = ("VOSS K.", "EDRIC M.", "GRIMM A.", "MARLOW T.", "KESSLER B.", "BRANDT O.",
          "THALER R.", "REZNICK D.", "OSTER H.", "LINHARD P.", "FALK W.", "JUNOT L.")
 BUSTS = [f"traveler_{n:02d}_24.png" for n in range(1, 13)]
+# six personalities over the twelve travelers (fixed order, flavor only)
+PERSONAS = ("impatient", "sweet", "nervous", "executive", "tourist", "smuggler")
+# two bribes per campaign on deny-gold documents that are not among the five
+# audited ones (d2-6, d4-6): presentation and session state only, the gold of
+# the documents never changes
+BRIBES = {"d2-6": 40, "d4-6": 40}
 
 
 def traveler_for(day: int, i: int) -> dict:
     rng = random.Random(stable_seed("amber", "v2", "traveler", day, i))
-    bust = BUSTS[(day * 6 + i) % len(BUSTS)]
-    return {"bust": f"{ASSETS_REF}/busts/{bust}",
+    n = (day * 6 + i) % len(BUSTS)          # traveler index 0..11, no repeat per day
+    return {"bust": f"{ASSETS_REF}/busts/{BUSTS[n]}",
+            "persona": PERSONAS[n % len(PERSONAS)],
             "name": rng.choice(NAMES),
-            "line": rng.choice(TRAVELER_LINES["arrival"]),
-            "approve_line": rng.choice(TRAVELER_LINES["approve"]),
-            "deny_line": rng.choice(TRAVELER_LINES["deny"])}
+            "line": rng.choice(TRAVELER_LINES["arrival"])}
 
 
 ASSETS_REF = "assets"
@@ -218,6 +223,8 @@ def plan() -> dict:
                 for i, sc in enumerate(SCENARIOS[day])]
         for i, d in enumerate(docs, 1):
             d["traveler"] = traveler_for(day, i)
+            if d["id"] in BRIBES:
+                d["bribe"] = {"offer": BRIBES[d["id"]]}
         listed = [d["sender"] for d in docs if d["kind"] == "inv" and d["listed"]]
         fillers = [c for c in COMPANIES if c not in set(senders)]
         manifest = list(dict.fromkeys(listed + fillers))[:6]

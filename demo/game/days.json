@@ -41,10 +41,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_08_24.png",
+      "persona": "sweet",
       "name": "FALK W.",
-      "line": "Here. All in order.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "I will be back with better papers."
+      "line": "Here. All in order."
      },
      "checks": [
       {
@@ -99,10 +98,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_09_24.png",
+      "persona": "nervous",
       "name": "THALER R.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "The truck is waiting outside."
      },
      "checks": [
       {
@@ -155,10 +153,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_10_24.png",
+      "persona": "executive",
       "name": "EDRIC M.",
-      "line": "Long queue behind me.",
-      "approve_line": "Good day, then.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Long queue behind me."
      },
      "checks": [
       {
@@ -213,10 +210,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_11_24.png",
+      "persona": "tourist",
       "name": "MARLOW T.",
-      "line": "Cold one today, officer.",
-      "approve_line": "Safe roads to you too.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Cold one today, officer."
      },
      "checks": [
       {
@@ -269,10 +265,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_12_24.png",
+      "persona": "smuggler",
       "name": "REZNICK D.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "Safe roads to you too.",
-      "deny_line": "This paper is valid where I come from."
+      "line": "The truck is waiting outside."
      },
      "checks": [
       {
@@ -327,10 +322,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_01_24.png",
+      "persona": "impatient",
       "name": "OSTER H.",
-      "line": "Long queue behind me.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "There must be a mistake."
+      "line": "Long queue behind me."
      },
      "checks": [
       {
@@ -416,10 +410,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_02_24.png",
+      "persona": "sweet",
       "name": "FALK W.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "The bureau told me it was enough!"
+      "line": "The truck is waiting outside."
      },
      "checks": [
       {
@@ -503,10 +496,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_03_24.png",
+      "persona": "nervous",
       "name": "FALK W.",
-      "line": "Morning. Business papers.",
-      "approve_line": "Good day, then.",
-      "deny_line": "I will be back with better papers."
+      "line": "Morning. Business papers."
      },
      "checks": [
       {
@@ -586,10 +578,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_04_24.png",
+      "persona": "executive",
       "name": "EDRIC M.",
-      "line": "I have a permit number, if it helps.",
-      "approve_line": "Good day, then.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "I have a permit number, if it helps."
      },
      "checks": [
       {
@@ -675,10 +666,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_05_24.png",
+      "persona": "tourist",
       "name": "GRIMM A.",
-      "line": "Here. All in order.",
-      "approve_line": "Safe roads to you too.",
-      "deny_line": "There must be a mistake."
+      "line": "Here. All in order."
      },
      "checks": [
       {
@@ -756,10 +746,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_06_24.png",
+      "persona": "smuggler",
       "name": "REZNICK D.",
-      "line": "I have a permit number, if it helps.",
-      "approve_line": "Safe roads to you too.",
-      "deny_line": "There must be a mistake."
+      "line": "I have a permit number, if it helps."
      },
      "checks": [
       {
@@ -843,10 +832,12 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_07_24.png",
+      "persona": "impatient",
       "name": "LINHARD P.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "Thank you, officer.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "The truck is waiting outside."
+     },
+     "bribe": {
+      "offer": 40
      },
      "checks": [
       {
@@ -937,10 +928,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_08_24.png",
+      "persona": "sweet",
       "name": "BRANDT O.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "The truck is waiting outside."
      },
      "checks": [
       {
@@ -1047,10 +1037,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_09_24.png",
+      "persona": "nervous",
       "name": "VOSS K.",
-      "line": "Third crossing this month.",
-      "approve_line": "About time.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Third crossing this month."
      },
      "checks": [
       {
@@ -1155,10 +1144,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_10_24.png",
+      "persona": "executive",
       "name": "REZNICK D.",
-      "line": "Cold one today, officer.",
-      "approve_line": "Good day, then.",
-      "deny_line": "The bureau told me it was enough!"
+      "line": "Cold one today, officer."
      },
      "checks": [
       {
@@ -1261,10 +1249,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_11_24.png",
+      "persona": "tourist",
       "name": "BRANDT O.",
-      "line": "Invoice and permit, like the chancellery said.",
-      "approve_line": "About time.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Invoice and permit, like the chancellery said."
      },
      "checks": [
       {
@@ -1344,10 +1331,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_12_24.png",
+      "persona": "smuggler",
       "name": "FALK W.",
-      "line": "Invoice and permit, like the chancellery said.",
-      "approve_line": "Safe roads to you too.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Invoice and permit, like the chancellery said."
      },
      "checks": [
       {
@@ -1454,10 +1440,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_01_24.png",
+      "persona": "impatient",
       "name": "VOSS K.",
-      "line": "Long queue behind me.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Long queue behind me."
      },
      "checks": [
       {
@@ -1603,10 +1588,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_02_24.png",
+      "persona": "sweet",
       "name": "BRANDT O.",
-      "line": "Invoice and permit, like the chancellery said.",
-      "approve_line": "Good day, then.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Invoice and permit, like the chancellery said."
      },
      "checks": [
       {
@@ -1713,10 +1697,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_03_24.png",
+      "persona": "nervous",
       "name": "KESSLER B.",
-      "line": "Invoice and permit, like the chancellery said.",
-      "approve_line": "Thank you, officer.",
-      "deny_line": "The bureau told me it was enough!"
+      "line": "Invoice and permit, like the chancellery said."
      },
      "checks": [
       {
@@ -1821,10 +1804,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_04_24.png",
+      "persona": "executive",
       "name": "BRANDT O.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "The goods will move tonight.",
-      "deny_line": "The bureau told me it was enough!"
+      "line": "The truck is waiting outside."
      },
      "checks": [
       {
@@ -1927,10 +1909,9 @@
      "verdict": "approve",
      "traveler": {
       "bust": "assets/busts/traveler_05_24.png",
+      "persona": "tourist",
       "name": "GRIMM A.",
-      "line": "Morning. Business papers.",
-      "approve_line": "About time.",
-      "deny_line": "The bureau told me it was enough!"
+      "line": "Morning. Business papers."
      },
      "checks": [
       {
@@ -2010,10 +1991,9 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_06_24.png",
+      "persona": "smuggler",
       "name": "LINHARD P.",
-      "line": "Third crossing this month.",
-      "approve_line": "Good day, then.",
-      "deny_line": "You are making a serious mistake, officer."
+      "line": "Third crossing this month."
      },
      "checks": [
       {
@@ -2120,10 +2100,12 @@
      "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_07_24.png",
+      "persona": "impatient",
       "name": "THALER R.",
-      "line": "The truck is waiting outside.",
-      "approve_line": "Thank you, officer.",
-      "deny_line": "I will be back with better papers."
+      "line": "The truck is waiting outside."
+     },
+     "bribe": {
+      "offer": 40
      },
      "checks": [
       {
@@ -2217,7 +2199,7 @@
   }
  ],
  "generator": {
-  "commit": "671e1a9467b1753283a55afcb857756ae57c61aa",
+  "commit": "1ae8a1af1708c2222f8f08858e1e1f0d19a0fd72",
   "fonts_sha256": {
    "IBMPlexMono-Regular.ttf": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
    "IBMPlexMono-SemiBold.ttf": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
