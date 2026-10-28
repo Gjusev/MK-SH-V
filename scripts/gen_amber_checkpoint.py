@@ -47,9 +47,9 @@ SD = "Scanned document page."  # the measured state of all four families
 # register). Day 4 is a spot-inspection notice, not a new rule: difficulty
 # comes from finer threshold gaps, which is the measured hard mode.
 SLIPS = {
-    1: [("Day 1", "Official declarations only. Private receipts, letters and notes: deny at the gate.", "PINNED 24 OCT")],
-    2: [("Day 2 · A", "Every declaration form must be complete. Required fields are marked with *.", "PINNED 25 OCT"),
-        ("Day 2 · B", "The trading company must appear on today's manifest. Unlisted companies: deny.", "PINNED 25 OCT")],
+    1: [("Day 1", "Traders must appear on today's manifest. Papers naming anyone else: deny.", "PINNED 24 OCT"),
+        ("Day 1 · B", "The traveler's word is not evidence. The paper decides.", "PINNED 24 OCT")],
+    2: [("Day 2 · NEW", "Every declaration form must be complete. Required fields are marked with *.", "PINNED 25 OCT")],
     3: [("Day 3 · NEW", "Declared value capped at 5,000.00 VEL. Totals at or above the cap: deny.", "PINNED 27 OCT")],
     4: [("Day 4 · NEW", "Spot inspection. Margins near the cap will be read to the cent.", "PINNED 28 OCT")],
 }
@@ -67,21 +67,46 @@ FORM_OPTIONS = [{"id": i, "description": d} for i, d in
                 zip(("complete", "missing_required", "illegible"), OPTION_TEXT["form_complete"]["en"])]
 TF_OPTIONS = [{"id": "false", "description": "No"}, {"id": "true", "description": "Yes"}]
 
-# (kind, scenario) per day, six documents each (v2.1 game design: fewer cases,
-# a day is a shorter shift). kind: inv=invoice declaration, form=declaration
-# form, wrong=private paper (receipt/letter). listed: sender on the manifest.
-# Slots 1-6 keep the five audited/sub-tau documents byte-identical
-# (d2-3, d2-4, d4-2, d3-6, d4-5); the dropped 7th/8th slots were never audited.
+# v4 identity game: every invoice traveler CLAIMS a firm. Honest ones name the
+# firm on the paper; liars hand over a near-miss of it (player-side catch: no
+# model check ever reads the claim). Deterministic per document.
+def _near_miss(name: str, rng: random.Random) -> str:
+    tricks = (
+        lambda n: n.replace("Ltd", "GmbH") if "Ltd" in n else n + " Ltd",
+        lambda n: n.replace("Traders", "Trading") if "Traders" in n else n.replace("Foods", "Food"),
+        lambda n: n.replace(" and ", " & ") if " and " in n else "The " + n,
+        lambda n: n[:-1] if n.endswith("s") else n + "s",
+        lambda n: n.replace("Logistics", "Logistik") if "Logistics" in n else n.replace("Systems", "Systeme"),
+    )
+    for _ in range(6):
+        cand = rng.choice(tricks)(name)
+        if cand != name:
+            return cand
+    return name + " Co."
+
+
+# (kind, scenario): inv=invoice, form=declaration form, wrong=private paper.
+# claim: "honest" names the sender; "lie" draws a near-miss. The two bribes
+# (BRIBES below) ride deny-gold liar documents: the smuggler fantasy.
 SCENARIOS = {
-    1: [("inv", {}), ("inv", {}), ("wrong",), ("inv", {}), ("wrong",), ("inv", {})],
-    2: [("inv", {"listed": True}), ("form", "complete"), ("inv", {"listed": False}),
-        ("form", "missing_required"), ("inv", {"listed": True}), ("wrong",)],
-    3: [("inv", {"total": "wide_in", "listed": True}), ("inv", {"total": "wide_over", "listed": True}),
-        ("inv", {"total": "wide_in", "listed": True}), ("form", "complete"),
-        ("inv", {"total": "wide_in", "listed": False}), ("inv", {"total": 5250.00, "listed": True})],
-    4: [("inv", {"total": "fine_in", "listed": True}), ("inv", {"total": "fine_over", "listed": True, "distract": False}),
-        ("inv", {"total": "fine_in", "listed": True}), ("form", "complete"),
-        ("inv", {"total": 5115.00, "listed": True}), ("inv", {"total": "fine_in", "listed": False})],
+    1: [("inv", {"claim": "honest", "listed": True}), ("inv", {"claim": "honest", "listed": True}),
+        ("inv", {"claim": "honest", "listed": False}), ("inv", {"claim": "lie", "listed": True}),
+        ("wrong",), ("inv", {"claim": "honest", "listed": True})],
+    2: [("inv", {"claim": "honest", "listed": True}), ("form", "complete"),
+        ("inv", {"claim": "lie", "listed": True}), ("form", "missing_required"),
+        ("inv", {"claim": "honest", "listed": True}), ("inv", {"claim": "honest", "listed": False})],
+    3: [("inv", {"claim": "honest", "listed": True, "total": "wide_in"}),
+        ("inv", {"claim": "honest", "listed": True, "total": "wide_over"}),
+        ("inv", {"claim": "honest", "listed": True, "total": "wide_in"}),
+        ("form", "complete"),
+        ("inv", {"claim": "honest", "listed": False, "total": "wide_in"}),
+        ("inv", {"claim": "honest", "listed": True, "total": 5250.00})],
+    4: [("inv", {"claim": "honest", "listed": True, "total": "fine_in"}),
+        ("inv", {"claim": "lie", "listed": True, "total": "fine_in"}),
+        ("inv", {"claim": "honest", "listed": True, "total": "fine_in"}),
+        ("form", "complete"),
+        ("inv", {"claim": "honest", "listed": True, "total": 5115.00}),
+        ("inv", {"claim": "honest", "listed": False, "total": "fine_in"})],
 }
 
 ASSETS_REF = "assets"
@@ -107,7 +132,7 @@ PERSONAS = ("impatient", "sweet", "nervous", "executive", "tourist", "smuggler")
 # two bribes per campaign on deny-gold documents that are not among the five
 # audited ones (d2-6, d4-6): presentation and session state only, the gold of
 # the documents never changes
-BRIBES = {"d2-6": 40, "d4-6": 40}
+BRIBES = {"d2-3": 40, "d4-2": 40}
 
 
 def traveler_for(day: int, i: int) -> dict:
@@ -151,6 +176,8 @@ def make_doc(day: int, i: int, scen: tuple, sender: str | None = None) -> dict:
                    distractor=distractor,
                    listed=sc.get("listed", True), template=f"acp-h0b0f{rng.randrange(2)}",
                    issuer="vel" if rng.random() < 0.7 else "kor")
+        doc["claim"] = (doc["sender"] if sc.get("claim", "honest") == "honest"
+                        else _near_miss(doc["sender"], rng))
     elif kind == "form":
         label = sc
         title, fields = form_content(label, rng, "en")
@@ -170,23 +197,30 @@ def make_doc(day: int, i: int, scen: tuple, sender: str | None = None) -> dict:
 def violations_of(day: int, doc: dict) -> list[str]:
     v: list[str] = []
     if doc["kind"] == "wrong":
-        v.append("paper type")
+        v.append("private paper")
     if doc["kind"] == "form" and day >= 2 and doc["form_label"] != "complete":
         v.append("incomplete form")
     if doc["kind"] == "inv":
-        if day >= 2 and not doc["listed"]:
+        if not doc["listed"]:                       # identity rule, day 1
             v.append("not on manifest")
+        if doc["claim"] != doc["sender"]:           # the player-side catch, day 1
+            v.append("false declaration")
         if day >= 3 and doc["total"] >= CAP:
             v.append("over the cap")
     return v
 
 
 def checks_for(day: int, doc: dict, manifest: list[str]) -> list[dict]:
-    """Every check in its measured framing; gold never enters the model input."""
-    out = [{"id": f"{doc['id']}-c1", "kind": "type", "family": "doc_type", "state": SD,
-            "question": "Which document type is this?", "options": TYPE_OPTIONS,
-            "gold": doc["doc_type"], "display": "document type"}]
-    if doc["kind"] == "inv" and day >= 2:
+    """Every check in its measured framing; gold never enters the model input.
+    v4: the identity check (sender on manifest) is the core from day 1; the
+    document-type check only runs on private papers (AMBER flags what is not
+    a trade document); tariffs from day 3."""
+    out = []
+    if doc["kind"] != "inv":  # letters/receipts/forms still get their classification
+        out.append({"id": f"{doc['id']}-c1", "kind": "type", "family": "doc_type", "state": SD,
+                    "question": "Which document type is this?", "options": TYPE_OPTIONS,
+                    "gold": doc["doc_type"], "display": "document type"})
+    if doc["kind"] == "inv":
         rng = random.Random(stable_seed("amber", "v2", doc["id"], "names"))
         others = [c for c in dict.fromkeys(manifest + list(COMPANIES)) if c != doc["sender"]][:4]
         names = [doc["sender"], *others]

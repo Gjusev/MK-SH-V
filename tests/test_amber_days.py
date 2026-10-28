@@ -31,10 +31,15 @@ def test_shape_and_mix():
 def test_check_matrix_and_measured_framings():
     c = plan()
     kinds = {d["day"]: {ck["kind"] for x in d["docs"] for ck in x["checks"]} for d in c["days"]}
-    assert kinds[1] == {"type"}
-    assert kinds[2] == {"type", "manifest", "form"}
-    assert kinds[3] == {"type", "manifest", "form", "amount"}
-    assert kinds[4] == {"type", "manifest", "form", "amount"}
+    # v4: identity from day 1 (manifest on invoices); type only on private papers
+    assert kinds[1] == {"manifest", "type"}
+    assert kinds[2] == {"manifest", "type", "form"}
+    assert kinds[3] == {"manifest", "type", "form", "amount"}
+    assert kinds[4] == {"manifest", "type", "form", "amount"}
+    for d in c["days"]:
+        for x in d["docs"]:
+            types = [ck for ck in x["checks"] if ck["kind"] == "type"]
+            assert len(types) == (0 if x["kind"] == "inv" else 1), x["id"]
     for d in c["days"]:
         for x in d["docs"]:
             for ck in x["checks"]:
@@ -58,10 +63,19 @@ def test_gold_matches_the_paper():
         for x in day["docs"]:
             viol = set(x["violations"])
             assert x["verdict"] == ("deny" if viol else "approve")
-            assert ("paper type" in viol) == (x["kind"] == "wrong")
+            assert ("private paper" in viol) == (x["kind"] == "wrong")
             assert ("incomplete form" in viol) == (x["kind"] == "form" and x["form_label"] != "complete")
             assert ("not on manifest" in viol) == (x["kind"] == "inv" and not x["listed"])
             assert ("over the cap" in viol) == (x["kind"] == "inv" and x["total"] >= CAP)
+            # identity: the claim vs the paper (player-side catch, day 1)
+            if x["kind"] == "inv" and "claim" in x:
+                honest = x["claim"] == x["sender"]
+                assert ("false declaration" in viol) != honest
+                if not honest:  # the LIAR's claim never reaches the model
+                    # (exact option match; near-miss names are substrings of
+                    # each other by design, so substring checks do not apply)
+                    assert all(o["description"] != x["claim"]
+                               for ck in x["checks"] for o in ck["options"])
             for ck in x["checks"]:
                 if ck["kind"] == "type":
                     assert ck["gold"] == x["doc_type"]
@@ -89,19 +103,16 @@ def test_manifest_and_gap_design():
     assert any(t < 4000 for t in totals(3, "in")), "day-3 keeps wide gaps too"
 
 
-def test_frozen_documents_unchanged():
-    import subprocess
-    p = ROOT / "demo/game/days.json"
-    written = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
-    if written is None:
-        import pytest
-        pytest.skip("days.json not generated yet")
-    head = json.loads(subprocess.run(["git", "show", "HEAD:demo/game/days.json"],
-                                     capture_output=True, text=True, cwd=ROOT).stdout)
-    frozen = ["assets/docs/d2-3.png", "assets/docs/d2-4.png", "assets/docs/d4-2.png",
-              "assets/docs/d3-6.png", "assets/docs/d4-5.png"]
-    for f in frozen:
-        assert written["generator"]["images_sha256"][f] == head["generator"]["images_sha256"][f], f
+def test_liars_are_near_misses():
+    c = plan()
+    liars = [(x["claim"], x["sender"]) for d in c["days"] for x in d["docs"]
+             if x["kind"] == "inv" and x.get("claim") and x["claim"] != x["sender"]]
+    assert len(liars) == 3
+    for claim, sender in liars:
+        assert claim != sender
+        # a near miss, not a different planet: same core once "The " is dropped
+        core = claim[4:] if claim.startswith("The ") else claim
+        assert core[:6].lower() == sender[:6].lower(), (claim, sender)
 
 
 def test_written_days_json_matches_plan():

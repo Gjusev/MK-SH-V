@@ -126,7 +126,7 @@ def test_unstamped_filing_and_routing_display():
 def test_bribe_flow_and_inspection():
     seed_cache()
     s = game.new_session()
-    # walk to day 2 doc 6 (d2-6 carries the +40 gift): one full day first
+    # walk to day 2 doc 3 (d2-3, the liar, carries the +40 gift): one full day first
     for _ in range(1):
         s = game.advance(s)  # intro -> day1 doc0
         while s["phase"] == "doc":
@@ -134,7 +134,7 @@ def test_bribe_flow_and_inspection():
             s = game.advance(s)
         s = game.advance(s)  # day_end -> next intro
     assert s["day"] == 2
-    while not (s["phase"] == "doc" and game._doc(2, s["doc_i"])["id"] == "d2-6"):
+    while not (s["phase"] == "doc" and game._doc(2, s["doc_i"])["id"] == "d2-3"):
         s = game.stamp(s, game._doc(2, s["doc_i"])["verdict"])
         s = game.advance(s)
     d = game._doc(2, s["doc_i"])
@@ -146,13 +146,14 @@ def test_bribe_flow_and_inspection():
     assert s["credits"] == before + 40 and s["contraband"] == 1
     assert game.accept_gift(s)["credits"] == before + 40  # once only
     s = game.stamp(s, d["verdict"])
-    s = game.advance(s)  # enters day_end: inspection coin-flip runs
+    while s["phase"] == "doc":  # finish the day: remaining docs, then day_end
+        s = game.stamp(s, game._doc(s["day"], s["doc_i"])["verdict"])
+        s = game.advance(s)
     caught = any(b["caught"] for b in s["bribes"])
-    # doc 6 itself stamps correct (+5) and day 2 is clean (+10) on top of the gift
+    # day 2 fully correct: gift +40, four remaining stamps +20, clean shift +10
+    assert s["credits"] == before + 40 + 20 + 10 - (60 if caught else 0)
     if caught:
-        assert s["credits"] == before + 40 + 5 + 10 - 60 and s["streak"] == 0
-    else:
-        assert s["credits"] == before + 40 + 5 + 10
+        assert s["streak"] == 0
     # the coin is fixed per document: replay must agree
     s2 = game.new_session()
     for _ in range(1):
@@ -161,12 +162,14 @@ def test_bribe_flow_and_inspection():
             s2 = game.stamp(s2, game._doc(s2["day"], s2["doc_i"])["verdict"])
             s2 = game.advance(s2)
         s2 = game.advance(s2)
-    while not (s2["phase"] == "doc" and game._doc(2, s2["doc_i"])["id"] == "d2-6"):
+    while not (s2["phase"] == "doc" and game._doc(2, s2["doc_i"])["id"] == "d2-3"):
         s2 = game.stamp(s2, game._doc(2, s2["doc_i"])["verdict"])
         s2 = game.advance(s2)
     s2 = game.accept_gift(s2)
     s2 = game.stamp(s2, "deny")
-    s2 = game.advance(s2)
+    while s2["phase"] == "doc":
+        s2 = game.stamp(s2, game._doc(s2["day"], s2["doc_i"])["verdict"])
+        s2 = game.advance(s2)
     assert any(b["caught"] for b in s2["bribes"]) == caught
 
 

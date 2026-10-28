@@ -13,15 +13,20 @@
    "slips": [
     {
      "title": "Day 1",
-     "text": "Official declarations only. Private receipts, letters and notes: deny at the gate.",
+     "text": "Traders must appear on today's manifest. Papers naming anyone else: deny.",
+     "pinned": "PINNED 24 OCT"
+    },
+    {
+     "title": "Day 1 · B",
+     "text": "The traveler's word is not evidence. The paper decides.",
      "pinned": "PINNED 24 OCT"
     }
    ],
    "manifest": [
     "Orion Print GmbH",
     "Meridian Foods",
-    "Sierra Logistics",
     "Vela Marine",
+    "Cobalt Systems",
     "Northwind Traders",
     "Acme Supplies Ltd"
    ],
@@ -37,6 +42,7 @@
      "listed": true,
      "template": "acp-h0b0f0",
      "issuer": "vel",
+     "claim": "Orion Print GmbH",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -47,39 +53,35 @@
      },
      "checks": [
       {
-       "id": "d1-1-c1",
-       "kind": "type",
-       "family": "doc_type",
+       "id": "d1-1-c2",
+       "kind": "manifest",
+       "family": "source_conflict",
        "state": "Scanned document page.",
-       "question": "Which document type is this?",
+       "question": "Which company is named as the sender on this document?",
        "options": [
         {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
+         "id": "g0",
+         "description": "Meridian Foods"
         },
         {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
+         "id": "g1",
+         "description": "Orion Print GmbH"
         },
         {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
+         "id": "g2",
+         "description": "Northwind Traders"
         },
         {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
+         "id": "g3",
+         "description": "Cobalt Systems"
         },
         {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
+         "id": "g4",
+         "description": "Vela Marine"
         }
        ],
-       "gold": "invoice",
-       "display": "document type"
+       "gold": "g1",
+       "display": "sender on manifest"
       }
      ]
     },
@@ -94,6 +96,7 @@
      "listed": true,
      "template": "acp-h0b0f0",
      "issuer": "kor",
+     "claim": "Meridian Foods",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -104,51 +107,52 @@
      },
      "checks": [
       {
-       "id": "d1-2-c1",
-       "kind": "type",
-       "family": "doc_type",
+       "id": "d1-2-c2",
+       "kind": "manifest",
+       "family": "source_conflict",
        "state": "Scanned document page.",
-       "question": "Which document type is this?",
+       "question": "Which company is named as the sender on this document?",
        "options": [
         {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
+         "id": "g0",
+         "description": "Vela Marine"
         },
         {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
+         "id": "g1",
+         "description": "Northwind Traders"
         },
         {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
+         "id": "g2",
+         "description": "Meridian Foods"
         },
         {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
+         "id": "g3",
+         "description": "Orion Print GmbH"
         },
         {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
+         "id": "g4",
+         "description": "Cobalt Systems"
         }
        ],
-       "gold": "invoice",
-       "display": "document type"
+       "gold": "g2",
+       "display": "sender on manifest"
       }
      ]
     },
     {
      "id": "d1-3",
-     "kind": "wrong",
+     "kind": "inv",
      "image": "assets/docs/d1-3.png",
-     "doc_type": "letter",
-     "template": "acp-h3b0f0",
-     "issuer": "kor",
+     "doc_type": "invoice",
+     "total": 812.5,
+     "sender": "Sierra Logistics",
+     "distractor": null,
+     "listed": false,
+     "template": "acp-h0b0f0",
+     "issuer": "vel",
+     "claim": "Sierra Logistics",
      "violations": [
-      "paper type"
+      "not on manifest"
      ],
      "verdict": "deny",
      "traveler": {
@@ -159,39 +163,35 @@
      },
      "checks": [
       {
-       "id": "d1-3-c1",
-       "kind": "type",
-       "family": "doc_type",
+       "id": "d1-3-c2",
+       "kind": "manifest",
+       "family": "source_conflict",
        "state": "Scanned document page.",
-       "question": "Which document type is this?",
+       "question": "Which company is named as the sender on this document?",
        "options": [
         {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
+         "id": "g0",
+         "description": "Cobalt Systems"
         },
         {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
+         "id": "g1",
+         "description": "Meridian Foods"
         },
         {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
+         "id": "g2",
+         "description": "Sierra Logistics"
         },
         {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
+         "id": "g3",
+         "description": "Orion Print GmbH"
         },
         {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
+         "id": "g4",
+         "description": "Vela Marine"
         }
        ],
-       "gold": "letter",
-       "display": "document type"
+       "gold": "g2",
+       "display": "sender on manifest"
       }
      ]
     },
@@ -201,13 +201,16 @@
      "image": "assets/docs/d1-4.png",
      "doc_type": "invoice",
      "total": 1850.0,
-     "sender": "Sierra Logistics",
+     "sender": "Vela Marine",
      "distractor": null,
      "listed": true,
      "template": "acp-h0b0f0",
      "issuer": "vel",
-     "violations": [],
-     "verdict": "approve",
+     "claim": "The Vela Marine",
+     "violations": [
+      "false declaration"
+     ],
+     "verdict": "deny",
      "traveler": {
       "bust": "assets/busts/traveler_11_24.png",
       "persona": "tourist",
@@ -216,39 +219,35 @@
      },
      "checks": [
       {
-       "id": "d1-4-c1",
-       "kind": "type",
-       "family": "doc_type",
+       "id": "d1-4-c2",
+       "kind": "manifest",
+       "family": "source_conflict",
        "state": "Scanned document page.",
-       "question": "Which document type is this?",
+       "question": "Which company is named as the sender on this document?",
        "options": [
         {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
+         "id": "g0",
+         "description": "Meridian Foods"
         },
         {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
+         "id": "g1",
+         "description": "Cobalt Systems"
         },
         {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
+         "id": "g2",
+         "description": "Vela Marine"
         },
         {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
+         "id": "g3",
+         "description": "Orion Print GmbH"
         },
         {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
+         "id": "g4",
+         "description": "Northwind Traders"
         }
        ],
-       "gold": "invoice",
-       "display": "document type"
+       "gold": "g2",
+       "display": "sender on manifest"
       }
      ]
     },
@@ -260,7 +259,7 @@
      "template": "acp-h2b0f0",
      "issuer": "kor",
      "violations": [
-      "paper type"
+      "private paper"
      ],
      "verdict": "deny",
      "traveler": {
@@ -313,11 +312,12 @@
      "image": "assets/docs/d1-6.png",
      "doc_type": "invoice",
      "total": 1850.0,
-     "sender": "Vela Marine",
+     "sender": "Cobalt Systems",
      "distractor": null,
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Cobalt Systems",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -328,39 +328,35 @@
      },
      "checks": [
       {
-       "id": "d1-6-c1",
-       "kind": "type",
-       "family": "doc_type",
+       "id": "d1-6-c2",
+       "kind": "manifest",
+       "family": "source_conflict",
        "state": "Scanned document page.",
-       "question": "Which document type is this?",
+       "question": "Which company is named as the sender on this document?",
        "options": [
         {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
+         "id": "g0",
+         "description": "Cobalt Systems"
         },
         {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
+         "id": "g1",
+         "description": "Vela Marine"
         },
         {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
+         "id": "g2",
+         "description": "Orion Print GmbH"
         },
         {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
+         "id": "g3",
+         "description": "Meridian Foods"
         },
         {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
+         "id": "g4",
+         "description": "Northwind Traders"
         }
        ],
-       "gold": "invoice",
-       "display": "document type"
+       "gold": "g0",
+       "display": "sender on manifest"
       }
      ]
     }
@@ -372,26 +368,26 @@
    "slips": [
     {
      "title": "Day 1",
-     "text": "Official declarations only. Private receipts, letters and notes: deny at the gate.",
+     "text": "Traders must appear on today's manifest. Papers naming anyone else: deny.",
      "pinned": "PINNED 24 OCT"
     },
     {
-     "title": "Day 2 · A",
-     "text": "Every declaration form must be complete. Required fields are marked with *.",
-     "pinned": "PINNED 25 OCT"
+     "title": "Day 1 · B",
+     "text": "The traveler's word is not evidence. The paper decides.",
+     "pinned": "PINNED 24 OCT"
     },
     {
-     "title": "Day 2 · B",
-     "text": "The trading company must appear on today's manifest. Unlisted companies: deny.",
+     "title": "Day 2 · NEW",
+     "text": "Every declaration form must be complete. Required fields are marked with *.",
      "pinned": "PINNED 25 OCT"
     }
    ],
    "manifest": [
     "Orion Print GmbH",
+    "Cobalt Systems",
     "Northwind Traders",
     "Acme Supplies Ltd",
     "Baltic Parts OY",
-    "Sierra Logistics",
     "Meridian Foods"
    ],
    "docs": [
@@ -406,6 +402,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Orion Print GmbH",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -416,41 +413,6 @@
      },
      "checks": [
       {
-       "id": "d2-1-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
-      {
        "id": "d2-1-c2",
        "kind": "manifest",
        "family": "source_conflict",
@@ -459,7 +421,7 @@
        "options": [
         {
          "id": "g0",
-         "description": "Acme Supplies Ltd"
+         "description": "Northwind Traders"
         },
         {
          "id": "g1",
@@ -467,15 +429,15 @@
         },
         {
          "id": "g2",
-         "description": "Baltic Parts OY"
+         "description": "Acme Supplies Ltd"
         },
         {
          "id": "g3",
-         "description": "Northwind Traders"
+         "description": "Cobalt Systems"
         },
         {
          "id": "g4",
-         "description": "Sierra Logistics"
+         "description": "Baltic Parts OY"
         }
        ],
        "gold": "g1",
@@ -569,11 +531,12 @@
      "total": 312.5,
      "sender": "Cobalt Systems",
      "distractor": null,
-     "listed": false,
+     "listed": true,
      "template": "acp-h0b0f0",
      "issuer": "vel",
+     "claim": "Cobalt System",
      "violations": [
-      "not on manifest"
+      "false declaration"
      ],
      "verdict": "deny",
      "traveler": {
@@ -582,42 +545,10 @@
       "name": "EDRIC M.",
       "line": "I have a permit number, if it helps."
      },
+     "bribe": {
+      "offer": 40
+     },
      "checks": [
-      {
-       "id": "d2-3-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d2-3-c2",
        "kind": "manifest",
@@ -742,6 +673,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "kor",
+     "claim": "Northwind Traders",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -751,41 +683,6 @@
       "line": "I have a permit number, if it helps."
      },
      "checks": [
-      {
-       "id": "d2-5-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d2-5-c2",
        "kind": "manifest",
@@ -803,15 +700,15 @@
         },
         {
          "id": "g2",
-         "description": "Baltic Parts OY"
-        },
-        {
-         "id": "g3",
          "description": "Acme Supplies Ltd"
         },
         {
+         "id": "g3",
+         "description": "Cobalt Systems"
+        },
+        {
          "id": "g4",
-         "description": "Sierra Logistics"
+         "description": "Baltic Parts OY"
         }
        ],
        "gold": "g1",
@@ -821,13 +718,18 @@
     },
     {
      "id": "d2-6",
-     "kind": "wrong",
+     "kind": "inv",
      "image": "assets/docs/d2-6.png",
-     "doc_type": "receipt",
-     "template": "acp-h1b0f0",
-     "issuer": "kor",
+     "doc_type": "invoice",
+     "total": 312.5,
+     "sender": "Sierra Logistics",
+     "distractor": null,
+     "listed": false,
+     "template": "acp-h0b0f1",
+     "issuer": "vel",
+     "claim": "Sierra Logistics",
      "violations": [
-      "paper type"
+      "not on manifest"
      ],
      "verdict": "deny",
      "traveler": {
@@ -836,44 +738,37 @@
       "name": "LINHARD P.",
       "line": "The truck is waiting outside."
      },
-     "bribe": {
-      "offer": 40
-     },
      "checks": [
       {
-       "id": "d2-6-c1",
-       "kind": "type",
-       "family": "doc_type",
+       "id": "d2-6-c2",
+       "kind": "manifest",
+       "family": "source_conflict",
        "state": "Scanned document page.",
-       "question": "Which document type is this?",
+       "question": "Which company is named as the sender on this document?",
        "options": [
         {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
+         "id": "g0",
+         "description": "Sierra Logistics"
         },
         {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
+         "id": "g1",
+         "description": "Orion Print GmbH"
         },
         {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
+         "id": "g2",
+         "description": "Northwind Traders"
         },
         {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
+         "id": "g3",
+         "description": "Cobalt Systems"
         },
         {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
+         "id": "g4",
+         "description": "Acme Supplies Ltd"
         }
        ],
-       "gold": "receipt",
-       "display": "document type"
+       "gold": "g0",
+       "display": "sender on manifest"
       }
      ]
     }
@@ -885,17 +780,17 @@
    "slips": [
     {
      "title": "Day 1",
-     "text": "Official declarations only. Private receipts, letters and notes: deny at the gate.",
+     "text": "Traders must appear on today's manifest. Papers naming anyone else: deny.",
      "pinned": "PINNED 24 OCT"
     },
     {
-     "title": "Day 2 · A",
-     "text": "Every declaration form must be complete. Required fields are marked with *.",
-     "pinned": "PINNED 25 OCT"
+     "title": "Day 1 · B",
+     "text": "The traveler's word is not evidence. The paper decides.",
+     "pinned": "PINNED 24 OCT"
     },
     {
-     "title": "Day 2 · B",
-     "text": "The trading company must appear on today's manifest. Unlisted companies: deny.",
+     "title": "Day 2 · NEW",
+     "text": "Every declaration form must be complete. Required fields are marked with *.",
      "pinned": "PINNED 25 OCT"
     },
     {
@@ -924,6 +819,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Meridian Foods",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -933,41 +829,6 @@
       "line": "The truck is waiting outside."
      },
      "checks": [
-      {
-       "id": "d3-1-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d3-1-c2",
        "kind": "manifest",
@@ -1031,6 +892,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Northwind Traders",
      "violations": [
       "over the cap"
      ],
@@ -1042,41 +904,6 @@
       "line": "Third crossing this month."
      },
      "checks": [
-      {
-       "id": "d3-2-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d3-2-c2",
        "kind": "manifest",
@@ -1140,6 +967,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Sierra Logistics",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -1149,41 +977,6 @@
       "line": "Cold one today, officer."
      },
      "checks": [
-      {
-       "id": "d3-3-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d3-3-c2",
        "kind": "manifest",
@@ -1325,6 +1118,7 @@
      "listed": false,
      "template": "acp-h0b0f0",
      "issuer": "vel",
+     "claim": "Baltic Parts OY",
      "violations": [
       "not on manifest"
      ],
@@ -1336,41 +1130,6 @@
       "line": "Invoice and permit, like the chancellery said."
      },
      "checks": [
-      {
-       "id": "d3-5-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d3-5-c2",
        "kind": "manifest",
@@ -1434,6 +1193,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Orion Print GmbH",
      "violations": [
       "over the cap"
      ],
@@ -1445,41 +1205,6 @@
       "line": "Long queue behind me."
      },
      "checks": [
-      {
-       "id": "d3-6-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d3-6-c2",
        "kind": "manifest",
@@ -1540,17 +1265,17 @@
    "slips": [
     {
      "title": "Day 1",
-     "text": "Official declarations only. Private receipts, letters and notes: deny at the gate.",
+     "text": "Traders must appear on today's manifest. Papers naming anyone else: deny.",
      "pinned": "PINNED 24 OCT"
     },
     {
-     "title": "Day 2 · A",
-     "text": "Every declaration form must be complete. Required fields are marked with *.",
-     "pinned": "PINNED 25 OCT"
+     "title": "Day 1 · B",
+     "text": "The traveler's word is not evidence. The paper decides.",
+     "pinned": "PINNED 24 OCT"
     },
     {
-     "title": "Day 2 · B",
-     "text": "The trading company must appear on today's manifest. Unlisted companies: deny.",
+     "title": "Day 2 · NEW",
+     "text": "Every declaration form must be complete. Required fields are marked with *.",
      "pinned": "PINNED 25 OCT"
     },
     {
@@ -1584,6 +1309,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Sierra Logistics",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -1593,41 +1319,6 @@
       "line": "Invoice and permit, like the chancellery said."
      },
      "checks": [
-      {
-       "id": "d4-1-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d4-1-c2",
        "kind": "manifest",
@@ -1685,14 +1376,15 @@
      "kind": "inv",
      "image": "assets/docs/d4-2.png",
      "doc_type": "invoice",
-     "total": 5015.0,
+     "total": 4650.0,
      "sender": "Orion Print GmbH",
-     "distractor": null,
+     "distractor": 4748.12,
      "listed": true,
      "template": "acp-h0b0f0",
      "issuer": "kor",
+     "claim": "Orion Print GmbHs",
      "violations": [
-      "over the cap"
+      "false declaration"
      ],
      "verdict": "deny",
      "traveler": {
@@ -1701,42 +1393,10 @@
       "name": "KESSLER B.",
       "line": "Invoice and permit, like the chancellery said."
      },
+     "bribe": {
+      "offer": 40
+     },
      "checks": [
-      {
-       "id": "d4-2-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d4-2-c2",
        "kind": "manifest",
@@ -1784,7 +1444,7 @@
          "description": "Yes"
         }
        ],
-       "gold": "true",
+       "gold": "false",
        "display": "within the 5,000.00 VEL cap"
       }
      ]
@@ -1800,6 +1460,7 @@
      "listed": true,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Vela Marine",
      "violations": [],
      "verdict": "approve",
      "traveler": {
@@ -1809,41 +1470,6 @@
       "line": "The truck is waiting outside."
      },
      "checks": [
-      {
-       "id": "d4-3-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d4-3-c2",
        "kind": "manifest",
@@ -1985,6 +1611,7 @@
      "listed": true,
      "template": "acp-h0b0f0",
      "issuer": "vel",
+     "claim": "Cobalt Systems",
      "violations": [
       "over the cap"
      ],
@@ -1996,41 +1623,6 @@
       "line": "Third crossing this month."
      },
      "checks": [
-      {
-       "id": "d4-5-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d4-5-c2",
        "kind": "manifest",
@@ -2094,6 +1686,7 @@
      "listed": false,
      "template": "acp-h0b0f1",
      "issuer": "vel",
+     "claim": "Acme Supplies Ltd",
      "violations": [
       "not on manifest"
      ],
@@ -2104,45 +1697,7 @@
       "name": "THALER R.",
       "line": "The truck is waiting outside."
      },
-     "bribe": {
-      "offer": 40
-     },
      "checks": [
-      {
-       "id": "d4-6-c1",
-       "kind": "type",
-       "family": "doc_type",
-       "state": "Scanned document page.",
-       "question": "Which document type is this?",
-       "options": [
-        {
-         "id": "invoice",
-         "description": "Invoice: an itemized bill with line items, reference number and total."
-        },
-        {
-         "id": "receipt",
-         "description": "Receipt: a proof of purchase with items and total, without invoice reference."
-        },
-        {
-         "id": "contract",
-         "description": "Contract: titled clauses with signature lines for parties."
-        },
-        {
-         "id": "form",
-         "description": "Form: labelled input fields, mostly unfilled."
-        },
-        {
-         "id": "letter",
-         "description": "Letter: sender and recipient blocks, salutation and paragraphs."
-        },
-        {
-         "id": "other",
-         "description": "None of the other document types applies to this page."
-        }
-       ],
-       "gold": "invoice",
-       "display": "document type"
-      },
       {
        "id": "d4-6-c2",
        "kind": "manifest",
@@ -2199,7 +1754,7 @@
   }
  ],
  "generator": {
-  "commit": "1ae8a1af1708c2222f8f08858e1e1f0d19a0fd72",
+  "commit": "724d3d6e13ec018d0928467e077daea41db184e7",
   "fonts_sha256": {
    "IBMPlexMono-Regular.ttf": "6a3412f058c7d8dfd9170c41e85ade48e5156ecb89356110ca57a0a27734af46",
    "IBMPlexMono-SemiBold.ttf": "d3c38e55c78f5b0f28009fddba4834ec503278936a5986032424c9bd2d23aa46",
@@ -2209,16 +1764,16 @@
   "images_sha256": {
    "assets/docs/d1-1.png": "a1ca01094090ca459afdca2a80482040a5fb552adacb17cb56a2243d74a4877f",
    "assets/docs/d1-2.png": "f0edcde3cc527ef5ad57511cc03a915e41b4feb439c5a7d375bec2213cb8ef81",
-   "assets/docs/d1-3.png": "9b7b95dd01042c2e4265407817a174de8b30fd80ece5927df848dcecc25cfcf7",
-   "assets/docs/d1-4.png": "138840718c0728e000516ff2f2e8989075f433bdde7d3aef1d54ddcaad8e7a9e",
+   "assets/docs/d1-3.png": "2395cadc86de39d908cadb83731f64a5563274d8b779f57bdcaf55dd31d23225",
+   "assets/docs/d1-4.png": "217292bf5909f96b47b07e453b74b5c453af40ff950cacab063f0f6d660d7b89",
    "assets/docs/d1-5.png": "6766073d5aee2ac2c8b287375124da9af7a96346d1666bbefc262861747a7f94",
-   "assets/docs/d1-6.png": "b5e5aa960a6b19c5b42e37397914a34ab2b10a256ea5f3e141c3afda134d06a1",
+   "assets/docs/d1-6.png": "96afc39012cd341f9f1487b4e2bb4ae8a3bde8ff0001c3e0853550ed33d6a1a1",
    "assets/docs/d2-1.png": "8b431ec915477515c2e27f51dbba179d6af02c835ccede179e49774c3585d406",
    "assets/docs/d2-2.png": "dee4d848db721c533d7843f75bc127041b6bf2c8c8e97dcd44b0bdc37d0705e9",
    "assets/docs/d2-3.png": "837b290ea045659d025cbe0afa61e109ab095fe9069a8d4f23d703fe38a86f7f",
    "assets/docs/d2-4.png": "25c84164129715a8ba419c365036e04e206f90f5e04e2ba8926cb1c6403ba929",
    "assets/docs/d2-5.png": "66cca99db76bf7c07ae46f22523204383c07a2685042f8c47b79ff446f987f91",
-   "assets/docs/d2-6.png": "be4e1bb9156f031d0e63ac04f4fa86317af912e3efb6d81d5de2431f0065fdbc",
+   "assets/docs/d2-6.png": "7923125b68596907932a81e5fbc95cf22f300c349b27e7e79de1129adb03da19",
    "assets/docs/d3-1.png": "2511e45739324bdadce67dfecb150a5058f3c39f4c9008d625ee419078db2d46",
    "assets/docs/d3-2.png": "d1ed69e89b4bd825adfbdc87c12613f3a9208fb1df5fd51bdffb733c6d67660f",
    "assets/docs/d3-3.png": "bea457e7647acbc97d5938b8728324e81e2f1dc44efe6c4a41587ab487e8a71c",
@@ -2226,7 +1781,7 @@
    "assets/docs/d3-5.png": "bac4a04a05fa3477a6a8af70533369a9bcac3c12ac1a8847684a042a83cb2931",
    "assets/docs/d3-6.png": "8c6b482309db6a3f9b9910735a2f52d952acea2560f7cf967803f060c83dfae9",
    "assets/docs/d4-1.png": "a359c86d0f8892152935ae5ce49dc7a16b0ccc27539eafd9482e2b2c4103cdf3",
-   "assets/docs/d4-2.png": "a9cf2f34778843c56a33398a616602dafe836553ac3f58b177beb9d33c3882cb",
+   "assets/docs/d4-2.png": "7b850664f32cf4f3e6955b5a91d4066b6d46b0a927dcc5d12903097e0807b8b5",
    "assets/docs/d4-3.png": "5ba8913be4b2362e52a2beaa12c873230eeca8e0161f1a3eebc25814ff835760",
    "assets/docs/d4-4.png": "f7ac2cf8e88c366f8b10f9b26e2a2f2841916b19e67cea75889d6901d5fbc4d6",
    "assets/docs/d4-5.png": "dac9566af1bb4003dd4902ce0388c268b92578dea7229399b7cce621431b40fa",

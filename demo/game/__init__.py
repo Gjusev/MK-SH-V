@@ -423,9 +423,12 @@ def _window_html(s: dict, d: dict, t: dict) -> str:
         mood, key = "wait", None
     else:
         mood, key = "", None
-    line = (t["line"] if key is None and s["stamped"] is None
-            else "(The traveler does not move.)" if key is None
-            else _persona_line(d["id"], t["persona"], key))
+    if key is None and s["stamped"] is None:
+        line = f"Papers for {d['claim']}." if d.get("claim") else t["line"]
+    elif key is None:
+        line = "(The traveler does not move.)"
+    else:
+        line = _persona_line(d["id"], t["persona"], key)
     bust = t["bust"].rsplit("/", 1)[-1]
     if s["stamped"] == "approve":
         bust = bust.replace("_24.png", "_smile_24.png")
@@ -503,7 +506,7 @@ def _check_html(ck: dict, r: dict, n: int) -> str:
     return (f"<div class='check{' routed-row' if not r['backed'] else ''}' id='check-{n}'>"
             f"<div class='q'>{q}</div>"
             f"<div class='prob-row{' routed-row' if not r['backed'] else ''} top'>"
-            f"<span class='prob-id'>{escape(label)[:10]}</span>"
+            f"<span class='prob-id' title='{escape(label)}'>{escape(label)}</span>"
             f"<span class='prob-bar'><span class='prob-fill' style='width:{p * 100:.1f}%'></span>"
             f"<span class='tau'></span></span>"
             f"<span class='prob-num'>{p:.1%}</span></div>{verdict}</div>")
@@ -522,10 +525,11 @@ def _intro_html(s: dict) -> str:
     <div class='i-kicker'>REPUBLIC OF VELDANIA · BORDER BUREAU · BOOTH 04</div>
     <h1>{head}</h1>
     <p class='i-sub'>{sub}</p>
-    <p class='i-body'>Six travelers reach your window today. AMBER SYSTEM prints one probability
-      line per check; below the gate tau {TAU:g} it refuses to advise and the case is routed to you.
-      Your stamp is the decision of record. Correct calls pay 5 credits; wrong ones cost 10;
-      a clean shift pays a bonus of 10.</p>
+    <p class='i-body'>Six travelers reach your window today, each claiming a firm. AMBER SYSTEM reads
+      the paper: the firm on it, and whether it is on today's manifest. What the machine cannot
+      read is people: when the claim and the paper do not match, that catch is yours. Below the
+      gate tau {TAU:g} the machine refuses to advise and the case is routed to you. Your stamp is
+      the decision of record. Correct calls pay 5 credits; wrong ones cost 10; a clean shift pays 10.</p>
     <p class='i-foot'>{escape(HONESTY)}</p>
   </section>
 </div>"""
@@ -701,9 +705,10 @@ ACP_CSS = """
 .acp-root .p-head small{display:block;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--pale);letter-spacing:1.2px;margin-top:2px;font-weight:400}
 .acp-root .check{padding:8px 0 9px;border-bottom:1px solid #22324A}
 .acp-root .check:last-of-type{border-bottom:none}
-.acp-root .q{font-size:12.5px;color:var(--pale);line-height:1.35;margin-bottom:6px}
-.acp-root .prob-row{display:grid;grid-template-columns:44px 1fr 52px;align-items:center;gap:3px 10px}
-.acp-root .prob-id{font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--fpaper)}
+.acp-root .q{font-size:13.5px;color:var(--pale);line-height:1.4;margin-bottom:6px}
+.acp-root .prob-row{display:grid;grid-template-columns:118px 1fr 52px;align-items:center;gap:3px 10px}
+.acp-root .prob-id{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--fpaper);
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .acp-root .prob-bar{background:var(--track);height:16px;border-radius:8px;position:relative}
 .acp-root .prob-fill{position:absolute;inset:0 auto 0 0;border-radius:8px;background:#8E9BAD;height:16px;
  animation:acp-grow .7s cubic-bezier(.16,1,.3,1) both;transform-origin:left}
@@ -713,7 +718,7 @@ ACP_CSS = """
 @keyframes acp-grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .acp-root .tau{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;background:var(--amber);border-radius:2px;left:55%}
 .acp-root .prob-num{font-family:'IBM Plex Mono',monospace;font-size:13px;text-align:right;color:var(--fpaper);font-variant-numeric:tabular-nums}
-.acp-root .verdictline{display:flex;justify-content:space-between;margin-top:5px;font-size:11.5px;font-weight:600;letter-spacing:1.2px}
+.acp-root .verdictline{display:flex;justify-content:space-between;margin-top:5px;font-size:12.5px;font-weight:600;letter-spacing:1px}
 .acp-root .backed{color:var(--pale)}
 .acp-root .routed{color:var(--amber)}
 .acp-root .check.routed-row .prob-bar{outline:1.5px solid var(--amber);outline-offset:2px;border-radius:8px}
