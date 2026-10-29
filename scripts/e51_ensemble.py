@@ -27,7 +27,8 @@ def load_pair(name: str) -> list[dict]:
     for ra, rb in zip(a, b):
         assert ra["gold"] == rb["gold"], ra["id"]
         p = [(x + y) / 2 for x, y in zip(ra["probs"], rb["probs"])]
-        rows.append({"id": ra["id"], "family": ra.get("family"), "gold": ra["gold"], "probs": p})
+        rows.append({"id": ra["id"], "family": ra.get("family"), "gold": ra["gold"], "probs": p,
+                     "pred": max(range(len(p)), key=lambda i: p[i])})
     return rows
 
 
@@ -42,8 +43,9 @@ def geomean_pair(name: str) -> list[dict]:  # descriptive-only ablation
         m = max(logs)
         ex = [math.exp(x - m) for x in logs]
         s = sum(ex)
+        p = [e / s for e in ex]
         rows.append({"id": ra["id"], "family": ra.get("family"), "gold": ra["gold"],
-                     "probs": [e / s for e in ex]})
+                     "probs": p, "pred": max(range(len(p)), key=lambda i: p[i])})
     return rows
 
 
