@@ -185,6 +185,23 @@ images: that is the campaign's declared open problem, not a hidden one. A
 screens-domain gate (E43, on the E41 checkpoint) held the budget on one seed
 and missed on the other, so no real-GUI abstention claim is made.
 
+## Two-seed ensemble option (experiment E51)
+
+Publishing the second trained seed (`model-s42.safetensors`, sha
+`0ddd1aef...`) unlocks an ensemble policy: average the two members' raw
+option probabilities, then apply T = 0.8329 and the gate at tau = 0.30
+(`inference-policy-ensemble.json`, same frozen E42 fit protocol on the
+ensemble's own calibration split). Held out, the ensemble beats the released
+single seed on every one of the seven evaluation sets - largest gain on
+never-read documents (fresh 0.778 vs 0.737) - and holds the 5 % budget on
+the synthetic test (CP95 upper 4.23 % at coverage 1.00). It costs two
+forward passes per case. The real-screens abstention gap is NOT solved by
+ensembling: E51 measured the screens gate still not claimable (budget met
+only at 24 % coverage, under the pre-registered 30 % floor), and a uniform
+weight-average "soup" of the two seeds preserved every decision but
+destroyed the probability ranking (smoke-killed). The hosted demo keeps the
+single-seed policy; the Amber Checkpoint in-game audit is bound to it.
+
 ## Usage
 
 ```bash

@@ -60,6 +60,13 @@ flowchart LR
     F -- no --> H["choice = null<br/>reason_code = below_validated_threshold"]
 ```
 
+## Two-seed ensemble (E51)
+
+The repo also ships the second trained seed (`release/model-s42.safetensors`) and
+`release/inference-policy-ensemble.json`: average the two members' probabilities,
+T 0.8329, gate tau 0.30. It beats the released single seed on all seven held-out
+sets (fresh 0.778 vs 0.737) at 2x inference. The demo stays single-seed.
+
 ## Play the booth
 
 The live demo ships with **Amber Checkpoint**, a Papers Please style booth played against

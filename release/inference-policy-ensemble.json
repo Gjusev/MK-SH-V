@@ -1,0 +1,52 @@
+{
+  "model": "MK-SH-V (A1-V) two-seed ensemble",
+  "policy_id": "ensemble_e51",
+  "experiment": "E51 (docs/E51_CRITERIA_2026-10-29.md)",
+  "members": [
+    {
+      "checkpoint": "a1v_e47_s43",
+      "file": "model.safetensors",
+      "sha256": "ff4a47599b0f127af6393ff7e74996c9f0e6e47a182fa5ccca4a672251c79491"
+    },
+    {
+      "checkpoint": "a1v_e47_s42",
+      "file": "model-s42.safetensors",
+      "sha256": "0ddd1aefa44731cbce029b5f1cb1c11f094d41f4b9c7f389f003717815b7569a"
+    }
+  ],
+  "combination": {
+    "rule": "arithmetic mean of the members' raw option probabilities per case, then the temperature transform softmax(log p_mean / T)",
+    "cost": "two forward passes per case (~2x single-model inference, ~520M total)"
+  },
+  "temperature": {
+    "value": 0.8329,
+    "fitted_on": "ensemble cal_temperature (3,150 synthetic calibration cases), E42 NLL grid + ternary refinement"
+  },
+  "abstention": {
+    "threshold": 0.30,
+    "rule": "smallest grid value whose ensemble cal_policy CP95 UPPER bound of selective risk <= 0.05 (the grid bottom already qualifies: the ensemble is sharper than the single model)",
+    "risk_budget": 0.05,
+    "held_out_validation": {
+      "set": "synthetic test non-FR (4,200)",
+      "coverage": 1.0,
+      "selective_risk": 0.0362,
+      "cp95": [0.0307, 0.0423]
+    }
+  },
+  "evidence": {
+    "beats_the_released_single_seed_on_every_held_out_set": true,
+    "per_set_full_accuracy": {
+      "test_nonfr": {"ensemble": 0.9638, "s43": 0.9588},
+      "test_fr": {"ensemble": 0.9364, "s43": 0.93},
+      "testC": {"ensemble": 1.0, "s43": 1.0},
+      "fresh_ft": {"ensemble": 0.778, "s43": 0.7367},
+      "cord": {"ensemble": 0.7378, "s43": 0.7344},
+      "gui": {"ensemble": 0.8368, "s43": 0.8284},
+      "task": {"ensemble": 0.8333, "s43": 0.83}
+    },
+    "raw_outputs": "runs/e51/e51_summary.json"
+  },
+  "bounds": "same protocol- and distribution-specific guarantees as the single model (synthetic families); real-image abstention remains not validated - E51 Arm B measured the screens-domain gate NOT claimable for the ensemble either (budget met only at 24% coverage, below the pre-registered 30% floor)",
+  "input_rule": "upscale the image (Lanczos) so its longest side is 1,024 px when smaller, then process with max_side 1,024 (E46); build_batch(..., max_side=1024, upscale_to=1024), identical for both members",
+  "deployment_note": "the hosted demo runs the single s43 policy (tau 0.55); the Amber Checkpoint in-game audit is bound to that policy and is not re-validated under the ensemble"
+}

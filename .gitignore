@@ -25,6 +25,7 @@ data/
 runs/
 release/*
 !release/inference-policy.json
+!release/inference-policy-ensemble.json
 checkpoints/
 artifacts/
 .cache/

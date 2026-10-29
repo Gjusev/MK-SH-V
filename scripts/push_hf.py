@@ -24,6 +24,10 @@ def push_model(api: HfApi) -> None:
                 repo_id=MODEL_ID, repo_type="model")
     upload_file(path_or_fileobj=str(ROOT / "release/inference-policy.json"),
                 path_in_repo="inference-policy.json", repo_id=MODEL_ID, repo_type="model")
+    upload_file(path_or_fileobj=str(ROOT / "release/model-s42.safetensors"),
+                path_in_repo="model-s42.safetensors", repo_id=MODEL_ID, repo_type="model")
+    upload_file(path_or_fileobj=str(ROOT / "release/inference-policy-ensemble.json"),
+                path_in_repo="inference-policy-ensemble.json", repo_id=MODEL_ID, repo_type="model")
     for asset in ("assets/mkshv-film.mp4", "assets/mkshv-film.jpg", "assets/logo-mark.png",
                   "assets/chart-accuracy.png", "assets/chart-gate.png"):  # card embeds
         upload_file(path_or_fileobj=str(ROOT / asset), path_in_repo=asset,
