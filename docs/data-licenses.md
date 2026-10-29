@@ -42,3 +42,9 @@ Last reviewed: 2026-10-14.
 
 Attribution for CC BY sources goes into the model card and `THIRD_PARTY_NOTICES.md`
 at release time.
+
+## Own generated families (added 2026-10-29, before E52 generation)
+
+| Source | License | Use | Status |
+|---|---|---|---|
+| E52 receipt renders (own HTML/CSS via Playwright, `scripts/gen_e52.py`; embedded DejaVu fonts, OFL, same as e38a) | ours, Apache-2.0 (repo license); fonts OFL-1.1 with sha manifests | training + fresh test | E52 |

@@ -66,6 +66,19 @@ CONFIGS["e49"] = dict(CONFIGS["e47"], criteria="docs/E49_CRITERIA_2026-10-26.md"
                                  "8b166fb995069d0f80f95aec9fd759ef47a72fc0cde1338ca453b8adb6d19452"),
                             43: ("mkshv-e47-train", "a1v_e47_s43",
                                  "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29")})
+# E52 (docs/E52_CRITERIA_2026-10-29.md): pool v4 = E47 rows byte-identical + receipt-format
+# family (own thermal renders; idr dot-thousands / comma decimals / eur control, 4-8-digit
+# totals), G0 probe dropped the crop arm; init from the E47 checkpoints
+CONFIGS["e52"] = dict(CONFIGS["e47"], criteria="docs/E52_CRITERIA_2026-10-29.md",
+                      bind_slug="mkshv-e52-bind",
+                      bind_sha="80ab59d4c9cdca6dec82c230e7d9cafeadf71ec5ecc61d6e468f5da05bacd5b8",
+                      weights={"num_syn": 0.10, "num_cord": 0.10, "cmp_text": 0.05, "digits": 0.15,
+                               "receipt": 0.25, "range": 0.05, "goal": 0.15, "goal_match": 0.15},
+                      init={42: ("mkshv-e47-train", "a1v_e47_s42",
+                                 "8b166fb995069d0f80f95aec9fd759ef47a72fc0cde1338ca453b8adb6d19452"),
+                            43: ("mkshv-e47-train", "a1v_e47_s43",
+                                 "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29")})
+
 EXP = "e44"  # kernel default; the E45 kernel sets it before main()
 SMOKE_ONLY: tuple[str, ...] = ()  # E46 smoke kernel: these arms, one GPU each, 20 steps, then stop
 SEEDS = {42: 0, 43: 1}
