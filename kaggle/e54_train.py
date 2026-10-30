@@ -107,10 +107,11 @@ def run_worker(seed: int, steps: int, smoke: bool, t0: float) -> None:
     kw = dict(max_state_tokens=T.MAX_STATE_TOKENS, max_option_tokens=T.MAX_OPTION_TOKENS)
 
     def enc_rows(rows):
-        encs = model.encode_cases([case_of_row(r) for r in rows], **kw)
+        cases = [r if hasattr(r, "options") else case_of_row(r) for r in rows]
+        encs = model.encode_cases(cases, **kw)
         out = []
         for r, e in zip(rows, encs):
-            d, L = aux_labels_of(r)
+            d, L = aux_labels_of(r) if isinstance(r, dict) else (None, None)
             out.append(dict(e, aux_digits=d, aux_len=L) if d else e)
         return out
 
