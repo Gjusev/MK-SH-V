@@ -71,7 +71,7 @@ CONFIGS["e49"] = dict(CONFIGS["e47"], criteria="docs/E49_CRITERIA_2026-10-26.md"
 # totals), G0 probe dropped the crop arm; init from the E47 checkpoints
 CONFIGS["e52"] = dict(CONFIGS["e47"], criteria="docs/E52_CRITERIA_2026-10-29.md",
                       bind_slug="mkshv-e52-bind",
-                      bind_sha="a6824a17e85bda5d29cef10013b72b2c716f064fe81a25c78c83a2032ce30d08",
+                      bind_sha="351b5505b4f5362866c1f116c30232a46b35b9e21e8c23a9c5d7c84555bb5704",
                       weights={"num_syn": 0.10, "num_cord": 0.10, "cmp_text": 0.05, "digits": 0.15,
                                "receipt": 0.25, "range": 0.05, "goal": 0.15, "goal_match": 0.15},
                       init={42: ("mkshv-e47-train", "a1v_e47_s42",
