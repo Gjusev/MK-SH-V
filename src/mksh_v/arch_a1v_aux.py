@@ -90,10 +90,10 @@ class NeoMMEAuxScorer(NeoMMEMarkerScorer):
 
 
 def forward_a1v_aux(model: NeoMMEAuxScorer, batch: dict) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """(choice_logits, digit_logits (B,8,10), len_logits (B,9))."""
-    from mksh_v.arch_a1v import forward_a1v
+    """(choice_logits, digit_logits (B,8,10), len_logits (B,9)) from ONE encoder
+    pass (the double-pass version OOM'd the T4 at micro-batch 4)."""
+    import torch
 
-    logits = forward_a1v(model, batch)
     out = model.encoder(
         input_ids=batch["input_ids"],
         attention_mask=batch["attention_mask"],
@@ -101,8 +101,18 @@ def forward_a1v_aux(model: NeoMMEAuxScorer, batch: dict) -> tuple[torch.Tensor, 
         pixel_values=batch["pixel_values"],
     )
     hidden = out.last_hidden_state
-    rows = batch["aux_rows"]
-    h = hidden[torch.arange(rows.shape[0]).unsqueeze(1), rows]  # (B, 9, H)
+    rows = batch["marker_rows"]
+    marker_h = hidden[rows[:, 0], rows[:, 1]]
+    scores = model.head(marker_h).squeeze(-1)
+    logits = torch.full(
+        (batch["num_decisions"], batch["max_options"]),
+        torch.finfo(scores.dtype).min,
+        dtype=scores.dtype,
+        device=scores.device,
+    )
+    logits[rows[:, 0], rows[:, 2]] = scores
+    arows = batch["aux_rows"]
+    h = hidden[torch.arange(arows.shape[0], device=hidden.device).unsqueeze(1), arows]  # (B, 9, H)
     d_logits = model.aux_digit_head(h[:, :N_POS])  # (B, 8, 10)
     l_logits = model.aux_len_head(h[:, N_POS])  # (B, 9)
     return logits, d_logits, l_logits
