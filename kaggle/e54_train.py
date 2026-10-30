@@ -271,7 +271,7 @@ def spawn(seed: int, gpu: int, steps: int, smoke: bool, t0: float):
     fh = open(log_path, "a", encoding="utf-8")
     env = dict(os.environ, CUDA_VISIBLE_DEVICES=str(gpu),
                PYTORCH_CUDA_ALLOC_CONF=CONFIGS["e54"].get("alloc_conf", "expandable_segments:True"))
-    return subprocess.Popen(cmd, env=env, stdout=fh, stderr=subprocess.STDOUT, text=True), fh
+    return subprocess.Popen(cmd, env=env, stdout=fh, stderr=subprocess.STDOUT, text=True), fh, log_path
 
 
 def main() -> None:
@@ -304,7 +304,7 @@ def main() -> None:
         (WORK / "e54_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 
     print(f"[parent {time.strftime('%H:%M:%S')}] smoke next", flush=True)
-    smoke = E41.finish(spawn(42, 0, SMOKE_STEPS, True, t0)[0], "smoke", 3600)
+    smoke = E41.finish(spawn(42, 0, SMOKE_STEPS, True, t0), "smoke", 3600)
     summary["smoke"] = smoke
     save()
     if smoke != "completed":
@@ -312,7 +312,7 @@ def main() -> None:
         save()
         raise SystemExit(f"E54 ABORT: smoke {smoke}")
     print(f"[parent {time.strftime('%H:%M:%S')}] workers next", flush=True)
-    procs = {seed: spawn(seed, gpu, STEPS, False, t0)[0] for seed, gpu in SEEDS.items()}
+    procs = {seed: spawn(seed, gpu, STEPS, False, t0) for seed, gpu in SEEDS.items()}
     for seed, sp in procs.items():
         wall_s = CONFIGS["e54"]["wall_h"] * 3600
         status = E41.finish(sp, f"s{seed}", wall_s - (time.time() - t0))
