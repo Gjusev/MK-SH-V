@@ -49,7 +49,7 @@ ROOT_MODULES = {"e39r2_comparators": ("e39_train.py",), "e41_train": ("e39_train
                 "e45_train": ("e39_train.py", "e41_train.py", "e44_train.py"),
                 **{k: ("e39_train.py", "e41_train.py", "e44_train.py")
                    for k in ("e46_smoke", "e46a_train", "e46b_train", "e47_train", "e49_train",
-                             "e52_train")},
+                             "e52_train", "e54_train")}
                 "e48_calib": ("e42_calib.py",), "e53_calib": ("e42_calib.py",)}
 
 

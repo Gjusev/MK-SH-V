@@ -79,6 +79,17 @@ CONFIGS["e52"] = dict(CONFIGS["e47"], criteria="docs/E52_CRITERIA_2026-10-29.md"
                             43: ("mkshv-e47-train", "a1v_e47_s43",
                                  "afcbeaa45a4c033b5e7d3f033b85fdda2642c0fef78397fcecc5bef53cd83c29")})
 
+# E54 (docs/E54_CRITERIA_2026-10-30.md): aux digit heads on the E52 checkpoints; own kernel
+# module (kaggle/e54_train.py) carries the worker; this config only pins data + init + budget
+CONFIGS["e54"] = dict(CONFIGS["e52"], criteria="docs/E54_CRITERIA_2026-10-30.md",
+                      bind_slug="mkshv-e52-bind",
+                      bind_sha="351b5505b4f5362866c1f116c30232a46b35b9e21e8c23a9c5d7c84555bb5704",
+                      train_deadline_h=3.9, wall_h=5.2,
+                      init={42: ("mkshv-e52-train", "a1v_e52_s42",
+                                 "3d2ffdbcfe6eb9e851716079796cf9a2a04e1e0e90f30b9ffacecf66093c9aa3"),
+                            43: ("mkshv-e52-train", "a1v_e52_s43",
+                                 "dfc6d60e15247c9e4b5902f6e84cbca9c70eba8a5489a06a580b6b43330de37d")})
+
 EXP = "e44"  # kernel default; the E45 kernel sets it before main()
 SMOKE_ONLY: tuple[str, ...] = ()  # E46 smoke kernel: these arms, one GPU each, 20 steps, then stop
 SEEDS = {42: 0, 43: 1}
