@@ -27,13 +27,17 @@ from e44_train import CONFIGS, DEV_EVERY, SEEDS, SMOKE_EVAL_ROWS, SMOKE_STEPS, S
 AUX_W = 0.5  # frozen in the E54 criteria
 
 
+def _sig_digits(total: float, idr: bool) -> str:
+    """gen_e45.sig_digits inlined (scripts/ modules do not ship in the kernel)."""
+    return str(round(total)) if idr else f"{total:.2f}".replace(".", "")
+
+
 def aux_labels_of(row: dict) -> tuple[list[int] | None, int | None]:
-    from gen_e45 import sig_digits
     total = row.get("total")
     if total is None:
         return None, None
     idr = row.get("img_src") == "e41" or row.get("fmt") == "idr"
-    d = sig_digits(float(total), idr)
+    d = _sig_digits(float(total), idr)
     return [int(c) for c in d][:8], len(str(int(float(total))))
 
 
