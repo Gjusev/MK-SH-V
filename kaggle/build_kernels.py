@@ -21,7 +21,7 @@ SRC = ROOT / "src" / "mksh_v"
 KAGGLE = ROOT / "kaggle"
 GEN = KAGGLE / "gen"
 MODULES = ("__init__.py", "sequence.py", "splitting.py", "visual.py",
-           "synth_doc_type.py", "arch_a1v.py", "train_compare.py", "rules_baseline.py")
+           "synth_doc_type.py", "arch_a1v.py", "arch_a1v_aux.py", "train_compare.py", "rules_baseline.py")
 
 HEADER = '''# AUTO-GENERATED from kaggle/{name}.py + src/mksh_v/* by kaggle/build_kernels.py.
 # Do not edit: edit the sources and regenerate.
