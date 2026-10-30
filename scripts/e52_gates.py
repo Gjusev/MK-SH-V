@@ -14,7 +14,13 @@ BASELINE = {42: 0.3433, 43: 0.3312}
 
 
 def load(p: str) -> list[dict]:
-    return [json.loads(l) for l in (R / p).read_text(encoding="utf-8").splitlines() if l.strip()]
+    rows = [json.loads(l) for l in (R / p).read_text(encoding="utf-8").splitlines() if l.strip()]
+    out = []
+    for r in rows:  # kernel schema -> e43_infer schema
+        if "pred" not in r:
+            r = {**r, "pred": r["pred_idx"], "gold": r["gold_idx"]}
+        out.append(r)
+    return out
 
 
 def acc(rows):
