@@ -50,7 +50,7 @@ ROOT_MODULES = {"e39r2_comparators": ("e39_train.py",), "e41_train": ("e39_train
                 **{k: ("e39_train.py", "e41_train.py", "e44_train.py")
                    for k in ("e46_smoke", "e46a_train", "e46b_train", "e47_train", "e49_train",
                              "e52_train")},
-                "e48_calib": ("e42_calib.py",)}
+                "e48_calib": ("e42_calib.py",), "e53_calib": ("e42_calib.py",)}
 
 
 def build(name: str) -> pathlib.Path:
