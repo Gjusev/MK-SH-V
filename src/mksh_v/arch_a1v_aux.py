@@ -54,14 +54,15 @@ class NeoMMEAuxScorer(NeoMMEMarkerScorer):
         B = batch["input_ids"].shape[0]
         attn = batch["attention_mask"]
         # append the aux tail after each row's real tokens (right-padding aware)
-        grow = torch.full((B, len(ids)), pad, dtype=torch.long)
-        grow_attn = torch.zeros((B, len(ids)), dtype=torch.long)
+        dev = batch["input_ids"].device
+        grow = torch.full((B, len(ids)), pad, dtype=torch.long, device=dev)
+        grow_attn = torch.zeros((B, len(ids)), dtype=torch.long, device=dev)
         ext_ids = torch.cat([batch["input_ids"], grow], dim=1)
         ext_attn = torch.cat([attn, grow_attn], dim=1)
         pos_a, pos_b = batch["position_ids"][0], batch["position_ids"][1]
         next_a = pos_a.max(dim=1, keepdim=True).values + 1
         next_b = pos_b.max(dim=1, keepdim=True).values + 1
-        inc_a = torch.arange(1, len(ids) + 1, dtype=torch.long).unsqueeze(0)
+        inc_a = torch.arange(1, len(ids) + 1, dtype=torch.long, device=dev).unsqueeze(0)
         ext_a = torch.cat([pos_a, next_a + inc_a - 1], dim=1)
         ext_b = torch.cat([pos_b, next_b + inc_a - 1], dim=1)
         # aux token placement: at the first pad slot of each row
